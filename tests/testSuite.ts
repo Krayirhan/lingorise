@@ -40,6 +40,9 @@ import { getAuthErrorMessage } from "../src/services/authErrors";
 import { isOfflineError } from "../src/services/errorReporter";
 import { componentSizes, iconSizes } from "../src/theme/tokens";
 import { track } from "../src/services/telemetry";
+import { randomizeDistractors } from "../src/domain/practice/distractors";
+import * as fs from "fs";
+import * as path from "path";
 
 let passedCount = 0;
 let failedCount = 0;
@@ -1028,6 +1031,91 @@ console.log("\n42. Migration Schema Versioning:");
   } as Partial<UserData>);
   assert(oldestShape.schemaVersion === CURRENT_SCHEMA_VERSION, "The oldest pre-learningProgress shape still normalizes to the current version");
   assert(Object.keys(oldestShape.learningProgress).length === 1, "Migration 25's behavior is unchanged by the version stamp");
+}
+
+// 43. Distractors are drawn fresh per session, not fixed at content-authoring
+// time (roadmap Birim 10.1)
+console.log("\n43. Randomized Distractors (roadmap Birim 10.1):");
+{
+  const a1Pool = getQuestionsByLevel("A1");
+  const target = a1Pool.find((q) => q.word === "quiet")!;
+  const originalDecoys = [...target.wrongOptions];
+
+  const firstSample = randomizeDistractors(target, a1Pool);
+  assert(firstSample.wrongOptions.length === originalDecoys.length, "Resampled decoys keep the same count as the authored set");
+  assert(!firstSample.wrongOptions.includes(target.meaning), "The correct meaning never appears among resampled decoys");
+  assert(new Set(firstSample.wrongOptions).size === firstSample.wrongOptions.length, "Resampled decoys are never duplicated within one question");
+
+  const seenDecoySets = new Set<string>();
+  for (let i = 0; i < 20; i += 1) {
+    const resampled = randomizeDistractors(target, a1Pool);
+    seenDecoySets.add(resampled.wrongOptions.slice().sort().join("|"));
+  }
+  assert(
+    seenDecoySets.size > 1,
+    `Across 20 resamples, the decoy set actually varies (saw ${seenDecoySets.size} distinct combinations) — content is no longer deterministic`
+  );
+
+  // PICK_THE_WORD questions already get fresh decoys from reverseMode.ts —
+  // randomizeDistractors must leave them alone rather than double-processing.
+  const reversedTarget = { ...target, mode: "PICK_THE_WORD" as const };
+  const untouched = randomizeDistractors(reversedTarget, a1Pool);
+  assert(
+    untouched.wrongOptions.join("|") === reversedTarget.wrongOptions.join("|"),
+    "PICK_THE_WORD questions are left untouched — their decoys already come from reverseMode.ts"
+  );
+
+  // A too-small candidate pool must never crash or return fewer decoys than authored.
+  const tinyPool = [target];
+  const fallback = randomizeDistractors(target, tinyPool);
+  assert(
+    fallback.wrongOptions.length === originalDecoys.length,
+    "When the pool is too small to safely resample, the authored decoys are kept rather than shrinking the option count"
+  );
+}
+
+// 44. Accessibility labels must speak the app's language, not a hardcoded one
+// (roadmap Birim 9.1 — a TalkBack user on the English locale must not hear
+// Turkish button names)
+console.log("\n44. Accessibility Label Localization Scan (roadmap Birim 9.1):");
+{
+  // Components that legitimately carry a hardcoded label, and why:
+  //  - GlobalTopBar / DevClockCard: __DEV__-gated, never reach a real user
+  //  - Brand: the product name + "logo" — not meaningfully translatable
+  //  - HomeHeader: dead code, not imported/rendered anywhere in the app
+  //  - LanguageSettingsCard: the two labels ARE each language's own name,
+  //    intentionally bilingual by design (Türkçe/English selectors)
+  const allowlist = new Set([
+    "src/components/GlobalTopBar.tsx",
+    "src/components/Brand.tsx",
+    "src/features/profile/components/DevClockCard.tsx",
+    "src/features/home/components/HomeHeader.tsx",
+    "src/features/profile/components/LanguageSettingsCard.tsx",
+  ]);
+
+  const srcRoot = path.join(__dirname, "..", "src");
+  const hardcodedLabelPattern = /accessibilityLabel="[A-ZİÇĞÖŞÜ][a-zA-Zçğıöşü ]*"/;
+  const offenders: string[] = [];
+
+  function walk(dir: string) {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        walk(full);
+      } else if (entry.name.endsWith(".tsx")) {
+        const relative = path.relative(path.join(__dirname, ".."), full).replace(/\\/g, "/");
+        if (allowlist.has(relative)) continue;
+        const content = fs.readFileSync(full, "utf-8");
+        if (hardcodedLabelPattern.test(content)) offenders.push(relative);
+      }
+    }
+  }
+  walk(srcRoot);
+
+  assert(
+    offenders.length === 0,
+    `No shipped component has a hardcoded-language accessibilityLabel outside the documented allowlist (offenders: ${offenders.join(", ") || "none"})`
+  );
 }
 
 console.log("\n=========================================");

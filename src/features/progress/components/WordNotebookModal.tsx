@@ -22,6 +22,7 @@ interface Props {
   solvedQuestionIds: string[];
   onClose: () => void;
   onPracticeWord?: (question: MeaningMatchQuestion) => void;
+  reduceMotion?: boolean;
 }
 
 const LEVELS: (LevelCode | "ALL")[] = ["ALL", "A1", "A2", "B1", "B2", "C1", "C2"];
@@ -32,6 +33,7 @@ export function WordNotebookModal({
   solvedQuestionIds,
   onClose,
   onPracticeWord,
+  reduceMotion,
 }: Props) {
   const [query, setQuery] = useState("");
   const [selectedLevel, setSelectedLevel] = useState<LevelCode | "ALL">("ALL");
@@ -54,14 +56,14 @@ export function WordNotebookModal({
   };
 
   return (
-    <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
+    <Modal visible={visible} animationType={reduceMotion ? "none" : "slide"} onRequestClose={onClose}>
       <SafeAreaView style={S.safe}>
         <View style={S.shell}>
           {/* Header */}
           <View style={S.header}>
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="Kapat"
+              accessibilityLabel={copy.home?.wordDetailClose || "Kapat"}
               style={S.closeBtn}
               onPress={onClose}
             >

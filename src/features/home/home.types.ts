@@ -70,4 +70,5 @@ export interface HomeScreenProps {
   onWordPress?: (wordData: RecommendedWordData) => void;
   onTabPress: (tab: HomeTab) => void;
   onRefresh: () => Promise<void>;
+  reduceMotion?: boolean;
 }

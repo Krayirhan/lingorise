@@ -141,7 +141,7 @@ export function DataManagementCard({ copy, onDataReset }: Props) {
               <Text style={S.modalTitle}>Gizlilik ve Kullanım Şartları</Text>
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel="Kapat"
+                accessibilityLabel={copy.home?.wordDetailClose || "Kapat"}
                 style={S.modalCloseBtn}
                 onPress={() => setPrivacyModalVisible(false)}
               >

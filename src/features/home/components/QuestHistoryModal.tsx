@@ -10,6 +10,7 @@ interface Props {
   visible: boolean;
   questHistory: QuestHistoryEntry[];
   onClose: () => void;
+  reduceMotion?: boolean;
 }
 
 /** Groups the flat history into one row per day, newest first. */
@@ -32,13 +33,13 @@ function formatDate(date: string, locale: Locale): string {
   });
 }
 
-export function QuestHistoryModal({ copy, locale, visible, questHistory, onClose }: Props) {
+export function QuestHistoryModal({ copy, locale, visible, questHistory, onClose, reduceMotion }: Props) {
   if (!visible) return null;
 
   const days = groupByDate(questHistory || []);
 
   return (
-    <Modal visible transparent animationType="slide" onRequestClose={onClose}>
+    <Modal visible transparent animationType={reduceMotion ? "none" : "slide"} onRequestClose={onClose}>
       <View style={S.overlay}>
         <View style={S.sheet}>
           <View style={S.header}>
@@ -48,7 +49,12 @@ export function QuestHistoryModal({ copy, locale, visible, questHistory, onClose
                 {copy.home?.questHistorySubtitle || "Tamamladığın günlük görevlerin kaydı."}
               </Text>
             </View>
-            <Pressable accessibilityRole="button" accessibilityLabel="Kapat" style={S.closeBtn} onPress={onClose}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={copy.home?.wordDetailClose || "Kapat"}
+              style={S.closeBtn}
+              onPress={onClose}
+            >
               <Ionicons name="close" size={22} color={C.muted} />
             </Pressable>
           </View>

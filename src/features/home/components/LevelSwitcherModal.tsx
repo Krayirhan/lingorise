@@ -18,6 +18,7 @@ interface Props {
   learningProgress: Record<string, LearningItemProgress>;
   onSelect: (level: LevelCode) => void;
   onClose: () => void;
+  reduceMotion?: boolean;
 }
 
 const fill = (template: string, values: Record<string, string | number>) =>
@@ -39,6 +40,7 @@ export function LevelSwitcherModal({
   learningProgress,
   onSelect,
   onClose,
+  reduceMotion,
 }: Props) {
   const [pendingLevel, setPendingLevel] = useState<LevelCode | null>(null);
 
@@ -76,7 +78,7 @@ export function LevelSwitcherModal({
   };
 
   return (
-    <Modal visible transparent animationType="slide" onRequestClose={onClose}>
+    <Modal visible transparent animationType={reduceMotion ? "none" : "slide"} onRequestClose={onClose}>
       <View style={S.overlay}>
         <View style={S.sheet}>
           <View style={S.header}>

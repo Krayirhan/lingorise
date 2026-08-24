@@ -330,12 +330,12 @@ export function AccountManagementCard({
 
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Şifremi Sıfırla"
+          accessibilityLabel={copy.profile?.resetPasswordBtn || "Şifremi Sıfırla"}
           style={S.subBtn}
           onPress={handleResetPassword}
           disabled={busy}
         >
-          <Text style={S.subBtnTxt}>Şifre Sıfırla</Text>
+          <Text style={S.subBtnTxt}>{copy.profile?.resetPasswordBtn || "Şifre Sıfırla"}</Text>
         </Pressable>
 
         <Pressable

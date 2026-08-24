@@ -18,6 +18,7 @@ export function HomeScreen({
   onReviewPress,
   onWordPress,
   onTabPress,
+  reduceMotion,
 }: HomeScreenProps) {
   const [selectedWord, setSelectedWord] = useState<RecommendedWordData | null>(null);
   const [historyVisible, setHistoryVisible] = useState(false);
@@ -107,6 +108,7 @@ export function HomeScreen({
         visible={historyVisible}
         questHistory={viewModel.questHistory}
         onClose={() => setHistoryVisible(false)}
+        reduceMotion={reduceMotion}
       />
 
       {/* Word Detail Sheet Modal */}
@@ -119,6 +121,7 @@ export function HomeScreen({
           else onQuestPress();
         }}
         onClose={() => setSelectedWord(null)}
+        reduceMotion={reduceMotion}
       />
     </View>
   );

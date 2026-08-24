@@ -3,6 +3,7 @@ import { MeaningMatchQuestion } from "../types/content";
 import { getCurrentLevelUnitQuestions, getQuestionById, getQuestionsByLevel } from "../content/questions";
 import { getDueReviewItems } from "../domain/review/spacedRepetition";
 import { toPickTheWordSession, canUsePickTheWord } from "../domain/practice/reverseMode";
+import { randomizeDistractors } from "../domain/practice/distractors";
 import { ActiveSessionState, UserData } from "../types/user";
 import { now } from "../utils/clock";
 import { track } from "../services/telemetry";
@@ -26,7 +27,7 @@ function collectDueQuestions(userData: UserData, limit: number): MeaningMatchQue
  * One session for the day: overdue reviews first, then new words for whatever
  * room is left. A single flow means the review debt can no longer be skipped.
  */
-export function buildDailySession(userData: UserData): MeaningMatchQuestion[] {
+function buildDailySessionCore(userData: UserData): MeaningMatchQuestion[] {
   const sessionSize = userData.practiceSessionSize || 20;
   const dueQuestions = collectDueQuestions(userData, sessionSize);
 
@@ -48,6 +49,20 @@ export function buildDailySession(userData: UserData): MeaningMatchQuestion[] {
   // button dead, offer the words closest to their next review. These pay no XP
   // — they are not due — so practising ahead cannot be farmed.
   return getDueReviewItemsSoonest(userData, sessionSize);
+}
+
+/**
+ * Draws each question's decoys fresh from its own level's pool (roadmap
+ * Birim 10.1) rather than the fixed set baked in at content-authoring time.
+ * A due review pulled in from a level the learner has since moved past still
+ * gets decoys from ITS level, not the learner's current one.
+ */
+function withFreshDistractors(questions: MeaningMatchQuestion[]): MeaningMatchQuestion[] {
+  return questions.map((q) => randomizeDistractors(q, getQuestionsByLevel(q.level)));
+}
+
+export function buildDailySession(userData: UserData): MeaningMatchQuestion[] {
+  return withFreshDistractors(buildDailySessionCore(userData));
 }
 
 /** Known words ordered by how soon they come around again. */
@@ -110,7 +125,7 @@ export function useAppSession(userData: UserData, setActiveSession?: (session: A
       let qList: MeaningMatchQuestion[] = [];
 
       if (customQuestions && customQuestions.length > 0) {
-        qList = customQuestions;
+        qList = withFreshDistractors(customQuestions);
       } else {
         qList = buildDailySession(userData);
       }
@@ -148,7 +163,7 @@ export function useAppSession(userData: UserData, setActiveSession?: (session: A
     // what quietly defeated the spacing. If nothing is due, hand the learner
     // the ordinary daily session instead of a dead tap.
     const dueList = collectDueQuestions(userData, userData.practiceSessionSize);
-    const qList = dueList.length > 0 ? dueList : buildDailySession(userData);
+    const qList = withFreshDistractors(dueList.length > 0 ? dueList : buildDailySessionCore(userData));
     if (qList.length === 0) return;
 
     track("practice_session_started", {

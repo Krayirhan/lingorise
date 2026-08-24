@@ -189,6 +189,7 @@ export function AppNavigator({ userProgress, onAccountPress, deepLinkTarget, onD
         onPracticeWord={(q) => session.startPractice([q])}
         onBack={session.goToHome}
         onTabPress={handleTabPress}
+        reduceMotion={userData.reduceMotion}
       />
     );
   } else if (session.screen === "practiceHome") {
@@ -265,6 +266,7 @@ export function AppNavigator({ userProgress, onAccountPress, deepLinkTarget, onD
         }}
         onTabPress={handleTabPress}
         onRefresh={userProgress.refresh}
+        reduceMotion={userData.reduceMotion}
       />
     );
   }
@@ -287,6 +289,7 @@ export function AppNavigator({ userProgress, onAccountPress, deepLinkTarget, onD
         learningProgress={userData.learningProgress || {}}
         onSelect={setLevel}
         onClose={() => setLevelSwitcherOpen(false)}
+        reduceMotion={userData.reduceMotion}
       />
 
       <LevelPromotionModal
@@ -299,6 +302,7 @@ export function AppNavigator({ userProgress, onAccountPress, deepLinkTarget, onD
           setLevel(next);
         }}
         onDismiss={() => markLevelCelebrated(userData.level)}
+        reduceMotion={userData.reduceMotion}
       />
     </>
   );

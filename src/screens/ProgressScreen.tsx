@@ -29,6 +29,7 @@ export function ProgressScreen({
   unlockedBadges = [],
   onPracticeWord,
   onBack,
+  reduceMotion,
 }: ProgressScreenProps) {
   const [notebookVisible, setNotebookVisible] = useState(false);
 
@@ -137,6 +138,7 @@ export function ProgressScreen({
         solvedQuestionIds={solvedQuestionIds}
         onClose={() => setNotebookVisible(false)}
         onPracticeWord={onPracticeWord}
+        reduceMotion={reduceMotion}
       />
     </View>
   );

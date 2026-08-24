@@ -14,6 +14,7 @@ interface Props {
   visible: boolean;
   onAdvance: (next: LevelCode) => void;
   onDismiss: () => void;
+  reduceMotion?: boolean;
 }
 
 const fill = (template: string, values: Record<string, string | number>) =>
@@ -27,7 +28,7 @@ const fill = (template: string, values: Record<string, string | number>) =>
  * ready yet it says so plainly instead of promoting someone into an empty
  * catalogue.
  */
-export function LevelPromotionModal({ copy, level, promotion, visible, onAdvance, onDismiss }: Props) {
+export function LevelPromotionModal({ copy, level, promotion, visible, onAdvance, onDismiss, reduceMotion }: Props) {
   const shownForLevelRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -52,7 +53,7 @@ export function LevelPromotionModal({ copy, level, promotion, visible, onAdvance
   };
 
   return (
-    <Modal visible transparent animationType="fade" onRequestClose={onDismiss}>
+    <Modal visible transparent animationType={reduceMotion ? "none" : "fade"} onRequestClose={onDismiss}>
       <View style={S.overlay}>
         <View style={S.card}>
           <View style={S.crest}>

@@ -13,9 +13,10 @@ interface Props {
   visible: boolean;
   onPracticeWord: (wordData: RecommendedWordData) => void;
   onClose: () => void;
+  reduceMotion?: boolean;
 }
 
-export function WordDetailModal({ copy, wordData, visible, onPracticeWord, onClose }: Props) {
+export function WordDetailModal({ copy, wordData, visible, onPracticeWord, onClose, reduceMotion }: Props) {
   if (!visible || !wordData) return null;
 
   const handleAudio = () => {
@@ -23,12 +24,17 @@ export function WordDetailModal({ copy, wordData, visible, onPracticeWord, onClo
   };
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+    <Modal visible={visible} transparent animationType={reduceMotion ? "none" : "fade"} onRequestClose={onClose}>
       <View style={S.overlay}>
         <View style={S.card}>
           <View style={S.topRow}>
             <View style={S.badge}><Text style={S.badgeTxt}>{wordData.level} · {getTopicLabel(copy, wordData.topic)}</Text></View>
-            <Pressable accessibilityRole="button" accessibilityLabel="Kapat" style={S.closeBtn} onPress={onClose}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={copy.home?.wordDetailClose || "Kapat"}
+              style={S.closeBtn}
+              onPress={onClose}
+            >
               <Ionicons name="close" size={20} color={C.muted} />
             </Pressable>
           </View>
@@ -38,7 +44,12 @@ export function WordDetailModal({ copy, wordData, visible, onPracticeWord, onClo
               <Text style={S.word}>{wordData.word}</Text>
               {wordData.phonetic && <Text style={S.phonetic}>{wordData.phonetic}</Text>}
             </View>
-            <Pressable accessibilityRole="button" accessibilityLabel="Dinle" style={({ pressed }) => [S.audioBtn, pressed && S.audioBtnPre]} onPress={handleAudio}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={copy.home?.wordDetailListen || "Dinle"}
+              style={({ pressed }) => [S.audioBtn, pressed && S.audioBtnPre]}
+              onPress={handleAudio}
+            >
               <Ionicons name="volume-medium" size={22} color={C.primary} />
             </Pressable>
           </View>

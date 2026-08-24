@@ -41,5 +41,6 @@ export interface ProgressScreenProps {
   unlockedBadges?: string[];
   onPracticeWord?: (question: MeaningMatchQuestion) => void;
   onBack: () => void;
+  reduceMotion?: boolean;
   onTabPress?: (tab: "garden" | "practice" | "progress" | "profile") => void;
 }

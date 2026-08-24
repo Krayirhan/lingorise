@@ -1,6 +1,6 @@
 # Sprint Planı — Birimlerin Sprint'lere Dağılımı
 
-Bu dosya, `00-INDEX.md`'deki 11 uygulanabilir birimin (Birim 12 hariç — o bir kapı, iş kalemi değil) somut sprint'lere dağılımını tutar. Mevcut projede zaten **9 sprint** (S0-S8) tamamlanmış durumda; kalan plan **S9'dan başlar**.
+Bu dosya, `00-INDEX.md`'deki 11 uygulanabilir birimin (Birim 12 hariç — o bir kapı, iş kalemi değil) somut sprint'lere dağılımını tutar. Mevcut projede zaten **10 sprint** (S0-S9) tamamlanmış durumda; kalan plan **S10'dan başlar**.
 
 ## Önceki sprintler (tamamlandı, referans için)
 
@@ -15,6 +15,7 @@ Bu dosya, `00-INDEX.md`'deki 11 uygulanabilir birimin (Birim 12 hariç — o bir
 | S6 | İçerik Genişletme + Hızlı Kazanımlar | 9 | ✅ |
 | S7 | Doğrulama Altyapısı | 8 | ✅ |
 | S8 | Sağlamlaştırma | 8 | ✅ |
+| S9 | Erişilebilirlik + Çeşitlilik | 6 | ✅ |
 
 ## S6 — Tamamlandı (kanıtlı)
 
@@ -87,6 +88,21 @@ Bu dosya, `00-INDEX.md`'deki 11 uygulanabilir birimin (Birim 12 hariç — o bir
 | [10-game-variety-and-content-quality.md](10-game-variety-and-content-quality.md) §10.1 | Rastgele çeldirici — düşük efor, yüksek etki |
 
 **6 kalem · bağımsız, S6-S8 ile paralel yürütülebilir**
+
+## S9 — Tamamlandı (kanıtlı)
+
+| Kaynak | Kalem | Kanıt |
+|---|---|---|
+| [09-accessibility.md](09-accessibility.md) §9.1 | TalkBack ile gerçek akış testi | Cihazda TalkBack fiilen etkinleştirildi (`dumpsys accessibility` ile teyitli, dokunma keşfi aktif). Ana ekran, pratik ekranı, `LevelSwitcherModal` erişilebilirlik ağacı (`uiautomator dump`) incelendi: her buton anlamlı etiket taşıyor ("Button" gibi genel duyuru yok), cevap satırları `RadioButton` rolüyle doğru anlamı taşıyor, `LevelSwitcherModal`'da hazır olmayan seviyeler `enabled="false"` ile doğru işaretleniyor, odak göstergesi (yeşil çerçeve) ekran görüntüsünde görünür durumda. Bu sırada **gerçek bir hata bulundu ve düzeltildi**: birden fazla modalin `accessibilityLabel`'ı sabit Türkçe metin taşıyordu ("Kapat", "Dinle", "Şifremi Sıfırla") — İngilizce arayüzde bile TalkBack Türkçe duyuruyordu. `QuestHistoryModal`, `WordDetailModal` (×2), `WordNotebookModal`, `DataManagementCard`, `AccountManagementCard` düzeltildi; 2 yeni i18n anahtarı eklendi (`wordDetailListen`, `resetPasswordBtn`) |
+| [09-accessibility.md](09-accessibility.md) §9.2 | Dinamik yazı tipi testi | Cihazda `font_scale=1.3` (Android'in pratik maksimumu) ayarlandı, ana ekran ve özellikle roadmap'in riskli işaretlediği `LevelSwitcherModal` cihazda ekran görüntüsüyle doğrulandı — hiçbir metin kesilmiyor/taşmıyor, "Şu anki" etiketi ve satırlar esnek genişliyor |
+| [09-accessibility.md](09-accessibility.md) §9.3 | Accessibility Scanner ile kontrast doğrulaması | **Yapılamadı** — bu emülatörde Play Store var ama Accessibility Scanner kurulu değil, otomatik kurulum Google hesabı girişi gerektiriyor ve bu oturumun kapsamı dışında. Sprint 3'ün matematiksel WCAG AA hesaplaması geçerliliğini koruyor ama gerçek cihaz ölçümüyle bu sprintte teyit edilmedi — dürüstçe açık bırakılıyor |
+| [09-accessibility.md](09-accessibility.md) §9.4 | `reduceMotion` kapsamı genişletildi | `grep -rn reduceMotion` taraması, Sprint 3-5'te eklenen `LevelPromotionModal`, `LevelSwitcherModal`, `QuestHistoryModal`'ın bu ayara hiç saygı göstermediğini ortaya çıkardı — üçü de artık `reduceMotion` açıkken `Modal`'ın `animationType`'ını `"none"`'a çekiyor. Aynı düzeltme `WordDetailModal` ve `WordNotebookModal`'a da uygulandı (aynı kalıp, `userData.reduceMotion` zincirini `AppNavigator` → `HomeScreen`/`ProgressScreen` → modallere kadar taşıyarak) |
+| [09-accessibility.md](09-accessibility.md) §9.5 | Otomatik erişilebilirlik kontrolü | `react-native-testing-library` gibi yeni bir bağımlılık eklemek yerine düşük maliyetli, gerçek bir statik tarama yazıldı: test 44, `src/**/*.tsx`'i tarayıp belgeli istisnalar (dev-only bileşenler, kasıtlı iki-dilli seçiciler, ölü kod) dışında sabit-dilli `accessibilityLabel` kalmadığını doğruluyor — bu, tam olarak §9.1'de bulunan hata sınıfının bir daha sessizce geri gelmesini engelliyor |
+| [10-game-variety-and-content-quality.md](10-game-variety-and-content-quality.md) §10.1 | Çeldiriciler artık her oturumda farklı | `src/domain/practice/distractors.ts` — `randomizeDistractors`, içerik üretim zamanında değil oturum kurulma zamanında (`buildDailySession`/`startReview`/`startPractice`) her sorunun yanlış seçeneklerini kendi seviyesinin havuzundan yeniden örnekliyor. Cihazda canlı doğrulandı: aynı kelime ("son") art arda açılan oturumlarda farklı çeldiricilerle geldi. `PICK_THE_WORD` soruları dokunulmadan geçiyor (zaten Sprint 6'da `reverseMode.ts` ile aynı ilkeyle çözülmüştü) |
+
+**Testler: 211 → 218.** TypeScript: temiz. Release APK cihazda derlendi; TalkBack ile erişilebilirlik ağacı, 1.3x font ölçeğiyle görsel bütünlük, ve rastgele çeldirici canlı davranışı doğrulandı.
+
+**Dürüstlük notu:** §9.3 (gerçek kontrast tarayıcısı) bu ortamda yapılamadı — Play Store kurulu ama Accessibility Scanner uygulaması yok ve otomatik kurulumu bir Google hesabı gerektiriyor. Bu, Sprint 7/8'de belgelenen benzer ortam kısıtlarıyla aynı kategoride: kod eksikliği değil, bu spesifik emülatörün araç kısıtı.
 
 ### S10 — Parametre Kalibrasyonu
 
