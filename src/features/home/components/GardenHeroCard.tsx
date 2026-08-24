@@ -27,6 +27,8 @@ interface Props {
   onPress: () => void;
   onViewProgress?: () => void;
   onPracticeAgain?: () => void;
+  showGardenExplainer?: boolean;
+  onDismissGardenExplainer?: () => void;
 }
 
 export function GardenHeroCard({
@@ -48,6 +50,8 @@ export function GardenHeroCard({
   onPress,
   onViewProgress,
   onPracticeAgain,
+  showGardenExplainer = false,
+  onDismissGardenExplainer,
 }: Props) {
   // Determine resolved state
   const isCompleted = practiceState === "completed" || isDailyCompleted;
@@ -147,6 +151,24 @@ export function GardenHeroCard({
             </Text>
             <Text style={S.metricsRight}>{stageName}</Text>
           </View>
+
+          {showGardenExplainer && (
+            <View style={S.explainerRow}>
+              <Ionicons name="information-circle-outline" size={14} color="#C5B2BD" />
+              <Text style={S.explainerTxt}>
+                {copy.home?.gardenExplainerTip ||
+                  "Bahçen tüm seviyelerdeki pekişmiş kelimelerinle büyür — bir seviyeyi bitirmek onu tek başına ilerletmez."}
+              </Text>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={copy.home?.wordDetailClose || "Kapat"}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                onPress={onDismissGardenExplainer}
+              >
+                <Ionicons name="close" size={14} color="#C5B2BD" />
+              </Pressable>
+            </View>
+          )}
         </View>
       )}
 
@@ -333,6 +355,21 @@ const S = StyleSheet.create({
     color: "#C5B2BD",
     fontSize: 11,
     fontWeight: "600",
+  },
+  explainerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(255, 255, 255, 0.12)",
+  },
+  explainerTxt: {
+    flex: 1,
+    color: "#C5B2BD",
+    fontSize: 10.5,
+    lineHeight: 14,
   },
   ctaBtn: {
     backgroundColor: C.reward,

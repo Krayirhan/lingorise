@@ -1,10 +1,17 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { MeaningMatchQuestion } from "../../../types/content";
+
+export interface AnswerQualityMeta {
+  /** Wall-clock time from the question appearing to this check, ms. */
+  responseTimeMs: number;
+  /** 1 on a clean first try; incremented for each prior wrong attempt on this same question. */
+  attemptNumber: number;
+}
 
 export function usePracticeSession(
   question: MeaningMatchQuestion,
   correctAnswer: string,
-  onCheckAnswer: (xpReward: number) => void
+  onCheckAnswer: (xpReward: number, quality: AnswerQualityMeta) => void
 ) {
   const [shuffledOptions, setShuffledOptions] = useState<string[]>([]);
   const [showHint, setShowHint] = useState(false);
@@ -13,6 +20,11 @@ export function usePracticeSession(
 
   const baseReward = question.xp || 10;
   const xpReward = showHint ? Math.max(2, baseReward - 2) : baseReward;
+
+  // roadmap Birim 3 §3.1 — an indirect quality signal (response time, hint
+  // use, retry count) collected without asking the learner anything new.
+  const questionShownAtRef = useRef(Date.now());
+  const attemptNumberRef = useRef(1);
 
   // Shuffle options on question change
   useEffect(() => {
@@ -26,18 +38,32 @@ export function usePracticeSession(
     setShowHint(false);
     setIsChecking(false);
     setRemindSuccess(false);
+    questionShownAtRef.current = Date.now();
+    attemptNumberRef.current = 1;
   }, [question.id, correctAnswer, question.options, question.wrongOptions]);
 
   const handleCheck = useCallback(
     (picked: string | null, submitted: boolean) => {
       if (!picked || submitted || isChecking) return;
       setIsChecking(true);
+      const isCorrect = picked === correctAnswer;
+      const quality: AnswerQualityMeta = {
+        responseTimeMs: Date.now() - questionShownAtRef.current,
+        attemptNumber: attemptNumberRef.current,
+      };
+      // A wrong attempt (via "Tekrar Dene") means the NEXT check on this same
+      // question is no longer a clean first try — count it, then reset the
+      // clock so response time reflects thinking time on the retry itself.
+      if (!isCorrect) {
+        attemptNumberRef.current += 1;
+      }
+      questionShownAtRef.current = Date.now();
       setTimeout(() => {
         setIsChecking(false);
-        onCheckAnswer(xpReward);
+        onCheckAnswer(xpReward, quality);
       }, 240);
     },
-    [isChecking, onCheckAnswer, xpReward]
+    [isChecking, onCheckAnswer, xpReward, correctAnswer]
   );
 
   return {

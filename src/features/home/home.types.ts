@@ -71,4 +71,6 @@ export interface HomeScreenProps {
   onTabPress: (tab: HomeTab) => void;
   onRefresh: () => Promise<void>;
   reduceMotion?: boolean;
+  showGardenExplainer?: boolean;
+  onDismissGardenExplainer?: () => void;
 }

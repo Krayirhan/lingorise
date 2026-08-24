@@ -28,7 +28,20 @@ export type TelemetryEvent =
   | { name: "session_started"; params: { daysSinceLastOpen: number | null } }
   | { name: "daily_rollover_applied"; params: { streakBefore: number; streakAfter: number; pendingReviewsAtOpen: number } }
   | { name: "practice_session_started"; params: { sessionType: "mixed" | "review_only" | "new_only"; dueCount: number; freshCount: number; reverseMode: boolean } }
-  | { name: "question_answered"; params: { questionId: string; isCorrect: boolean; isFirstEncounter: boolean; wasDue: boolean; usedHint: boolean; level: string } }
+  | {
+      name: "question_answered";
+      params: {
+        questionId: string;
+        isCorrect: boolean;
+        isFirstEncounter: boolean;
+        wasDue: boolean;
+        usedHint: boolean;
+        level: string;
+        /** roadmap Birim 3 §3.1 — observational only, not yet used to schedule reviews. */
+        responseTimeMs: number | null;
+        inferredQuality: 0 | 1 | 2 | 3 | 4 | 5 | null;
+      };
+    }
   | { name: "word_mastery_changed"; params: { fromStatus: string; toStatus: string; questionId: string } }
   | { name: "garden_stage_changed"; params: { fromStage: string; toStage: string; masteredWords: number } }
   | { name: "review_debt_capped"; params: { dueCount: number; sessionSize: number } }

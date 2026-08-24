@@ -7,7 +7,7 @@ import { MeaningMatchQuestion } from "../types/content";
 import { SessionMode } from "../state/useAppSession";
 import { C, radius, spacing } from "../theme/colors";
 import { useSpeech } from "../features/practice/hooks/useSpeech";
-import { usePracticeSession } from "../features/practice/hooks/usePracticeSession";
+import { usePracticeSession, AnswerQualityMeta } from "../features/practice/hooks/usePracticeSession";
 import { usePracticeFeedback } from "../features/practice/hooks/usePracticeFeedback";
 import { PracticeHeader } from "../features/practice/components/PracticeHeader";
 import { WordPrompt } from "../features/practice/components/WordPrompt";
@@ -29,7 +29,7 @@ interface Props {
   isSessionCompleted?: boolean;
   sessionAnswers?: { questionId: string; isCorrect: boolean; xpEarned: number }[];
   onPick: (answer: string) => void;
-  onCheck: (xpReward: number) => void;
+  onCheck: (xpReward: number, quality: AnswerQualityMeta) => void;
   onRetry: () => void;
   onNext: () => void;
   onRemindLater?: (q: MeaningMatchQuestion) => void;

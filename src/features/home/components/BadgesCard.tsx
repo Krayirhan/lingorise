@@ -14,7 +14,12 @@ export function BadgesCard({ copy, unlockedBadges, title }: Props) {
     id: string;
     icon: keyof typeof Ionicons.glyphMap;
     name: string;
-    conditionKey: "badgeConditionFirstStep" | "badgeConditionQuickGrow" | "badgeConditionGardenLover" | "badgeConditionStreak3";
+    conditionKey:
+      | "badgeConditionFirstStep"
+      | "badgeConditionQuickGrow"
+      | "badgeConditionGardenLover"
+      | "badgeConditionStreak3"
+      | "badgeConditionMasterReview";
     defaultCondition: string;
   }[] = [
     {
@@ -45,7 +50,29 @@ export function BadgesCard({ copy, unlockedBadges, title }: Props) {
       conditionKey: "badgeConditionStreak3",
       defaultCondition: "3 gün üst üste çalış",
     },
+    {
+      id: "badge_master_review",
+      icon: "ribbon",
+      name: "Usta Tekrarcı",
+      conditionKey: "badgeConditionMasterReview",
+      defaultCondition: "25 kelimeyi pekiştir",
+    },
   ];
+
+  // Level-completion badges (roadmap Birim 11.3) are dynamic — one per level
+  // actually earned — rather than pre-listed as locked placeholders for
+  // levels that may not even have content yet.
+  const levelBadges = unlockedBadges
+    .filter((id) => /^badge_level_[a-z0-9]+_complete$/.test(id))
+    .map((id) => {
+      const level = id.replace("badge_level_", "").replace("_complete", "").toUpperCase();
+      return {
+        id,
+        icon: "trophy" as keyof typeof Ionicons.glyphMap,
+        name: (copy.home?.badgeLevelCompleteName || "{level} Tamamlandı").replace("{level}", level),
+        condition: (copy.home?.badgeConditionLevelComplete || "{level} seviyesini bitirdin").replace("{level}", level),
+      };
+    });
 
   return (
     <View style={S.badgesCard}>
@@ -56,9 +83,12 @@ export function BadgesCard({ copy, unlockedBadges, title }: Props) {
       </View>
 
       <View style={S.badgesGrid}>
-        {badgesList.map((b) => {
+        {[
+          ...badgesList.map((b) => ({ id: b.id, icon: b.icon, name: b.name, condition: copy.home?.[b.conditionKey] || b.defaultCondition })),
+          ...levelBadges,
+        ].map((b) => {
           const unlocked = unlockedBadges.includes(b.id);
-          const condition = copy.home?.[b.conditionKey] || b.defaultCondition;
+          const condition = b.condition;
 
           return (
             <View
@@ -135,12 +165,16 @@ const S = StyleSheet.create({
   },
   badgesGrid: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    flexWrap: "wrap",
     gap: 8,
   },
   badgeItem: {
     alignItems: "center",
-    flex: 1,
+    // A fixed basis (not flex:1) so the collection can grow past 4-5 items —
+    // level-completion badges (roadmap Birim 11.3) are unbounded — without
+    // every card getting squeezed thinner as more are earned.
+    width: "31%",
+    flexGrow: 1,
     gap: 4,
     paddingVertical: 10,
     paddingHorizontal: 4,

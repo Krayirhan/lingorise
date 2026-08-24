@@ -1,4 +1,5 @@
 import { UserData, DailyQuest, QuestHistoryEntry } from "../../types/user";
+import { countMasteredWords } from "../learning/mastery";
 
 export const DAILY_QUEST_PRACTICE_ID = "quest_daily_practice";
 export const DAILY_QUEST_REVIEW_ID = "quest_daily_review";
@@ -71,11 +72,13 @@ export function evaluateBadges(userData: UserData): string[] {
     currentBadges.add("badge_streak_3");
   }
 
-  // Earned by genuinely consolidating words, not by clearing a single review.
-  const consolidated = Object.values(userData.learningProgress || {}).filter(
-    (item) => item.repetitions >= 2
-  ).length;
-  if (consolidated >= 25) {
+  // A high-threshold badge must mean something durable, not just "answered
+  // right twice in a row this sitting" — that was `repetitions >= 2`
+  // (the domain's own REVIEW_THRESHOLD, one step short of `mastered`), which
+  // let a single good session flip this badge without any word actually
+  // surviving a second day. Roadmap Birim 11.2 flags this exact pattern as
+  // badge inflation; mastered is the bar this badge's name implies.
+  if (countMasteredWords(userData.learningProgress || {}) >= 25) {
     currentBadges.add("badge_master_review");
   }
 

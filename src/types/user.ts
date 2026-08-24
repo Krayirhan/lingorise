@@ -129,6 +129,14 @@ export interface UserData {
   lastSyncSuccessAt?: number;
   /** Storage schema version this record was last normalized to. Absent on data written before Sprint 8. */
   schemaVersion?: number;
+  /**
+   * Whether the learner has been shown the one-time explainer that the
+   * garden grows from mastered words across EVERY level, while the daily
+   * unit chip next to it tracks only the current level (roadmap Birim
+   * 11.1/11.4 — finishing a level does not by itself move the garden stage,
+   * and that was never explained anywhere).
+   */
+  hasSeenGardenExplainer?: boolean;
   lastCompletedWord?: {
     word: string;
     meaning: string;

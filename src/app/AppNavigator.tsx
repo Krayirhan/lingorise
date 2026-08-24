@@ -30,7 +30,7 @@ interface Props {
 }
 
 export function AppNavigator({ userProgress, onAccountPress, deepLinkTarget, onDeepLinkConsumed }: Props) {
-  const { userData, recordAnswer, bookmarkQuestion, setLocale, setLevel, markLevelCelebrated, completeOnboarding, badgeUnlockQueue, dismissBadgeUnlock } = userProgress;
+  const { userData, recordAnswer, bookmarkQuestion, setLocale, setLevel, markLevelCelebrated, markGardenExplainerSeen, completeOnboarding, badgeUnlockQueue, dismissBadgeUnlock } = userProgress;
   const session = useAppSession(userData, userProgress.setActiveSession);
   const [levelSwitcherOpen, setLevelSwitcherOpen] = useState(false);
 
@@ -92,9 +92,9 @@ export function AppNavigator({ userProgress, onAccountPress, deepLinkTarget, onD
         isSessionCompleted={session.isSessionCompleted}
         sessionAnswers={session.sessionAnswers}
         onPick={session.setPicked}
-        onCheck={(xpReward) => {
+        onCheck={(xpReward, quality) => {
           session.recordSessionStep(session.picked === correctAnswer, xpReward);
-          recordAnswer(currentQuestion, session.picked || "", xpReward, session.sessionMode);
+          recordAnswer(currentQuestion, session.picked || "", xpReward, session.sessionMode, quality);
           session.setSubmitted(true);
         }}
         onRetry={session.resetQuestionState}
@@ -267,6 +267,8 @@ export function AppNavigator({ userProgress, onAccountPress, deepLinkTarget, onD
         onTabPress={handleTabPress}
         onRefresh={userProgress.refresh}
         reduceMotion={userData.reduceMotion}
+        showGardenExplainer={!userData.hasSeenGardenExplainer}
+        onDismissGardenExplainer={markGardenExplainerSeen}
       />
     );
   }

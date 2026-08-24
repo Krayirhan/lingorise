@@ -1,6 +1,6 @@
 # Sprint Planı — Birimlerin Sprint'lere Dağılımı
 
-Bu dosya, `00-INDEX.md`'deki 11 uygulanabilir birimin (Birim 12 hariç — o bir kapı, iş kalemi değil) somut sprint'lere dağılımını tutar. Mevcut projede zaten **11 sprint** (S0-S10) tamamlanmış durumda — S10 kısmi, kendi veri ön koşulu henüz karşılanmadığı için (bkz. aşağıdaki S10 bölümü); kalan plan **S11'den başlar**.
+Bu dosya, `00-INDEX.md`'deki 11 uygulanabilir birimin (Birim 12 hariç — o bir kapı, iş kalemi değil) somut sprint'lere dağılımını tutar. Mevcut projede zaten **12 sprint** (S0-S11) tamamlanmış durumda — S10 kısmi, kendi veri ön koşulu henüz karşılanmadığı için (bkz. aşağıdaki S10 bölümü); kalan plan **S12'den başlar**.
 
 ## Önceki sprintler (tamamlandı, referans için)
 
@@ -17,6 +17,7 @@ Bu dosya, `00-INDEX.md`'deki 11 uygulanabilir birimin (Birim 12 hariç — o bir
 | S8 | Sağlamlaştırma | 8 | ✅ |
 | S9 | Erişilebilirlik + Çeşitlilik | 6 | ✅ |
 | S10 | Parametre Kalibrasyonu | 4 | ⚠️ Kısmi — ölçüm altyapısı tamam, kalibrasyon gerçek veri bekliyor |
+| S11 | Tutarlılık + SM-2 Başlangıcı | 5 | ✅ |
 
 ## S6 — Tamamlandı (kanıtlı)
 
@@ -138,6 +139,18 @@ Bu dosya, `00-INDEX.md`'deki 11 uygulanabilir birimin (Birim 12 hariç — o bir
 | [03-srs-algorithm-v2.md](03-srs-algorithm-v2.md) §3.1 | Dolaylı kalite sinyali (süre, ipucu, deneme sayısı) |
 
 **5 kalem · S6'nın çoklu seviye verisine bağımlı**
+
+## S11 — Tamamlandı (kanıtlı)
+
+| Kaynak | Kalem | Kanıt |
+|---|---|---|
+| [11-badge-progression-consistency.md](11-badge-progression-consistency.md) §11.1 | Çapraz tutarlılık matrisi — 4 çift, her biri için karar | **Bahçe↔Terfi**: kasıtlı ayrım korundu, artık §11.4 ile açıklanıyor. **Bölüm↔Terfi**: "mastered asla seen'i geçemez" değişmezi test 47'de doğrulandı — varsayım değil, kanıtlanmış gerçek. **Rozet↔Mastery**: `badge_first_step`/`badge_garden_lover` kasıtlı olarak "seen" bazlı kaldı (düşük eşik, erken motivasyon ilkesi — test 47), `badge_master_review` mastery'ye taşındı (aşağıya bakın). **Rozet↔Terfi**: aşağıya bakın (§11.3) |
+| [11-badge-progression-consistency.md](11-badge-progression-consistency.md) §11.2 | Rozet eşikleri mastery sistemiyle denetlendi | **Gerçek bir hata bulundu**: `badge_master_review` eşiği hâlâ `repetitions >= 2` kullanıyordu (mastery.ts'in kendi `REVIEW_THRESHOLD`'ı — "mastered" için gereken `3 + 2 farklı gün` değil, tek oturumda ulaşılabilen "review" seviyesi). Roadmap'in kendi tarif ettiği rozet enflasyonu sorunuydu (#23). `countMasteredWords()` kullanacak şekilde düzeltildi. **İkinci, bağımsız bir hata daha bulundu**: `BadgeUnlockCelebration.tsx`'teki kayıt anahtarı `badge_review_master` idi, ama `badges.ts`'in ürettiği gerçek id `badge_master_review` — isim sırası ters. Bu rozet kazanıldığında kutlama modalı hiçbir zaman açılmıyordu (`BADGES[badgeId]` her zaman `undefined` dönüyordu). Ayrıca bu rozet `BadgesCard.tsx`'in gösterdiği listede hiç yoktu — kazanılsa bile kalıcı koleksiyonda görünmüyordu. Üçü de düzeltildi |
+| [11-badge-progression-consistency.md](11-badge-progression-consistency.md) §11.3 | Seviye terfisi rozet koleksiyonuna eklendi | `markLevelCelebrated` artık `badge_level_{level}_complete` id'sini `unlockedBadges`'e ekliyor — önceden terfi sadece geçici bir modaldı, `unlockedBadges`'e hiç yazılmıyordu. `BadgeUnlockCelebration.tsx`'e dinamik başlık çözümleyici eklendi (6 seviye için ayrı statik giriş yerine tek fonksiyon), `BadgesCard.tsx`'e sadece kazanılan seviye rozetlerini gösteren dinamik bir bölüm eklendi (kazanılmamış/içerik henüz hazır olmayan seviyeler için kilitli placeholder gösterilmiyor) |
+| [11-badge-progression-consistency.md](11-badge-progression-consistency.md) §11.4 | Bahçe/terfi ilişkisi kullanıcıya açıklandı | `GardenHeroCard`'a bir kerelik, kapatılabilir bir ipucu satırı eklendi ("Bahçen HER seviyedeki pekişmiş kelimelerinle büyür..."), yeni `hasSeenGardenExplainer` alanıyla kalıcı olarak bir kez gösteriliyor — `celebratedLevels`'ın kullandığı aynı "bir kez göster" deseni |
+| [03-srs-algorithm-v2.md](03-srs-algorithm-v2.md) §3.1 | Dolaylı kalite sinyali | `src/domain/review/qualitySignal.ts` `inferQuality()` — cevap süresi + ipucu kullanımı + deneme sayısından 0-5 kalite puanı çıkarıyor. `usePracticeSession.ts` artık soru gösterim zamanını ve deneme sayısını takip ediyor. **Bilinçli olarak `scheduleNextReview`'a bağlanmadı** — bu §3.2, S12'ye ertelendi (§3.4'ün gerektirdiği "en az 2 hafta karşılaştırmalı veri" önkoşulu S10'daki gibi henüz karşılanmıyor). Şimdilik yalnızca `question_answered` telemetrisine gözlemsel olarak ekleniyor (`responseTimeMs`, `inferredQuality`) — kullanıcıya hiçbir yeni UI yükü bindirmeden |
+
+**Testler: 224 → 235.** TypeScript: temiz. Release APK cihazda derlendi ve mevcut ilerlemeyle test edildi.
 
 ### S12 — SM-2 Tamamlama + Yayın Kapısı
 

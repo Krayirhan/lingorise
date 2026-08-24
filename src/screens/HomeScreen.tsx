@@ -19,6 +19,8 @@ export function HomeScreen({
   onWordPress,
   onTabPress,
   reduceMotion,
+  showGardenExplainer,
+  onDismissGardenExplainer,
 }: HomeScreenProps) {
   const [selectedWord, setSelectedWord] = useState<RecommendedWordData | null>(null);
   const [historyVisible, setHistoryVisible] = useState(false);
@@ -56,6 +58,8 @@ export function HomeScreen({
           onPress={onQuestPress}
           onViewProgress={() => onTabPress("progress")}
           onPracticeAgain={onQuestPress}
+          showGardenExplainer={showGardenExplainer}
+          onDismissGardenExplainer={onDismissGardenExplainer}
         />
 
         {/* Garden Skills Progress Section */}

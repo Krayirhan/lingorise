@@ -14,6 +14,8 @@ import { track } from "../services/telemetry";
 import { deriveStatus, countMasteredWords } from "../domain/learning/mastery";
 import { calculateGardenProgress } from "../domain/gamification/xp";
 import { detectUnitJustCompleted } from "../content/questions";
+import { inferQuality } from "../domain/review/qualitySignal";
+import { AnswerQualityMeta } from "../features/practice/hooks/usePracticeSession";
 
 function daysBetween(fromISO: string, toISO: string): number {
   const from = new Date(`${fromISO}T00:00:00Z`).getTime();
@@ -127,7 +129,8 @@ export function useUserProgress() {
       question: MeaningMatchQuestion,
       picked: string,
       xpReward: number,
-      sessionMode: PracticeSessionMode
+      sessionMode: PracticeSessionMode,
+      quality?: AnswerQualityMeta
     ) => {
       updateAndPersist((prev) => {
         const next = applyPracticeAnswer(prev, question, picked, xpReward, sessionMode);
@@ -135,13 +138,20 @@ export function useUserProgress() {
         const isCorrect = picked === correctAnswer;
 
         const wasDue = Boolean(prev.learningProgress?.[question.id]?.attempts);
+        const usedHint = xpReward < (question.xp || 10);
         track("question_answered", {
           questionId: question.id,
           isCorrect,
           isFirstEncounter: !prev.rewardedQuestionIds.includes(question.id),
           wasDue,
-          usedHint: xpReward < (question.xp || 10),
+          usedHint,
           level: question.level,
+          // roadmap Birim 3 §3.1 — observational only; not yet consumed by
+          // scheduleNextReview (that's §3.2, deferred to S12).
+          responseTimeMs: quality?.responseTimeMs ?? null,
+          inferredQuality: quality
+            ? inferQuality(quality.responseTimeMs, usedHint, isCorrect, quality.attemptNumber)
+            : null,
         });
 
         const completedUnit = detectUnitJustCompleted(
@@ -221,17 +231,36 @@ export function useUserProgress() {
     [updateAndPersist]
   );
 
-  /** Records that a level's completion has been celebrated, so it happens once. */
+  /**
+   * Records that a level's completion has been celebrated, so it happens
+   * once. Also unlocks a permanent badge for it (roadmap Birim 11.3) — until
+   * now a promotion was only a modal that appeared once and vanished; it
+   * never left a trace in the badge collection the way every other
+   * achievement in the app does.
+   */
   const markLevelCelebrated = useCallback(
     (level: LevelCode) => {
-      updateAndPersist((prev) =>
-        prev.celebratedLevels?.includes(level)
-          ? prev
-          : { ...prev, celebratedLevels: [...(prev.celebratedLevels || []), level] }
-      );
+      updateAndPersist((prev) => {
+        if (prev.celebratedLevels?.includes(level)) return prev;
+        const badgeId = `badge_level_${level.toLowerCase()}_complete`;
+        return {
+          ...prev,
+          celebratedLevels: [...(prev.celebratedLevels || []), level],
+          unlockedBadges: prev.unlockedBadges.includes(badgeId)
+            ? prev.unlockedBadges
+            : [...prev.unlockedBadges, badgeId],
+        };
+      });
     },
     [updateAndPersist]
   );
+
+  /** Marks the garden/level explainer tooltip (roadmap Birim 11.4) as seen, so it shows once and never again. */
+  const markGardenExplainerSeen = useCallback(() => {
+    updateAndPersist((prev) =>
+      prev.hasSeenGardenExplainer ? prev : { ...prev, hasSeenGardenExplainer: true }
+    );
+  }, [updateAndPersist]);
 
   const setDailyGoalMinutes = useCallback(
     (minutes: 2 | 5 | 10 | 15) => {
@@ -322,6 +351,7 @@ export function useUserProgress() {
     setLocale,
     setLevel,
     markLevelCelebrated,
+    markGardenExplainerSeen,
     setDailyGoalMinutes,
     setPracticeSessionSize,
     setNotificationsEnabled,

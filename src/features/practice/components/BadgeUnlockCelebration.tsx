@@ -8,8 +8,22 @@ const BADGES: Record<string, { titleTr: string; titleEn: string; icon: keyof typ
   badge_quick_grow: { titleTr: "Hızlı İlerleme", titleEn: "Quick Grow", icon: "flash" },
   badge_garden_lover: { titleTr: "Kelime Sever", titleEn: "Garden Lover", icon: "flower" },
   badge_streak_3: { titleTr: "3 Gün Seri", titleEn: "3 Day Streak", icon: "flame" },
-  badge_review_master: { titleTr: "Tekrar Ustası", titleEn: "Review Master", icon: "ribbon" },
+  // Roadmap Birim 11.1/11.2: this key used to be "badge_review_master" here
+  // while badges.ts actually emits "badge_master_review" — the mismatch
+  // meant this celebration silently never fired for the badge (this lookup
+  // always missed, `badge` stayed undefined, and the effect below returns
+  // early). Fixed to match the id badges.ts actually produces.
+  badge_master_review: { titleTr: "Usta Tekrarcı", titleEn: "Master Reviewer", icon: "ribbon" },
 };
+
+/** badge_level_a1_complete → "A1"; every level shares one dynamic entry
+    rather than six near-duplicate static ones. */
+export function levelCompleteBadgeTitle(badgeId: string, locale: "tr" | "en"): string | null {
+  const match = /^badge_level_([a-z0-9]+)_complete$/.exec(badgeId);
+  if (!match) return null;
+  const level = match[1].toUpperCase();
+  return locale === "tr" ? `${level} Tamamlandı` : `${level} Completed`;
+}
 
 interface Props {
   badgeId?: string;
@@ -21,7 +35,10 @@ interface Props {
 export function BadgeUnlockCelebration({ badgeId, locale, reduceMotion = false, onDismiss }: Props) {
   const scale = useRef(new Animated.Value(0.7)).current;
   const opacity = useRef(new Animated.Value(0)).current;
-  const badge = badgeId ? BADGES[badgeId] : undefined;
+  const dynamicLevelTitle = badgeId ? levelCompleteBadgeTitle(badgeId, locale) : null;
+  const badge = badgeId
+    ? BADGES[badgeId] || (dynamicLevelTitle ? { titleTr: dynamicLevelTitle, titleEn: dynamicLevelTitle, icon: "trophy" as const } : undefined)
+    : undefined;
 
   useEffect(() => {
     if (!badge) return;
