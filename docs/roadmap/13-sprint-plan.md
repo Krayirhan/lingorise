@@ -1,6 +1,6 @@
 # Sprint Planı — Birimlerin Sprint'lere Dağılımı
 
-Bu dosya, `00-INDEX.md`'deki 11 uygulanabilir birimin (Birim 12 hariç — o bir kapı, iş kalemi değil) somut sprint'lere dağılımını tutar. Mevcut projede zaten **10 sprint** (S0-S9) tamamlanmış durumda; kalan plan **S10'dan başlar**.
+Bu dosya, `00-INDEX.md`'deki 11 uygulanabilir birimin (Birim 12 hariç — o bir kapı, iş kalemi değil) somut sprint'lere dağılımını tutar. Mevcut projede zaten **11 sprint** (S0-S10) tamamlanmış durumda — S10 kısmi, kendi veri ön koşulu henüz karşılanmadığı için (bkz. aşağıdaki S10 bölümü); kalan plan **S11'den başlar**.
 
 ## Önceki sprintler (tamamlandı, referans için)
 
@@ -16,6 +16,7 @@ Bu dosya, `00-INDEX.md`'deki 11 uygulanabilir birimin (Birim 12 hariç — o bir
 | S7 | Doğrulama Altyapısı | 8 | ✅ |
 | S8 | Sağlamlaştırma | 8 | ✅ |
 | S9 | Erişilebilirlik + Çeşitlilik | 6 | ✅ |
+| S10 | Parametre Kalibrasyonu | 4 | ⚠️ Kısmi — ölçüm altyapısı tamam, kalibrasyon gerçek veri bekliyor |
 
 ## S6 — Tamamlandı (kanıtlı)
 
@@ -111,6 +112,23 @@ Bu dosya, `00-INDEX.md`'deki 11 uygulanabilir birimin (Birim 12 hariç — o bir
 | [02-parameter-validation.md](02-parameter-validation.md) §2.1-2.4 | 5 keyfi sayının (mastery eşiği, borç limiti, bölüm boyutu, terfi eşiği, gecikme) veriyle ayarlanması |
 
 **4 kalem · S7'nin telemetrisi en az 2 hafta veri biriktirdikten sonra başlar — kod değil, analiz ağırlıklı**
+
+## S10 — Kısmen tamamlandı (dürüstlük notuyla)
+
+**Bu sprint kendi ön koşulunu karşılamıyordu ve bu bilinçli olarak açıkça belirtiliyor.** [02-parameter-validation.md](02-parameter-validation.md)'nin kendi metni, kalibrasyonun **en az 2-4 hafta gerçek üretim kullanım verisi** gerektirdiğini söylüyor (§2.3). Bu proje henüz gerçek kullanıcıya dağıtılmadı — Sprint 7'de kurulan telemetri hiç üretim verisi biriktirmedi, sadece geliştirme/test oturumlarından geçti. Bu koşullarda 5 parametreden herhangi birini "kalibre etmek", veri yerine tahmine dayanan sahte bir kesinlik üretmek olurdu — roadmap'in kendisi bunu açıkça yasaklıyor ("Mevcut değerlerle yayına çık... kötü başlangıç noktası değiller").
+
+**Bunun yerine yapılan, gerçek ve dürüst olan iş — §2.1'in "önce ölçüm çerçevesini kur" şartı:**
+
+| Kaynak | Kalem | Kanıt |
+|---|---|---|
+| [02-parameter-validation.md](02-parameter-validation.md) §2.1 | 5 sinyalin her biri için gerçekten hesaplanabilirlik denetimi yapıldı | Denetim 2 gerçek boşluk buldu: `question_answered` event'i `questionId` taşımıyordu (mastery ve yeniden-öğrenme sinyallerini hesaplanamaz kılıyordu), `unit_completed` ve oturum-tamamlama event'leri hiç yoktu (bölüm-boyutu ve borç-limiti sinyallerini hesaplanamaz kılıyordu). Üçü de eklendi — **hiçbir parametre değeri değişmedi**, sadece ölçüm eksiği kapatıldı |
+| [02-parameter-validation.md](02-parameter-validation.md) §2.1 | `unit_completed` event'i | `src/content/questions/index.ts` `detectUnitJustCompleted()` — saf, test edilebilir bir fonksiyon olarak çıkarıldı; `getLevelUnitInfo`'nun bir seviyenin SON bölümü bittiğinde index'i geri döndürmeme (fallback) davranışının bu sinyali sessizce kaçırmasını önleyen bir edge-case testi dahil (test 45) |
+| [02-parameter-validation.md](02-parameter-validation.md) §2.1 | `practice_session_completed` event'i | `src/state/useAppSession.ts` `nextQuestion()` — önceden yalnızca terk edilen (`session_abandoned`) oturumlar kayıt bırakıyordu, tamamlanan oturumlar hiç görünmüyordu; bu da "borç limiti aşıldığında terk oranı" sinyalinin paydasını hesaplanamaz kılıyordu |
+| [02-parameter-validation.md](02-parameter-validation.md) §2.2 | A/B test altyapısı | **Değerlendirilmedi/ertelendi** — kullanıcı sayısı sıfırken (henüz yayında değil) bir deney altyapısı kurmanın kendisi erken optimizasyon olurdu. Roadmap'in kendi 2.2 metni de "kullanıcı sayısı düşükse tek kollu gözlemsel kalibrasyon yeterli" diyor |
+| [02-parameter-validation.md](02-parameter-validation.md) §2.3 | Gözlemsel kalibrasyon | **Yapılamaz** — 2-4 haftalık gerçek kullanım verisi önkoşulu karşılanmıyor. Bu, kod eksikliği değil, projenin henüz bu aşamada olmaması |
+| [02-parameter-validation.md](02-parameter-validation.md) §2.4 | Karar günlüğü iskeleti | [14-parameter-calibration-log.md](14-parameter-calibration-log.md) oluşturuldu — 5 parametrenin mevcut temel değerlerini, her sinyalin hangi event'ten hesaplanacağını ve boş bir değişiklik-günlüğü tablosunu içeriyor. Gerçek veri geldiğinde ilk girdi buraya eklenecek |
+
+**Testler: 218 → 224.** TypeScript: temiz. **Hiçbir parametre değeri değişmedi** — bu, eksiklik değil, roadmap'in kendi kuralına sadık kalmanın sonucu.
 
 ### S11 — Tutarlılık + SM-2 Başlangıcı
 

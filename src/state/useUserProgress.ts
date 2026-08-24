@@ -13,6 +13,7 @@ import { cancelDailyReminder, scheduleDailyReminder } from "../services/notifica
 import { track } from "../services/telemetry";
 import { deriveStatus, countMasteredWords } from "../domain/learning/mastery";
 import { calculateGardenProgress } from "../domain/gamification/xp";
+import { detectUnitJustCompleted } from "../content/questions";
 
 function daysBetween(fromISO: string, toISO: string): number {
   const from = new Date(`${fromISO}T00:00:00Z`).getTime();
@@ -135,12 +136,22 @@ export function useUserProgress() {
 
         const wasDue = Boolean(prev.learningProgress?.[question.id]?.attempts);
         track("question_answered", {
+          questionId: question.id,
           isCorrect,
           isFirstEncounter: !prev.rewardedQuestionIds.includes(question.id),
           wasDue,
           usedHint: xpReward < (question.xp || 10),
           level: question.level,
         });
+
+        const completedUnit = detectUnitJustCompleted(
+          question.level,
+          prev.solvedQuestionIds || [],
+          next.solvedQuestionIds || []
+        );
+        if (completedUnit) {
+          track("unit_completed", { level: question.level, ...completedUnit });
+        }
 
         const prevItem = prev.learningProgress?.[question.id];
         const nextItem = next.learningProgress?.[question.id];

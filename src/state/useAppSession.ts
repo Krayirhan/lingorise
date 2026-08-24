@@ -194,10 +194,16 @@ export function useAppSession(userData: UserData, setActiveSession?: (session: A
       setCurrentIndex((prev) => prev + 1);
       resetQuestionState();
     } else {
+      track("practice_session_completed", {
+        questionsAnswered: sessionAnswers.length,
+        questionsTotal: sessionQuestions.length,
+        correctCount: sessionAnswers.filter((a) => a.isCorrect).length,
+        sessionMode,
+      });
       setIsSessionCompleted(true);
       resetQuestionState();
     }
-  }, [currentIndex, sessionQuestions.length, resetQuestionState]);
+  }, [currentIndex, sessionQuestions.length, sessionAnswers, sessionMode, resetQuestionState]);
 
   const goToHome = useCallback(() => {
     setScreen("home");

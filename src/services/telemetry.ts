@@ -17,13 +17,18 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
  * (AsyncStorage ring buffer) so they can be inspected on-device today.
  * Swapping in a real sink later is a one-line change to `emit()` below —
  * the call sites never need to change.
+ *
+ * questionId on question_answered, and the unit_completed /
+ * practice_session_completed events, exist specifically so the five signals
+ * in 02-parameter-validation.md §2.1 are computable once real usage data
+ * exists — see docs/roadmap/parameter-calibration-log.md.
  */
 
 export type TelemetryEvent =
   | { name: "session_started"; params: { daysSinceLastOpen: number | null } }
   | { name: "daily_rollover_applied"; params: { streakBefore: number; streakAfter: number; pendingReviewsAtOpen: number } }
   | { name: "practice_session_started"; params: { sessionType: "mixed" | "review_only" | "new_only"; dueCount: number; freshCount: number; reverseMode: boolean } }
-  | { name: "question_answered"; params: { isCorrect: boolean; isFirstEncounter: boolean; wasDue: boolean; usedHint: boolean; level: string } }
+  | { name: "question_answered"; params: { questionId: string; isCorrect: boolean; isFirstEncounter: boolean; wasDue: boolean; usedHint: boolean; level: string } }
   | { name: "word_mastery_changed"; params: { fromStatus: string; toStatus: string; questionId: string } }
   | { name: "garden_stage_changed"; params: { fromStage: string; toStage: string; masteredWords: number } }
   | { name: "review_debt_capped"; params: { dueCount: number; sessionSize: number } }
@@ -33,6 +38,8 @@ export type TelemetryEvent =
   | { name: "level_switch_confirmed_ahead"; params: { currentLevel: string; targetLevel: string } }
   | { name: "daily_quest_completed"; params: { questId: string; xpEarned: number } }
   | { name: "session_abandoned"; params: { questionsAnswered: number; questionsTotal: number } }
+  | { name: "practice_session_completed"; params: { questionsAnswered: number; questionsTotal: number; correctCount: number; sessionMode: string } }
+  | { name: "unit_completed"; params: { level: string; unitIndex: number; wordsInUnit: number } }
   | { name: "migration_applied"; params: { fromVersion: number; toVersion: number; hadLegacyReviewQueue: boolean; hadLegacyQuestSet: boolean } };
 
 const STORAGE_KEY = "@lingorise_telemetry_ring_v1";

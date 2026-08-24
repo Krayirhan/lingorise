@@ -27,6 +27,8 @@ Her dosya bağımsız bir **birim** — kendi başına planlanabilir, kendi baş
 
 **Sprint'lere tam dağılım, kalem sayıları ve zaman çizelgesi için:** [13-sprint-plan.md](13-sprint-plan.md)
 
+**Parametre değişiklik kararlarının günlüğü (Birim 2 §2.4 DoD'si) için:** [14-parameter-calibration-log.md](14-parameter-calibration-log.md)
+
 ## Zaman çizelgesi (kabaca)
 
 ```

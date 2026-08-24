@@ -168,6 +168,28 @@ export function getLevelUnitInfo(level: LevelCode, solvedQuestionIds: string[]):
   return { unitIndex: lastIndex, unitCount, questions, learnedInUnit: questions.length };
 }
 
+/**
+ * Detects whether `nextSolvedIds` just finished the unit `prevSolvedIds` was
+ * still working through — the exact moment worth logging for roadmap Birim
+ * 2's "days to finish a unit" signal. Checked against the SAME unit rather
+ * than comparing getLevelUnitInfo's unitIndex before/after, because that
+ * function falls back to the last unit's index once a level is fully
+ * finished — a naive index comparison would miss a level's final unit.
+ */
+export function detectUnitJustCompleted(
+  level: LevelCode,
+  prevSolvedIds: string[],
+  nextSolvedIds: string[]
+): { unitIndex: number; wordsInUnit: number } | null {
+  const before = getLevelUnitInfo(level, prevSolvedIds);
+  if (before.learnedInUnit >= before.questions.length) return null;
+
+  const learnedAfter = before.questions.filter((q) => nextSolvedIds.includes(q.id)).length;
+  if (learnedAfter < before.questions.length) return null;
+
+  return { unitIndex: before.unitIndex, wordsInUnit: before.questions.length };
+}
+
 /** Returns the first unfinished unit for the current runtime catalogue. */
 export function getCurrentLevelUnitQuestions(level: LevelCode, solvedQuestionIds: string[]): MeaningMatchQuestion[] {
   return getLevelUnitInfo(level, solvedQuestionIds).questions;
