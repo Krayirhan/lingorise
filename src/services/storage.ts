@@ -21,31 +21,34 @@ interface LegacyReviewItem {
   easeFactor?: number;
 }
 
+type RawUserData = Partial<UserData> & {
+  reviewQueue?: LegacyReviewItem[];
+  schemaVersion?: number;
+};
+
 const STORAGE_KEY = "@lingorise_user_data_v2";
 const LEGACY_STORAGE_KEY = "@lingorise_user_data_v1";
 
 /**
- * Migration versioning (roadmap Birim 8.1). Each version bump corresponds to
- * one of the three migration paths that used to be detected only by "does
- * this old field exist" checks scattered through normalizeUserData:
- *   v1 — pre-learningProgress data: only solvedQuestionIds and/or the old
- *        mistake-queue (`reviewQueue`) existed.
+ * Migration versioning (roadmap Birim 8.1 / 20). Each version corresponds to
+ * one real schema change this app has gone through:
+ *   v1 — pre-mastery-tracking data: only solvedQuestionIds and/or the old
+ *        mistake queue (`reviewQueue`) existed, no learningProgress at all.
  *   v2 — learningProgress introduced (Sprint 1-2), but quest records could
  *        still carry the old target:2 shape from before the daily-rollover
  *        rewrite.
- *   v3 — current: schemaVersion is now stamped explicitly so future
- *        migrations never again have to infer version from field shape.
- * The migrations themselves (migrateLearningProgress, isLegacyQuestSet)
- * still run their own idempotent shape checks below — this constant and
- * detector exist for observability (8.3) and so a future v4 has a version
- * number to gate on instead of one more "does this field exist" check.
+ *   v3 — current: schemaVersion is stamped explicitly, quests always carry
+ *        the post-rollover shape.
+ * migrateV1ToV2 and migrateV2ToV3 below are the two isolated, single-
+ * responsibility steps the roadmap originally asked for (Birim 8's DoD:
+ * "her göç izole bir fonksiyon haline getirir"). A future v4 needs only a
+ * new migrateV3ToV4 appended to the pipeline in normalizeUserData —
+ * neither existing step has to be touched.
  */
 export const CURRENT_SCHEMA_VERSION = 3;
 
 /** Infers the version of data written before schemaVersion existed. */
-function detectStoredSchemaVersion(
-  data: Partial<UserData> & { reviewQueue?: LegacyReviewItem[]; schemaVersion?: number }
-): number {
+function detectStoredSchemaVersion(data: RawUserData): number {
   if (typeof data.schemaVersion === "number") return data.schemaVersion;
   if (data.learningProgress && typeof data.learningProgress === "object" && !Array.isArray(data.learningProgress)) {
     return 2;
@@ -94,9 +97,26 @@ export function isSeededDemoProfile(data: Partial<UserData>): boolean {
   );
 }
 
+/** Strips a stale seeded-demo profile back to real defaults, keeping only the choices an actual user could have made (locale, level, settings). Not a version migration — this predates schemaVersion entirely and can hit data at any version. */
+function stripSeededDemoProfile(data: RawUserData): RawUserData {
+  if (!isSeededDemoProfile(data)) return data;
+  return {
+    onboardingCompleted: data.onboardingCompleted,
+    level: data.level,
+    locale: data.locale,
+    dailyGoalMinutes: data.dailyGoalMinutes,
+    practiceSessionSize: data.practiceSessionSize,
+    notificationsEnabled: data.notificationsEnabled,
+    soundEnabled: data.soundEnabled,
+    reduceMotion: data.reduceMotion,
+    avatarId: data.avatarId,
+    displayName: data.displayName === "LingoRise Bahçıvanı" ? "" : data.displayName,
+  };
+}
+
 /**
- * Brings forward progress saved before per-word recall was tracked. A solved
- * id only ever meant "answered right once", so it is adopted as `learning` —
+ * The per-word repair/synthesis logic migrateV1ToV2 depends on. A solved id
+ * only ever meant "answered right once", so it is adopted as `learning` —
  * claiming anything stronger would recreate the inflated percentages this
  * record exists to replace.
  */
@@ -176,9 +196,38 @@ function migrateLearningProgress(
 }
 
 /**
+ * v1 → v2: the pre-mastery-tracking shape — only solvedQuestionIds and/or
+ * the old mistake queue — gets a real per-word learningProgress record for
+ * the first time.
+ *
+ * This step intentionally still detects its own input by SHAPE (does a
+ * structured learningProgress object already exist?) inside
+ * migrateLearningProgress, rather than trusting the caller's version number
+ * to decide whether to run at all. That is not an oversight: it makes the
+ * step idempotent and self-healing, so it stays safe to run unconditionally
+ * on every load — not gated to "only when version < 2" — repairing a record
+ * with a missing serverSyncedAt or a stale derived `status` even on data
+ * that is already nominally current. A version-number gate alone would lose
+ * that safety net the first time schemaVersion itself is missing, wrong, or
+ * from a future app version being opened on an older build.
+ */
+export function migrateV1ToV2(data: RawUserData): RawUserData {
+  const legacyReviewQueue: LegacyReviewItem[] = Array.isArray(data.reviewQueue) ? data.reviewQueue : [];
+  return {
+    ...data,
+    learningProgress: migrateLearningProgress(
+      data.learningProgress,
+      Array.isArray(data.solvedQuestionIds) ? data.solvedQuestionIds : [],
+      legacyReviewQueue
+    ),
+  };
+}
+
+/**
  * Quests saved before the daily-rollover rewrite counted "answers submitted"
- * with a target of 2 while the UI promised a full session. Those are reissued
- * so nobody is left staring at a permanently completed two-step day.
+ * with a target of 2 while the UI promised a full session. Detected by
+ * shape (see migrateV1ToV2's comment for why), not by trusting a version
+ * number.
  */
 function isLegacyQuestSet(quests: unknown): boolean {
   if (!Array.isArray(quests) || quests.length === 0) return true;
@@ -186,34 +235,40 @@ function isLegacyQuestSet(quests: unknown): boolean {
   return !practice || typeof practice.target !== "number" || practice.target <= 2;
 }
 
-/** Migrates persisted data and removes the legacy untouched demo profile. */
-export function normalizeUserData(data: Partial<UserData>): UserData {
-  const parsed = isSeededDemoProfile(data)
-    ? {
-        onboardingCompleted: data.onboardingCompleted,
-        level: data.level,
-        locale: data.locale,
-        dailyGoalMinutes: data.dailyGoalMinutes,
-        practiceSessionSize: data.practiceSessionSize,
-        notificationsEnabled: data.notificationsEnabled,
-        soundEnabled: data.soundEnabled,
-        reduceMotion: data.reduceMotion,
-        avatarId: data.avatarId,
-        displayName: data.displayName === "LingoRise Bahçıvanı" ? "" : data.displayName,
-      }
-    : data;
+/**
+ * v2 → v3: reissues quest records still carrying the pre-daily-rollover
+ * shape, so nobody is left staring at a permanently completed two-step day.
+ * Same self-detecting design as migrateV1ToV2, for the same reason.
+ */
+export function migrateV2ToV3(data: RawUserData): RawUserData {
+  if (!isLegacyQuestSet(data.dailyQuests)) return data;
+  const sessionSize = [5, 10, 20, 30].includes(data.practiceSessionSize as number)
+    ? (data.practiceSessionSize as number)
+    : DEFAULT_USER_DATA.practiceSessionSize;
+  const hadLegacyReviewQueue = Array.isArray(data.reviewQueue) && data.reviewQueue.length > 0;
+  return {
+    ...data,
+    dailyQuests: createDailyQuests(sessionSize, hadLegacyReviewQueue),
+  };
+}
 
-  const legacyReviewQueue: LegacyReviewItem[] = Array.isArray(
-    (parsed as { reviewQueue?: LegacyReviewItem[] }).reviewQueue
-  )
-    ? ((parsed as { reviewQueue?: LegacyReviewItem[] }).reviewQueue as LegacyReviewItem[])
-    : [];
-
+/**
+ * Fills in safe defaults for any field that is missing or malformed. This is
+ * NOT a version migration — it is defensive normalization that must run on
+ * every load regardless of schema version, since storage can be corrupted,
+ * partially written, or simply new (a fresh install with no legacy shape at
+ * all). By the time this runs, migrateV1ToV2/migrateV2ToV3 have already
+ * guaranteed learningProgress and dailyQuests are well-formed, so this only
+ * has to defend the remaining fields.
+ */
+function fillDefaults(parsed: RawUserData): UserData {
   return {
     ...DEFAULT_USER_DATA,
     ...parsed,
     dailyGoalMinutes: parsed.dailyGoalMinutes || DEFAULT_USER_DATA.dailyGoalMinutes,
-    practiceSessionSize: [5, 10, 20, 30].includes(parsed.practiceSessionSize as number) ? parsed.practiceSessionSize as 5 | 10 | 20 | 30 : DEFAULT_USER_DATA.practiceSessionSize,
+    practiceSessionSize: [5, 10, 20, 30].includes(parsed.practiceSessionSize as number)
+      ? (parsed.practiceSessionSize as 5 | 10 | 20 | 30)
+      : DEFAULT_USER_DATA.practiceSessionSize,
     notificationsEnabled: parsed.notificationsEnabled ?? DEFAULT_USER_DATA.notificationsEnabled,
     soundEnabled: parsed.soundEnabled ?? DEFAULT_USER_DATA.soundEnabled,
     reduceMotion: parsed.reduceMotion ?? DEFAULT_USER_DATA.reduceMotion,
@@ -223,26 +278,22 @@ export function normalizeUserData(data: Partial<UserData>): UserData {
     solvedQuestionIds: Array.isArray(parsed.solvedQuestionIds) ? parsed.solvedQuestionIds : [],
     rewardedQuestionIds: Array.isArray(parsed.rewardedQuestionIds) ? parsed.rewardedQuestionIds : [],
     unlockedBadges: Array.isArray(parsed.unlockedBadges) ? parsed.unlockedBadges : [],
-    dailyQuests: isLegacyQuestSet(parsed.dailyQuests)
-      ? createDailyQuests(
-          [5, 10, 20, 30].includes(parsed.practiceSessionSize as number)
-            ? (parsed.practiceSessionSize as number)
-            : DEFAULT_USER_DATA.practiceSessionSize,
-          legacyReviewQueue.length > 0
-        )
-      : (parsed.dailyQuests as UserData["dailyQuests"]),
+    dailyQuests: (parsed.dailyQuests as UserData["dailyQuests"]) || DEFAULT_USER_DATA.dailyQuests,
     dailyReviewXpIds: Array.isArray(parsed.dailyReviewXpIds) ? parsed.dailyReviewXpIds : [],
-    learningProgress: migrateLearningProgress(
-      parsed.learningProgress,
-      Array.isArray(parsed.solvedQuestionIds) ? parsed.solvedQuestionIds : [],
-      legacyReviewQueue
-    ),
+    learningProgress: (parsed.learningProgress as Record<string, LearningItemProgress>) || {},
     celebratedLevels: Array.isArray(parsed.celebratedLevels) ? parsed.celebratedLevels : [],
     practiceHistory: Array.isArray(parsed.practiceHistory) ? parsed.practiceHistory : [],
     questHistory: Array.isArray(parsed.questHistory) ? parsed.questHistory : [],
     activeSession: parsed.activeSession || null,
-    schemaVersion: CURRENT_SCHEMA_VERSION,
   };
+}
+
+/** Migrates persisted data through every version step and fills in safe defaults. */
+export function normalizeUserData(data: Partial<UserData>): UserData {
+  const stripped = stripSeededDemoProfile(data as RawUserData);
+  const v2 = migrateV1ToV2(stripped);
+  const v3 = migrateV2ToV3(v2);
+  return { ...fillDefaults(v3), schemaVersion: CURRENT_SCHEMA_VERSION };
 }
 
 /**

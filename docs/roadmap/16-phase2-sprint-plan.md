@@ -93,9 +93,28 @@ Faz 2A (S13-S15) hiçbir gerçek kullanıcı verisi gerektirmiyor — sadece ara
 
 | Kaynak | Kalem |
 |---|---|
-| [15-phase2-roadmap.md](15-phase2-roadmap.md) Birim 20 §20.1-20.2 | Telemetri sıfır göç gösterince eski kodu sil, kalanı izole fonksiyonlara ayır |
+| [15-phase2-roadmap.md](15-phase2-roadmap.md) Birim 20 §20.1 | Telemetri sıfır göç gösterince eski kodu sil |
+| [15-phase2-roadmap.md](15-phase2-roadmap.md) Birim 20 §20.2 | Kalanı izole fonksiyonlara ayır |
 
-**Sabit bir sprint'e bağlı değil · aylar süren telemetri birikimi + düşük öncelik**
+**Sabit bir sprint'e bağlı değil · §20.1 aylar süren telemetri birikimi gerektiriyor**
+
+## Sürekli — Birim 20 §20.2 Tamamlandı (kanıtlı)
+
+**Sadece §20.2 (kod organizasyonu) yapıldı — §20.1 (eski kodun silinmesi) hâlâ aylar süren telemetri birikimi bekliyor, değişmedi.**
+
+Bu, S8'de bilinçli olarak eksik bırakılan gerçek bir borçtu — kullanıcının kendi sözleriyle: *"gerçek bir refactor değil, mevcut kodun üzerine ince bir gözlemlenebilirlik katmanı"*. `src/services/storage.ts` şimdi gerçekten yeniden yapılandırıldı:
+
+| Adım | Ne değişti | Kanıt |
+|---|---|---|
+| `migrateV1ToV2` | Artık ayrı, `export`lu, tek sorumluluklu bir fonksiyon — önceden `normalizeUserData`'nın gövdesine gömülü tek bir satırdı | Test 48: doğrudan çağrılıp senteziyle ve idempotent'liğiyle test ediliyor |
+| `migrateV2ToV3` | Aynı şekilde ayrıştırıldı | Test 48: legacy görev setini yeniden yayınladığı VE zaten güncel veriyi aynı referansla (yeniden inşa etmeden) geri döndürdüğü doğrulandı |
+| `stripSeededDemoProfile` | Adlandırılmış, ayrı bir fonksiyon | — |
+| `fillDefaults` | Versiyon göçünden bağımsız savunmacı normalizasyon, artık ayrı bir fonksiyon | — |
+| `normalizeUserData` | Artık 4 adımlık ince bir orkestratör: `stripSeededDemoProfile → migrateV1ToV2 → migrateV2ToV3 → fillDefaults` | — |
+
+**Bilinçli olarak DEĞİŞTİRİLMEYEN şey:** Her adım hâlâ kendi girdisini *versiyon numarasına güvenerek* değil, *veri şekline bakarak* tespit ediyor (`isLegacyQuestSet`, `migrateLearningProgress`'in yapısal kontrolü). Bu roadmap'in orijinal taslağından (`if (version < 2) ...`) kasıtlı bir sapma — gerekçesi kodun içinde (`migrateV1ToV2`'nin yorumu) açıkça yazılı: şekil-bazlı tespit kendi kendini onaran/idempotent'tir, `schemaVersion` alanı eksik/yanlış/bozuk olsa bile güvenlidir. Versiyon numarasına körü körüne güvenmek bu güvenlik ağını kaybederdi. Roadmap'in asıl istediği ("izole, tek sorumluluklu fonksiyonlar") karşılandı; "versiyon numarasıyla kapıla" kısmı bilinçli olarak daha güvenli bir tasarımla değiştirildi.
+
+**Testler: 235 → 240** (yeni test 48, iki fonksiyonu da doğrudan ve idempotent'liklerini ayrı ayrı doğruluyor). **Mevcut testler (16, 25, 28-31, 42) davranış değişmeden geçmeye devam ediyor** — DoD'nin şartı buydu. TypeScript temiz. Release APK cihazda mevcut ilerlemeyle test edildi, migration kod yolu her uygulama açılışında çalıştığı için en riskli değişiklikti.
 
 ## Öncelik sırası
 

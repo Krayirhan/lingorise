@@ -158,17 +158,17 @@ Bu birimler zaten tam olarak tanımlı (`02-parameter-validation.md`, `03-srs-al
 
 ### Birim 20 — Migration Kod Temizliği (teknik borç, düşük öncelik)
 
-**Puan (mevcut durum):** 6/10 · **Öncelik:** P3
+**Puan (§20.2 sonrası):** 8/10 · **Öncelik:** P3 (kalan §20.1 için)
 
-**Problem:** S8'de versiyon takibi eklendi ama bilinçli olarak ince bir katman olarak — mevcut üç göç fonksiyonu (`migrateLearningProgress`, `isLegacyQuestSet`, `isSeededDemoProfile`) davranış riski almamak için yeniden yazılmadı. Roadmap'in orijinal isteği ("her göç izole bir fonksiyon") tam anlamıyla gerçekleşmedi.
+**Problem (§20.2 — ÇÖZÜLDÜ):** S8'de versiyon takibi eklendi ama bilinçli olarak ince bir katman olarak — mevcut üç göç fonksiyonu (`migrateLearningProgress`, `isLegacyQuestSet`, `isSeededDemoProfile`) davranış riski almamak için yeniden yazılmadı. Roadmap'in orijinal isteği ("her göç izole bir fonksiyon") tam anlamıyla gerçekleşmemişti. **Bu, S13'ün ardından gerçek bir refactor ile kapatıldı** — bkz. [16-phase2-sprint-plan.md](16-phase2-sprint-plan.md)'nin "Sürekli — Birim 20 §20.2" bölümü.
 
 **Kapsam:**
-- 20.1 — `migration_applied` telemetrisi birkaç ay boyunca sıfır göç gösterirse (Birim 8 §8.4'ün kendi kriteri), eski göç yollarını güvenle sil.
-- 20.2 — Kalan göç kodunu roadmap'in orijinal taslağındaki gibi tam izole `migrateV0ToV1`/`migrateV1ToV2` fonksiyonlarına ayır (davranış testleri 16, 25, 28-31 değişmeden geçmeli).
+- ~~20.2 — Kalan göç kodunu roadmap'in orijinal taslağındaki gibi tam izole `migrateV1ToV2`/`migrateV2ToV3` fonksiyonlarına ayır (davranış testleri 16, 25, 28-31 değişmeden geçmeli).~~ **Tamamlandı.** `src/services/storage.ts` artık `stripSeededDemoProfile → migrateV1ToV2 → migrateV2ToV3 → fillDefaults` şeklinde ince bir orkestratör üzerinden çalışıyor; her adım `export`lu ve doğrudan test ediliyor (test 48). Versiyon numarasına değil veri şekline güvenme kararı bilinçli olarak korundu (gerekçesi kodun içinde).
+- 20.1 — `migration_applied` telemetrisi birkaç ay boyunca sıfır göç gösterirse (Birim 8 §8.4'ün kendi kriteri), eski göç yollarını güvenle sil. **Hâlâ açık** — bu, kod değil takvim/veri bekliyor.
 
-**Definition of Done:** `08-migration-cleanup.md`'nin kendi DoD'si.
+**Definition of Done:** `08-migration-cleanup.md`'nin kendi DoD'si — §20.2 karşılandı, §20.1 Birim 17'nin verisini bekliyor.
 
-**Bağımlılıklar:** Birim 17'nin verisi (silme kararı için) + zaman (aylar, hafta değil).
+**Bağımlılıklar:** §20.1 için Birim 17'nin verisi (silme kararı için) + zaman (aylar, hafta değil). §20.2'nin artık bir bağımlılığı yok, tamamlandı.
 
 ---
 
