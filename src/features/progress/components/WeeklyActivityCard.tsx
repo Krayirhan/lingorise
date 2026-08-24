@@ -3,6 +3,7 @@ import { StyleSheet, Text, View } from "react-native";
 import { C, radius } from "../../../theme/colors";
 import { Copy } from "../../../i18n/en";
 import { PracticeHistoryEntry } from "../../../types/user";
+import { nowDate } from "../../../utils/clock";
 
 interface Props {
   copy: Copy;
@@ -23,7 +24,7 @@ export function WeeklyActivityCard({ copy, streak, lastActiveDate, practiceHisto
     { label: "Paz", dayNum: 0 },
   ];
 
-  const todayIndex = new Date().getDay(); // 0 is Sunday
+  const todayIndex = nowDate().getDay(); // 0 is Sunday
   // Map todayIndex to 0-6 where 0 is Monday
   const todayMapped = todayIndex === 0 ? 6 : todayIndex - 1;
 
@@ -48,7 +49,7 @@ export function WeeklyActivityCard({ copy, streak, lastActiveDate, practiceHisto
           const isToday = index === todayMapped;
           // Days within current streak ending today are marked active
           const daysAgo = todayMapped - index;
-          const date = new Date();
+          const date = nowDate();
           date.setDate(date.getDate() - daysAgo);
           const dateKey = date.toISOString().slice(0, 10);
           const entry = practiceHistory.find((item) => item.date === dateKey);

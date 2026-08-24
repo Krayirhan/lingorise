@@ -7,6 +7,7 @@ import { getQuestionsByLevel, getLevelUnitInfo } from "../../../content/question
 import { getRecommendedWord } from "../../../services/contentService";
 import { getDueReviewItems } from "../../../domain/review/spacedRepetition";
 import { countMasteredWords, summarizeMastery } from "../../../domain/learning/mastery";
+import { todayISO } from "../../../utils/clock";
 
 export function useHomeViewModel(userData: UserData, copy: Copy, locale: Locale): HomeViewModel {
   return useMemo(() => {
@@ -93,7 +94,7 @@ export function useHomeViewModel(userData: UserData, copy: Copy, locale: Locale)
     const XP_PER_WORD = 10;
     const questBonusTotal = dailyQuests.reduce((sum, quest) => sum + quest.xpReward, 0);
     const dailyXpTarget = practiceTargetCount * XP_PER_WORD + questBonusTotal;
-    const today = new Date().toISOString().slice(0, 10);
+    const today = todayISO();
     const dailyXpEarned =
       (userData.practiceHistory || []).find((entry) => entry.date === today)?.xp || 0;
 

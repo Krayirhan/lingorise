@@ -231,6 +231,7 @@ export function AppNavigator({ userProgress, onAccountPress, deepLinkTarget, onD
         onDisplayNameChange={userProgress.setDisplayName}
         onAvatarChange={userProgress.setAvatarId}
         onDataReset={userProgress.refresh}
+        onRefresh={userProgress.refresh}
         onLocaleChange={setLocale}
         onChangeLevel={() => setLevelSwitcherOpen(true)}
         onBack={session.goToHome}

@@ -1,5 +1,6 @@
 import { LevelCode, MeaningMatchQuestion } from "../types/content";
 import { allQuestions, getCurrentLevelUnitQuestions, getQuestionsByLevel } from "../content/questions";
+import { nowDate } from "../utils/clock";
 
 export function getNextPracticeQuestion(
   currentId: string | null,
@@ -50,9 +51,9 @@ export function getRecommendedWord(
   }
 
   // Day of year deterministic index so word changes every day
-  const now = new Date();
-  const startOfYear = new Date(now.getFullYear(), 0, 0);
-  const diff = now.getTime() - startOfYear.getTime();
+  const currentDate = nowDate();
+  const startOfYear = new Date(currentDate.getFullYear(), 0, 0);
+  const diff = currentDate.getTime() - startOfYear.getTime();
   const dayOfYear = Math.floor(diff / (1000 * 60 * 60 * 24));
 
   // Drawn from the unit being worked through, so the word of the day belongs

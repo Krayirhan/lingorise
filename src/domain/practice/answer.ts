@@ -3,6 +3,7 @@ import { UserData } from "../../types/user";
 import { isItemDue } from "../review/spacedRepetition";
 import { evaluateBadges, updateDailyQuests } from "../../services/gamification";
 import { recordLearningOutcome } from "../learning/mastery";
+import { now as clockNow, todayISO } from "../../utils/clock";
 
 export type PracticeSessionMode = "PRACTICE" | "REVIEW";
 
@@ -19,7 +20,7 @@ export function applyPracticeAnswer(
 ): UserData {
   const correctAnswer = question.meaning || question.answer;
   const isCorrect = picked === correctAnswer;
-  const now = Date.now();
+  const now = clockNow();
 
   let nextXp = previous.xp;
   let nextSolved = [...previous.solvedQuestionIds];
@@ -51,7 +52,7 @@ export function applyPracticeAnswer(
   const questResult = updateDailyQuests(previous.dailyQuests, { type: questEvent, isCorrect });
   nextXp += questResult.bonusXpEarned;
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayISO();
 
   // The recall record is the single source of truth for both progress and
   // scheduling, so it is updated for every answer.

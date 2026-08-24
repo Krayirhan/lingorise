@@ -8,6 +8,7 @@ import { LanguageSettingsCard } from "../features/profile/components/LanguageSet
 import { AccountManagementCard } from "../features/profile/components/AccountManagementCard";
 import { SoundAndMotionCard } from "../features/profile/components/SoundAndMotionCard";
 import { DataManagementCard } from "../features/profile/components/DataManagementCard";
+import { DevClockCard } from "../features/profile/components/DevClockCard";
 
 export function ProfileScreen({
   copy,
@@ -30,6 +31,7 @@ export function ProfileScreen({
   onLocaleChange,
   onChangeLevel,
   onAccountPress,
+  onRefresh,
 }: ProfileScreenProps) {
   return (
     <View style={S.root}>
@@ -91,6 +93,9 @@ export function ProfileScreen({
 
         {/* Data & Privacy Card */}
         <DataManagementCard copy={copy} onDataReset={onDataReset} />
+
+        {/* Dev-only: renders nothing in a release build */}
+        <DevClockCard onRefresh={onRefresh} />
 
         {/* Badges Grid */}
 

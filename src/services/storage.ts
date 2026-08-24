@@ -4,6 +4,7 @@ import { createDailyQuests, DAILY_QUEST_PRACTICE_ID } from "../domain/gamificati
 import { LearningItemProgress } from "../types/user";
 import { deriveStatus } from "../domain/learning/mastery";
 import { DEFAULT_EASE_FACTOR } from "../domain/review/spacedRepetition";
+import { clearTelemetry } from "./telemetry";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 /** Days across which previously solved words are re-scheduled on upgrade. */
@@ -279,6 +280,7 @@ export async function clearAllLocalData(): Promise<UserData> {
   } catch (err) {
     console.warn("AsyncStorage clear error", err);
   }
+  await clearTelemetry();
   return DEFAULT_USER_DATA;
 }
 

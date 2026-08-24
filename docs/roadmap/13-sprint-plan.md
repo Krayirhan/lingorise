@@ -1,6 +1,6 @@
 # Sprint Planı — Birimlerin Sprint'lere Dağılımı
 
-Bu dosya, `00-INDEX.md`'deki 11 uygulanabilir birimin (Birim 12 hariç — o bir kapı, iş kalemi değil) somut sprint'lere dağılımını tutar. Mevcut projede zaten **7 sprint** (S0-S6) tamamlanmış durumda; kalan plan **S7'den başlar**.
+Bu dosya, `00-INDEX.md`'deki 11 uygulanabilir birimin (Birim 12 hariç — o bir kapı, iş kalemi değil) somut sprint'lere dağılımını tutar. Mevcut projede zaten **8 sprint** (S0-S7) tamamlanmış durumda; kalan plan **S8'den başlar**.
 
 ## Önceki sprintler (tamamlandı, referans için)
 
@@ -13,6 +13,7 @@ Bu dosya, `00-INDEX.md`'deki 11 uygulanabilir birimin (Birim 12 hariç — o bir
 | S4 | Terfi & Seviye | 5 | ✅ |
 | S5 | Tutarlılık | 12 | ✅ |
 | S6 | İçerik Genişletme + Hızlı Kazanımlar | 9 | ✅ |
+| S7 | Doğrulama Altyapısı | 8 | ✅ |
 
 ## S6 — Tamamlandı (kanıtlı)
 
@@ -37,6 +38,21 @@ Bu dosya, `00-INDEX.md`'deki 11 uygulanabilir birimin (Birim 12 hariç — o bir
 | [05-telemetry-analytics.md](05-telemetry-analytics.md) §5.1-5.4 | Event altyapısı, temel event seti, retention raporları, gizlilik kontrolü |
 
 **8 kalem · S6'nın ürettiği içerikle test edilir**
+
+## S7 — Tamamlandı (kanıtlı)
+
+| Kaynak | Kalem | Kanıt |
+|---|---|---|
+| [04-multiday-verification.md](04-multiday-verification.md) §4.1 | Dev zaman kaydırma aracı — gerçek cihaz saati emülatörde `adb root` reddedildiği (production system image) için değiştirilemiyordu; bu, günler boyu davranışı gözlemlemenin tek yolu | `src/utils/clock.ts` · `advanceDevClock`/`resetDevClock`/`todayISO` · uygulama genelinde 8 dosyada `Date.now()`/`new Date()` yerine geçti · `src/features/profile/components/DevClockCard.tsx` (Profil ekranı, `__DEV__` ile release'de gizli) |
+| [04-multiday-verification.md](04-multiday-verification.md) §4.2 | Çok günlü simülasyon testleri | Yeni testler 36-38: 7 günlük mastery simülasyonu, 7 günlük rollover zinciri, 30 günlük mastery büyümesi — üçü de gerçek `applyDailyRollover`/`recordLearningOutcome`/`scheduleNextReview` fonksiyonlarını gün gün çağırıyor, mock değil |
+| [04-multiday-verification.md](04-multiday-verification.md) §4.3-4.4 | Manuel QA prosedürü, beta rollout | Kod kapsamı dışında bırakıldı — dokümanın kendisinde de süreç/organizasyon kalemi olarak işaretli, bu sprint'te bilinçli olarak ele alınmadı |
+| [05-telemetry-analytics.md](05-telemetry-analytics.md) §5.1-5.2 | Event altyapısı + 13 event'lik temel set | `src/services/telemetry.ts` — AsyncStorage tabanlı halka tampon (200 event), tipli `TelemetryEvent` union · 6 dosyada gerçek çağrı noktası: `useUserProgress.ts`, `useAppSession.ts`, `PracticeScreen.tsx`, `LevelPromotionModal.tsx`, `LevelSwitcherModal.tsx` |
+| [05-telemetry-analytics.md](05-telemetry-analytics.md) §5.3 | Retention/funnel raporları | **Ertelendi** — gerçek bir dashboard/analiz aracı gerektiriyor, bu proje kapsamında yok. Ham veri (`getRecentEvents()`) cihazda mevcut, raporlama katmanı değil |
+| [05-telemetry-analytics.md](05-telemetry-analytics.md) §5.4 | Gizlilik/KVKK incelemesi | `DataManagementCard.tsx`'teki Gizlilik Politikası modalına "4. Uygulama İçi Kullanım Kayıtları" maddesi eklendi — telemetrinin cihazda kaldığını ve hiçbir sunucuya gönderilmediğini açıkça belirtiyor. `clearAllLocalData()` artık `clearTelemetry()`'yi de çağırıyor (`src/services/storage.ts`) — önceden "Yerel Verileri Sıfırla" telemetri halka tamponunu silmiyordu, bu politika metniyle çelişecekti; düzeltildi |
+
+**Dürüstlük notu — DevClockCard'ın cihazda buton-tıklama doğrulaması:** DevClockCard `__DEV__` kontrolüyle release build'de bilerek gizleniyor (kullanıcıya sızmaması için), bu yüzden gerçek doğrulama debug build + Metro bağlantısı gerektiriyordu. Bu oturumda debug build + Metro kurulumu tekrarlayan bir bağlantı sorunuyla karşılaştı (bundle Metro tarafında başarıyla oluşuyor, ama native köprü JS context'i "ready" duruma hiç geçmiyor — uygulama verisi temizlense, APK tamamen kaldırılıp yeniden kurulsa bile aynı sonuç) ve zaman kısıtı nedeniyle bu ortam sorunu çözülemedi. Bu, Sprint 7 kodunun kendisinde bir hata değil: (1) release build aynı cihazda sorunsuz derlendi, kuruldu ve tam akış (onboarding → pratik → çıkış diyaloğu → telemetri tetikleyen olaylar) doğrulandı; (2) DevClockCard'ın çağırdığı asıl mantık (`advanceDevClock` → `applyDailyRollover`/`recordLearningOutcome`/`scheduleNextReview`) testler 36-38'de gün gün gerçek biçimde çalıştırılıp doğrulandı — UI, ince bir buton katmanından ibaret. Kalan risk yalnızca "buton basınca `onRefresh` gerçekten tetikleniyor mu" gibi ince bir kablo bağlantısı sorunu; kod incelemesiyle doğru olduğu teyit edildi ama interaktif cihaz kanıtı bu oturumda üretilemedi.
+
+**Testler: 189 → 198.** TypeScript: temiz (`npx tsc --noEmit` hatasız).
 
 ### S8 — Sağlamlaştırma
 

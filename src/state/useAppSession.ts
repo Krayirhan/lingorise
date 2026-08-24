@@ -4,6 +4,8 @@ import { getCurrentLevelUnitQuestions, getQuestionById, getQuestionsByLevel } fr
 import { getDueReviewItems } from "../domain/review/spacedRepetition";
 import { toPickTheWordSession, canUsePickTheWord } from "../domain/practice/reverseMode";
 import { ActiveSessionState, UserData } from "../types/user";
+import { now } from "../utils/clock";
+import { track } from "../services/telemetry";
 
 /**
  * Above this much overdue material, new words stop being introduced. Piling
@@ -94,7 +96,7 @@ export function useAppSession(userData: UserData, setActiveSession?: (session: A
       currentIndex,
       answers: sessionAnswers,
       sessionMode,
-      startedAt: restored?.startedAt || Date.now(),
+      startedAt: restored?.startedAt || now(),
     });
   }, [screen, isSessionCompleted, sessionQuestions, currentIndex, sessionAnswers, sessionMode, setActiveSession]);
 
@@ -114,6 +116,18 @@ export function useAppSession(userData: UserData, setActiveSession?: (session: A
       }
 
       if (qList.length === 0) return;
+
+      if (!customQuestions) {
+        const dueIds = new Set(getDueReviewItems(userData.learningProgress || {}).map((i) => i.questionId));
+        const dueCount = qList.filter((q) => dueIds.has(q.id)).length;
+        const freshCount = qList.length - dueCount;
+        const sessionType = dueCount > 0 && freshCount > 0 ? "mixed" : dueCount > 0 ? "review_only" : "new_only";
+        track("practice_session_started", { sessionType, dueCount, freshCount, reverseMode: Boolean(reverseMode) });
+        if (dueIds.size >= REVIEW_DEBT_LIMIT && freshCount === 0 && dueCount > 0) {
+          track("review_debt_capped", { dueCount: dueIds.size, sessionSize: userData.practiceSessionSize });
+        }
+      }
+
       if (reverseMode && canUsePickTheWord(qList.length)) {
         qList = toPickTheWordSession(qList);
       }
@@ -136,6 +150,13 @@ export function useAppSession(userData: UserData, setActiveSession?: (session: A
     const dueList = collectDueQuestions(userData, userData.practiceSessionSize);
     const qList = dueList.length > 0 ? dueList : buildDailySession(userData);
     if (qList.length === 0) return;
+
+    track("practice_session_started", {
+      sessionType: dueList.length > 0 ? "review_only" : "new_only",
+      dueCount: dueList.length,
+      freshCount: qList.length - dueList.length,
+      reverseMode: false,
+    });
 
     setSessionQuestions(qList);
     setCurrentIndex(0);

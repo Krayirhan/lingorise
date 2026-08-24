@@ -16,6 +16,7 @@ import { FeedbackCard } from "../features/practice/components/FeedbackCard";
 import { PracticeMascot } from "../features/practice/components/PracticeMascot";
 import { PrimaryButton } from "../components/PrimaryButton";
 import { SessionSummaryCard } from "../features/practice/components/SessionSummaryCard";
+import { track } from "../services/telemetry";
 
 interface Props {
   copy: Copy;
@@ -72,14 +73,24 @@ export function PracticeScreen({
     }
     const title = copy.game?.exitConfirmTitle || "Pratikten çıkmak istiyor musun?";
     const msg = copy.game?.exitConfirmMessage || "Bu oturumdaki çözülmemiş sorular kaydedilmeyecek.";
+    const trackAbandon = () =>
+      track("session_abandoned", { questionsAnswered: sessionAnswers.length, questionsTotal: totalQuestions });
     if (Platform.OS === "web") {
       if (window.confirm(`${title}\n${msg}`)) {
+        trackAbandon();
         onBack();
       }
     } else {
       Alert.alert(title, msg, [
         { text: copy.game?.exitCancel || "Devam Et", style: "cancel" },
-        { text: copy.game?.exitConfirm || "Çıkış Yap", style: "destructive", onPress: onBack },
+        {
+          text: copy.game?.exitConfirm || "Çıkış Yap",
+          style: "destructive",
+          onPress: () => {
+            trackAbandon();
+            onBack();
+          },
+        },
       ]);
     }
   };

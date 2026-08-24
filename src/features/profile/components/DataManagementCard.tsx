@@ -166,6 +166,14 @@ export function DataManagementCard({ copy, onDataReset }: Props) {
                 LingoRise hiçbir üçüncü taraf reklam ağına kişisel verilerinizi
                 aktarmaz.
               </Text>
+              <Text style={S.legalTitle}>4. Uygulama İçi Kullanım Kayıtları</Text>
+              <Text style={S.legalBody}>
+                Uygulamayı nasıl kullandığınızı anlamak için (hangi ekranı ne sıklıkta
+                açtığınız, bir pratiği tamamlayıp tamamlamadığınız gibi) bazı kullanım
+                olayları yalnızca bu cihazda saklanır. Bu kayıtlar hiçbir sunucuya veya
+                üçüncü tarafa gönderilmez; "Yerel Verileri Sıfırla" ile diğer verilerinizle
+                birlikte silinir.
+              </Text>
             </ScrollView>
           </View>
         </SafeAreaView>

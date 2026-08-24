@@ -1,6 +1,7 @@
 import { UserData } from "../../types/user";
 import { archiveDailyQuests, createDailyQuests } from "./badges";
 import { getDueReviewItems } from "../review/spacedRepetition";
+import { now } from "../../utils/clock";
 
 /** Keeps quest history bounded while still covering several months of days. */
 const QUEST_HISTORY_LIMIT = 120;
@@ -18,7 +19,7 @@ export function applyDailyRollover(previous: UserData, todayFormatted: string): 
   const archived = archiveDailyQuests(previous.dailyQuests || [], closingDate);
   // Only issue a review quest when the learner will actually have something
   // due today; an impossible quest would keep the day from ever completing.
-  const hasReviewBacklog = getDueReviewItems(previous.learningProgress || {}, Date.now()).length > 0;
+  const hasReviewBacklog = getDueReviewItems(previous.learningProgress || {}, now()).length > 0;
 
   return {
     ...previous,

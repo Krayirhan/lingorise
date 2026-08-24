@@ -1,9 +1,11 @@
+import { useEffect, useRef } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import { C, radius, spacing } from "../../../theme/colors";
 import { Copy } from "../../../i18n/en";
 import { LevelCode } from "../../../types/content";
 import { PromotionState } from "../../../domain/learning/promotion";
+import { track } from "../../../services/telemetry";
 
 interface Props {
   copy: Copy;
@@ -26,10 +28,28 @@ const fill = (template: string, values: Record<string, string | number>) =>
  * catalogue.
  */
 export function LevelPromotionModal({ copy, level, promotion, visible, onAdvance, onDismiss }: Props) {
+  const shownForLevelRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!visible || !promotion) return;
+    if (shownForLevelRef.current === level) return;
+    shownForLevelRef.current = level;
+    track("level_promotion_shown", {
+      level,
+      masteredPercent: promotion.masteredPercent,
+      nextLevelReady: promotion.isNextLevelReady,
+    });
+  }, [visible, promotion, level]);
+
   if (!visible || !promotion) return null;
 
   const canAdvance = Boolean(promotion.nextLevel && promotion.isNextLevelReady);
   const nextLevel = promotion.nextLevel;
+
+  const handleAdvance = (targetLevel: LevelCode) => {
+    track("level_promotion_advanced", { fromLevel: level, toLevel: targetLevel });
+    onAdvance(targetLevel);
+  };
 
   return (
     <Modal visible transparent animationType="fade" onRequestClose={onDismiss}>
@@ -71,7 +91,7 @@ export function LevelPromotionModal({ copy, level, promotion, visible, onAdvance
                 <Pressable
                   accessibilityRole="button"
                   style={({ pressed }) => [S.primaryBtn, pressed && S.pressed]}
-                  onPress={() => onAdvance(nextLevel)}
+                  onPress={() => handleAdvance(nextLevel)}
                 >
                   <Text style={S.primaryTxt}>
                     {fill(copy.home?.promotionNextCta || "{level} ile devam et →", { level: nextLevel })}

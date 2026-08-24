@@ -5,11 +5,20 @@ import { Locale } from "../i18n/en";
 import { DEFAULT_USER_DATA, loadUserData, saveUserData } from "../services/storage";
 import { updateDailyStreak } from "../domain/gamification/streak";
 import { applyDailyRollover } from "../domain/gamification/dailyRollover";
-import { bringForward } from "../domain/review/spacedRepetition";
+import { bringForward, getDueReviewItems } from "../domain/review/spacedRepetition";
 import { applyPracticeAnswer, PracticeSessionMode } from "../domain/practice/answer";
 import { auth } from "../services/firebase";
 import { syncLearningItemProgress, syncUserData, syncUserProgress } from "../services/firestore";
 import { cancelDailyReminder, scheduleDailyReminder } from "../services/notificationService";
+import { track } from "../services/telemetry";
+import { deriveStatus, countMasteredWords } from "../domain/learning/mastery";
+import { calculateGardenProgress } from "../domain/gamification/xp";
+
+function daysBetween(fromISO: string, toISO: string): number {
+  const from = new Date(`${fromISO}T00:00:00Z`).getTime();
+  const to = new Date(`${toISO}T00:00:00Z`).getTime();
+  return Math.round((to - from) / (24 * 60 * 60 * 1000));
+}
 
 export function useUserProgress() {
   const [isHydrated, setIsHydrated] = useState(false);
@@ -22,6 +31,21 @@ export function useUserProgress() {
     async function init() {
       const loaded = await loadUserData();
       const streakResult = updateDailyStreak(loaded.lastActiveDate, loaded.streak);
+
+      track("session_started", {
+        daysSinceLastOpen: loaded.lastActiveDate
+          ? daysBetween(loaded.lastActiveDate, streakResult.todayFormatted)
+          : null,
+      });
+
+      if (streakResult.isNewDay) {
+        track("daily_rollover_applied", {
+          streakBefore: loaded.streak,
+          streakAfter: streakResult.newStreak,
+          pendingReviewsAtOpen: getDueReviewItems(loaded.learningProgress || {}).length,
+        });
+      }
+
       const rolled = streakResult.isNewDay
         ? applyDailyRollover(loaded, streakResult.todayFormatted)
         : loaded;
@@ -70,6 +94,13 @@ export function useUserProgress() {
   const refresh = useCallback(async () => {
     const loaded = await loadUserData();
     const streakResult = updateDailyStreak(loaded.lastActiveDate, loaded.streak);
+    if (streakResult.isNewDay) {
+      track("daily_rollover_applied", {
+        streakBefore: loaded.streak,
+        streakAfter: streakResult.newStreak,
+        pendingReviewsAtOpen: getDueReviewItems(loaded.learningProgress || {}).length,
+      });
+    }
     const rolled = streakResult.isNewDay
       ? applyDailyRollover(loaded, streakResult.todayFormatted)
       : loaded;
@@ -99,10 +130,48 @@ export function useUserProgress() {
     ) => {
       updateAndPersist((prev) => {
         const next = applyPracticeAnswer(prev, question, picked, xpReward, sessionMode);
+        const correctAnswer = question.meaning || question.answer;
+        const isCorrect = picked === correctAnswer;
+
+        const wasDue = Boolean(prev.learningProgress?.[question.id]?.attempts);
+        track("question_answered", {
+          isCorrect,
+          isFirstEncounter: !prev.rewardedQuestionIds.includes(question.id),
+          wasDue,
+          usedHint: xpReward < (question.xp || 10),
+          level: question.level,
+        });
+
+        const prevItem = prev.learningProgress?.[question.id];
+        const nextItem = next.learningProgress?.[question.id];
+        if (nextItem) {
+          const fromStatus = prevItem ? deriveStatus(prevItem) : "new";
+          const toStatus = deriveStatus(nextItem);
+          if (fromStatus !== toStatus) {
+            track("word_mastery_changed", { fromStatus, toStatus, questionId: question.id });
+          }
+        }
+
+        const fromStage = calculateGardenProgress(countMasteredWords(prev.learningProgress || {})).stage;
+        const toStage = calculateGardenProgress(countMasteredWords(next.learningProgress || {})).stage;
+        if (fromStage !== toStage) {
+          track("garden_stage_changed", {
+            fromStage,
+            toStage,
+            masteredWords: countMasteredWords(next.learningProgress || {}),
+          });
+        }
+
+        for (const quest of next.dailyQuests) {
+          const prevQuest = prev.dailyQuests.find((q) => q.id === quest.id);
+          if (quest.completed && prevQuest && !prevQuest.completed) {
+            track("daily_quest_completed", { questId: quest.id, xpEarned: quest.xpReward });
+          }
+        }
+
         const user = auth.currentUser;
         if (user) {
-          const correctAnswer = question.meaning || question.answer;
-          void syncLearningItemProgress(user.uid, question, next, picked === correctAnswer);
+          void syncLearningItemProgress(user.uid, question, next, isCorrect);
         }
         return next;
       });

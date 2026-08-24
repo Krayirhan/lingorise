@@ -9,6 +9,7 @@ import { levels } from "../../../content/levels";
 import { getQuestionsByLevel, isLevelReady } from "../../../content/questions";
 import { summarizeMastery } from "../../../domain/learning/mastery";
 import { assessLevelChoice, PROMOTION_THRESHOLD_PERCENT } from "../../../domain/learning/promotion";
+import { track } from "../../../services/telemetry";
 
 interface Props {
   copy: Copy;
@@ -54,6 +55,11 @@ export function LevelSwitcherModal({
     }
     const assessment = assessLevelChoice(level, currentLevel, learningProgress);
     if (assessment.isAhead) {
+      track("level_switch_warning_shown", {
+        currentLevel,
+        targetLevel: level,
+        currentMasteredPercent: assessment.currentMasteredPercent,
+      });
       setPendingLevel(level);
       return;
     }
@@ -63,6 +69,7 @@ export function LevelSwitcherModal({
 
   const confirmPending = () => {
     if (!pendingLevel) return;
+    track("level_switch_confirmed_ahead", { currentLevel, targetLevel: pendingLevel });
     onSelect(pendingLevel);
     setPendingLevel(null);
     onClose();

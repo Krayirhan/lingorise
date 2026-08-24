@@ -19,6 +19,8 @@ export interface ProfileScreenProps {
   onDisplayNameChange?: (name: string) => void;
   onAvatarChange?: (avatarId: string) => void;
   onDataReset?: () => void;
+  /** Reloads user state from storage — used by the dev-only clock tool. */
+  onRefresh?: () => void;
   onLocaleChange: (locale: Locale) => void;
   onChangeLevel: () => void;
   onBack: () => void;

@@ -1,4 +1,5 @@
 import { LearningItemProgress, ReviewItem } from "../../types/user";
+import { now as clockNow } from "../../utils/clock";
 
 const MINUTE = 60 * 1000;
 const DAY = 24 * 60 * MINUTE;
@@ -62,7 +63,7 @@ export function scheduleNextReview(
 }
 
 /** True when a word has reached its scheduled time. */
-export function isItemDue(item: LearningItemProgress | undefined, now: number = Date.now()): boolean {
+export function isItemDue(item: LearningItemProgress | undefined, now: number = clockNow()): boolean {
   if (!item || item.attempts === 0) return false;
   return item.nextReviewAt <= now;
 }
@@ -73,7 +74,7 @@ export function isItemDue(item: LearningItemProgress | undefined, now: number = 
  */
 export function getDueReviewItems(
   learningProgress: Record<string, LearningItemProgress>,
-  now: number = Date.now()
+  now: number = clockNow()
 ): ReviewItem[] {
   return Object.entries(learningProgress || {})
     .filter(([, item]) => isItemDue(item, now))
@@ -93,7 +94,7 @@ export function getDueReviewItems(
  */
 export function bringForward(
   item: LearningItemProgress,
-  now: number = Date.now()
+  now: number = clockNow()
 ): LearningItemProgress {
   return { ...item, nextReviewAt: Math.min(item.nextReviewAt, now + RELEARN_DELAY_MS) };
 }
