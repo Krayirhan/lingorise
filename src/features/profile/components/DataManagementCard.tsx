@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Alert, Modal, Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Alert, Linking, Modal, Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { File, Paths } from "expo-file-system";
 import * as Sharing from "expo-sharing";
@@ -12,6 +12,10 @@ interface Props {
   copy: Copy;
   onDataReset?: () => void;
 }
+
+// roadmap Birim 13 §13.2 — the store listing needs a public URL for this
+// same policy; this is that URL, kept in sync with the in-app text below.
+const PRIVACY_POLICY_URL = "https://claude.ai/code/artifact/90a36725-0440-4caf-b2ca-5b26212c2b11";
 
 export function DataManagementCard({ copy, onDataReset }: Props) {
   const isCloudSynced = !!auth.currentUser;
@@ -174,6 +178,16 @@ export function DataManagementCard({ copy, onDataReset }: Props) {
                 üçüncü tarafa gönderilmez; "Yerel Verileri Sıfırla" ile diğer verilerinizle
                 birlikte silinir.
               </Text>
+
+              <Pressable
+                accessibilityRole="link"
+                accessibilityLabel="Gizlilik politikasının tam metnini web'de aç"
+                style={S.webLinkBtn}
+                onPress={() => Linking.openURL(PRIVACY_POLICY_URL)}
+              >
+                <Ionicons name="open-outline" size={15} color={C.primary} />
+                <Text style={S.webLinkTxt}>Web'de tam metni görüntüle</Text>
+              </Pressable>
             </ScrollView>
           </View>
         </SafeAreaView>
@@ -328,6 +342,23 @@ const S = StyleSheet.create({
     color: C.ink,
     fontSize: 13.5,
     lineHeight: 20,
+  },
+  webLinkBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    marginTop: 20,
+    minHeight: 44,
+    paddingVertical: 10,
+    borderRadius: radius.md || 12,
+    borderWidth: 1,
+    borderColor: C.line,
+  },
+  webLinkTxt: {
+    color: C.primary,
+    fontWeight: "700",
+    fontSize: 13,
   },
   jsonOverlay: {
     flex: 1,

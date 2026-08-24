@@ -3,9 +3,11 @@ import {
   deleteDoc,
   doc,
   getDoc,
+  getDocs,
   increment,
   serverTimestamp,
   setDoc,
+  writeBatch,
 } from "firebase/firestore";
 import { db } from "./firebase";
 import { LearningItemProgress, UserData } from "../types/user";
@@ -60,6 +62,24 @@ export async function fetchUserData(userId: string): Promise<UserData | null> {
 export async function deleteUserData(userId: string): Promise<void> {
   try {
     await withRetry(async () => {
+      // Every word answered writes a doc under users/{uid}/items (roadmap
+      // Birim 13.3 — the account-deletion audit). This subcollection was
+      // never cleaned up here: "Hesabımı Kalıcı Olarak Sil" deleted the
+      // profile and progress summary but silently left up to one Firestore
+      // document per question ever answered (590 possible) orphaned behind.
+      // Firestore's client SDK has no bulk collection delete, so each
+      // document is deleted individually, batched 500 at a time (Firestore's
+      // own batch limit).
+      const itemsSnap = await getDocs(collection(db, "users", userId, "items"));
+      const docs = itemsSnap.docs;
+      for (let i = 0; i < docs.length; i += 500) {
+        const batch = writeBatch(db);
+        for (const itemDoc of docs.slice(i, i + 500)) {
+          batch.delete(itemDoc.ref);
+        }
+        await batch.commit();
+      }
+
       await deleteDoc(doc(db, "users", userId, "progress", "main"));
       await deleteDoc(doc(db, "users", userId));
     }, 2);

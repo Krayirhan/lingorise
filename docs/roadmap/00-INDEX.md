@@ -29,6 +29,10 @@ Her dosya bağımsız bir **birim** — kendi başına planlanabilir, kendi baş
 
 **Parametre değişiklik kararlarının günlüğü (Birim 2 §2.4 DoD'si) için:** [14-parameter-calibration-log.md](14-parameter-calibration-log.md)
 
+**S0-S12 tamamlandıktan sonra kalan işler için (Faz 2, Birim 13-20):** [15-phase2-roadmap.md](15-phase2-roadmap.md)
+
+**Faz 2'nin sprint dağılımı (S13-S18) için:** [16-phase2-sprint-plan.md](16-phase2-sprint-plan.md)
+
 ## Zaman çizelgesi (kabaca)
 
 ```
