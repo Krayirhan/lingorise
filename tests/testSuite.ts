@@ -24,6 +24,7 @@ import {
 } from "../src/domain/learning/promotion";
 import { isLevelReady, getNextLevel } from "../src/content/questions";
 import { getTopicLabel } from "../src/features/home/topicLabel";
+import { toPickTheWordSession, canUsePickTheWord } from "../src/domain/practice/reverseMode";
 import {
   recordLearningOutcome,
   deriveStatus,
@@ -62,6 +63,17 @@ const validation = validateQuestionDatabase();
 assert(validation.valid, "Question database is valid with 0 errors");
 assert(validation.duplicateIds.length === 0, `No duplicate IDs found (total: ${allQuestions.length} questions)`);
 assert(validation.invalidQuestions.length === 0, "No invalid question options found");
+
+// Guards against the exact regression Sprint 6 fixed: auto-generated
+// questions silently carrying a repeated placeholder sentence instead of
+// real, per-word context.
+const templatedSentences = allQuestions.filter((q) =>
+  q.exampleSentence?.includes("Learn and use the word")
+);
+assert(
+  templatedSentences.length === 0,
+  `No question ships a template example sentence (checked ${allQuestions.length})`
+);
 
 // 2. Spaced Repetition (SM-2) Algorithm
 console.log("\n2. Spaced Repetition (SM-2) Engine:");
@@ -198,7 +210,7 @@ assert(qWrong.bonusXpEarned === 0, "Wrong answers never pay quest bonus XP");
 console.log("\n8. Progress & Level Breakdown:");
 const levels: LevelCode[] = ["A1", "A2", "B1", "B2", "C1", "C2"];
 const totalQuestionsAll = levels.reduce((acc, l) => acc + getQuestionsByLevel(l).length, 0);
-assert(totalQuestionsAll === 341, `All 6 levels verified with total ${totalQuestionsAll} curated questions`);
+assert(totalQuestionsAll === 590, `All 6 levels verified with total ${totalQuestionsAll} curated questions`);
 
 // 9. Vocabulary Content System & Search
 console.log("\n9. Vocabulary Content Search & Versioning:");
@@ -617,10 +629,12 @@ assert(earned.nextLevel === "A2", "The next level on the ladder is offered");
 assert(getNextLevel("B2") === "C1", "The ladder advances in CEFR order");
 assert(getNextLevel("C2") === null, "There is nothing beyond the final level");
 
-// The content gate: A2 is not populated yet, so advancing must not be offered
-assert(!earned.isNextLevelReady, "A2 is correctly reported as not ready — it has too few words");
-assert(!isLevelReady("A2"), "isLevelReady refuses a level below the content minimum");
+// The content gate: A2 was expanded past the readiness threshold in Sprint 6,
+// so promotion into it is now genuinely offered.
+assert(earned.isNextLevelReady, "A2 is now reported as ready — content expansion cleared the gate");
+assert(isLevelReady("A2"), "isLevelReady accepts A2 now that it has 100+ words");
 assert(isLevelReady("A1"), "isLevelReady accepts a fully populated level");
+assert(!isLevelReady("B1"), "isLevelReady still refuses a level below the content minimum (B1)");
 
 const alreadyCelebrated = evaluatePromotion("A1", mostlyMastered, ["A1"]);
 assert(alreadyCelebrated.isEarned, "An earned level stays earned");
@@ -729,6 +743,44 @@ assert(
   seenToday > masterySameDay.mastered,
   "Seen and mastered are reported as two different numbers, never collapsed into one"
 );
+
+// 35. Pick the Word — reversed session needs no new content
+console.log("\n35. Pick the Word Mode:");
+const forwardSession = getQuestionsByLevel("A1").slice(0, 5);
+const reversed = toPickTheWordSession(forwardSession);
+
+assert(reversed.length === forwardSession.length, "Reversing a session keeps every question");
+assert(
+  reversed.every((q, i) => q.id === forwardSession[i].id),
+  "Question ids are untouched — mastery tracking stays on the same word"
+);
+assert(
+  reversed[0].word === forwardSession[0].meaning,
+  "The Turkish meaning becomes the prompt"
+);
+assert(
+  reversed[0].meaning === forwardSession[0].word,
+  "The English word becomes the correct answer"
+);
+assert(
+  !!reversed[0].options?.includes(forwardSession[0].word || ""),
+  "The correct English word is among the options"
+);
+assert(
+  new Set(reversed[0].wrongOptions).size === reversed[0].wrongOptions.length,
+  "Decoys are not duplicated"
+);
+assert(
+  !reversed[0].wrongOptions.includes(forwardSession[0].word || ""),
+  "The correct word never appears as its own decoy"
+);
+assert(
+  reversed[0].exampleSentence === forwardSession[0].exampleSentence,
+  "Example sentence content is untouched by reversal"
+);
+
+assert(canUsePickTheWord(5), "Pick the Word is available for a normal session size");
+assert(!canUsePickTheWord(2), "Pick the Word is withheld when there aren't enough words for decoys");
 
 console.log("\n=========================================");
 console.log(`🏁 TEST SUMMARY: ${passedCount} PASSED, ${failedCount} FAILED`);

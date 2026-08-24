@@ -1,4 +1,5 @@
 import { MeaningMatchQuestion } from "../../types/content";
+import { a2GeneratedQuestions } from "./a2Generated";
 
 export const a2MeaningMatchQuestions: MeaningMatchQuestion[] = [
   {
@@ -108,4 +109,16 @@ export const a2MeaningMatchQuestions: MeaningMatchQuestion[] = [
   },
 ];
 
-export const a2Questions = a2MeaningMatchQuestions;
+const A2_UNIT_SIZE = 30;
+
+// Same publishing-metadata pattern as a1.ts — every question carries the
+// unit and ordering the rest of the app reads.
+export const a2Questions: MeaningMatchQuestion[] = [
+  ...a2MeaningMatchQuestions,
+  ...a2GeneratedQuestions,
+].map((question, index) => ({
+  ...question,
+  unitId: `a2-u${String(Math.floor(index / A2_UNIT_SIZE) + 1).padStart(2, "0")}`,
+  order: index,
+  status: "published" as const,
+}));

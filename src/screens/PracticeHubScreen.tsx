@@ -15,6 +15,7 @@ import { Copy, Locale } from "../i18n/en";
 import { LevelCode } from "../types/content";
 import { HomeBottomNav } from "../features/home/components/HomeBottomNav";
 import { HomeTab } from "../features/home/home.types";
+import { REVIEW_DEBT_LIMIT } from "../state/useAppSession";
 
 const sprig = require("../../assets/sprig-mascot-idle-transparent.png");
 
@@ -25,13 +26,15 @@ interface Props {
   xp: number;
   streak: number;
   dueReviewCount: number;
-  onStartDailyPractice: () => void;
+  onStartDailyPractice: (reverseMode: boolean) => void;
   onStartReview: () => void;
   onTabPress: (tab: HomeTab) => void;
   practiceSessionSize: 5 | 10 | 20 | 30;
   onPracticeSessionSizeChange: (size: 5 | 10 | 20 | 30) => void;
   /** How many of today's session are overdue reviews rather than new words. */
   dueInSession: number;
+  /** The real, uncapped overdue count — used to detect the review-debt pause. */
+  totalDueCount: number;
 }
 
 export function PracticeHubScreen({
@@ -46,19 +49,28 @@ export function PracticeHubScreen({
   practiceSessionSize,
   onPracticeSessionSizeChange,
   dueInSession,
+  totalDueCount,
 }: Props) {
+  const [reverseMode, setReverseMode] = useState(false);
   const streakText = `${streak} ${copy.game?.hubStreakSuffix || "gün seri"}`;
 
   // The card describes the session that will actually be built, instead of a
   // fixed "2 min · +40 XP" that no longer matched anything.
   const freshInSession = Math.max(0, practiceSessionSize - dueInSession);
   const estimatedMinutes = Math.max(1, Math.round(practiceSessionSize * 0.15));
+  // Past this many overdue words, buildDailySession() stops introducing new
+  // vocabulary (see REVIEW_DEBT_LIMIT). Without this the pause looked like a
+  // bug — the same words kept coming back with no explanation.
+  const isDebtCapped = totalDueCount >= REVIEW_DEBT_LIMIT && freshInSession === 0;
 
   const fill = (template: string, values: Record<string, string | number>) =>
     Object.entries(values).reduce((text, [key, value]) => text.replace(`{${key}}`, String(value)), template);
 
-  const sessionSummary =
-    dueInSession > 0 && freshInSession > 0
+  const sessionSummary = isDebtCapped
+    ? fill(copy.home?.practiceCardDebtCapped || "{count} kelime tekrar bekliyor. Önce bunları tazele, yeni kelimeler yarın seni bekliyor.", {
+        count: totalDueCount,
+      })
+    : dueInSession > 0 && freshInSession > 0
       ? fill(copy.game?.hubSessionMixed || copy.home?.practiceCardSubtitle || "{reviews} tekrar ve {fresh} yeni kelime", {
           reviews: dueInSession,
           fresh: freshInSession,
@@ -99,6 +111,31 @@ export function PracticeHubScreen({
             ))}
           </View>
           <Text style={S.sessionSizeHint}>{fill(copy.game?.hubSessionLengthHint || "Her pratikte {count} kelime gelir.", { count: practiceSessionSize })}</Text>
+
+          {/* Pick the Word reuses the same data reversed — no new content
+              needed, only which side is shown as the prompt. */}
+          <View style={S.modeRow}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityState={{ selected: !reverseMode }}
+              style={[S.modeButton, !reverseMode && S.modeButtonActive]}
+              onPress={() => setReverseMode(false)}
+            >
+              <Text style={[S.modeButtonText, !reverseMode && S.modeButtonTextActive]}>
+                {copy.game?.hubModePickMeaning || "Anlamı bul"}
+              </Text>
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityState={{ selected: reverseMode }}
+              style={[S.modeButton, reverseMode && S.modeButtonActive]}
+              onPress={() => setReverseMode(true)}
+            >
+              <Text style={[S.modeButtonText, reverseMode && S.modeButtonTextActive]}>
+                {copy.game?.hubModePickWord || "Kelimeyi bul"}
+              </Text>
+            </Pressable>
+          </View>
         </View>
 
           {/* User Status Mini-Stats Row */}
@@ -131,7 +168,7 @@ export function PracticeHubScreen({
               S.heroCard,
               pressed && S.cardPressed,
             ]}
-            onPress={onStartDailyPractice}
+            onPress={() => onStartDailyPractice(reverseMode)}
           >
             <View style={S.heroTop}>
               <View style={S.heroCopy}>
@@ -391,6 +428,11 @@ const S = StyleSheet.create({
   sessionSizeText: { color: C.ink, fontWeight: "800" },
   sessionSizeTextActive: { color: C.surface },
   sessionSizeHint: { color: C.muted, fontSize: 12 },
+  modeRow: { flexDirection: "row", gap: 8, marginTop: 10 },
+  modeButton: { flex: 1, minHeight: 40, alignItems: "center", justifyContent: "center", borderRadius: radius.md, backgroundColor: C.canvas, borderWidth: 1, borderColor: C.line },
+  modeButtonActive: { backgroundColor: C.primarySoft, borderColor: C.primaryBorder },
+  modeButtonText: { color: C.muted, fontWeight: "700", fontSize: 12.5 },
+  modeButtonTextActive: { color: C.primary },
   sectionTitle: {
     color: C.ink,
     fontSize: 18,

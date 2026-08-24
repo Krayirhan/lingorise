@@ -203,9 +203,10 @@ export function AppNavigator({ userProgress, onAccountPress, deepLinkTarget, onD
         dueReviewCount={homeViewModel.reviewCount}
         practiceSessionSize={userData.practiceSessionSize}
         onPracticeSessionSizeChange={userProgress.setPracticeSessionSize}
-        onStartDailyPractice={() => session.startPractice()}
+        onStartDailyPractice={(reverseMode) => session.startPractice(undefined, reverseMode)}
         onStartReview={session.startReview}
         dueInSession={Math.min(homeViewModel.reviewCount, userData.practiceSessionSize)}
+        totalDueCount={homeViewModel.reviewCount}
         onTabPress={handleTabPress}
       />
     );

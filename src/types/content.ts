@@ -12,7 +12,9 @@ export type PartOfSpeech = "noun" | "verb" | "adjective" | "adverb" | "phrase";
 
 export interface MeaningMatchQuestion {
   id: string;
-  mode: "MEANING_MATCH";
+  // Content is always authored as MEANING_MATCH; PICK_THE_WORD is applied at
+  // runtime by reversing an existing question (see domain/practice/reverseMode.ts).
+  mode: GameMode;
   level: LevelCode;
   topic: string;
   word: string;

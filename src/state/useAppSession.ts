@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from "react";
 import { MeaningMatchQuestion } from "../types/content";
 import { getCurrentLevelUnitQuestions, getQuestionById, getQuestionsByLevel } from "../content/questions";
 import { getDueReviewItems } from "../domain/review/spacedRepetition";
+import { toPickTheWordSession, canUsePickTheWord } from "../domain/practice/reverseMode";
 import { ActiveSessionState, UserData } from "../types/user";
 
 /**
@@ -103,7 +104,7 @@ export function useAppSession(userData: UserData, setActiveSession?: (session: A
   }, []);
 
   const startPractice = useCallback(
-    (customQuestions?: MeaningMatchQuestion[]) => {
+    (customQuestions?: MeaningMatchQuestion[], reverseMode?: boolean) => {
       let qList: MeaningMatchQuestion[] = [];
 
       if (customQuestions && customQuestions.length > 0) {
@@ -113,6 +114,9 @@ export function useAppSession(userData: UserData, setActiveSession?: (session: A
       }
 
       if (qList.length === 0) return;
+      if (reverseMode && canUsePickTheWord(qList.length)) {
+        qList = toPickTheWordSession(qList);
+      }
 
       setSessionQuestions(qList);
       setCurrentIndex(0);

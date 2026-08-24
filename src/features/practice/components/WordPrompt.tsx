@@ -34,13 +34,20 @@ export function WordPrompt({
 }: Props) {
   const wordPrompt = question.word || question.prompt || "";
   const posLabel = formatPartOfSpeech(question.partOfSpeech, "tr");
+  const isReversed = question.mode === "PICK_THE_WORD";
+  const directionLabel = isReversed
+    ? copy.game?.modeLabelReversed || "TÜRKÇE → İNGİLİZCE"
+    : copy.game?.modeLabel || "İNGİLİZCE → TÜRKÇE";
+  const instructionText = isReversed
+    ? copy.game?.instructionReversed || "İngilizce kelimeyi bul."
+    : copy.game?.instruction || "Türkçe karşılığını bul.";
 
   return (
     <View style={[S.card, isCompactScreen && S.cardCompact]}>
       <View style={S.metaRow}>
         <View style={S.tagsRow}>
           <View style={S.dirBadge}>
-            <Text style={S.dirText}>{copy.game?.modeLabel || "İNGİLİZCE → TÜRKÇE"}</Text>
+            <Text style={S.dirText}>{directionLabel}</Text>
           </View>
           {posLabel ? <View style={S.posBadge}><Text style={S.posText}>{posLabel}</Text></View> : null}
         </View>
@@ -83,7 +90,7 @@ export function WordPrompt({
       <View style={S.div} />
       <View style={S.instRow}>
         <Ionicons name="help-circle-outline" size={13.5} color={C.muted} />
-        <Text style={S.instTxt}>{copy.game?.instruction || "Türkçe karşılığını bul."}</Text>
+        <Text style={S.instTxt}>{instructionText}</Text>
       </View>
     </View>
   );

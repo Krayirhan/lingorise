@@ -1,5 +1,7 @@
 import { MeaningMatchQuestion } from "../../types/content";
 import { A1_CORE_VOCABULARY } from "../vocabulary/a1CoreVocabulary";
+import { A1_EXAMPLE_SENTENCES } from "../vocabulary/a1ExampleSentences";
+import { computeDifficulty, computeXpReward } from "./difficulty";
 
 export const a1MeaningMatchQuestions: MeaningMatchQuestion[] = [
   {
@@ -160,7 +162,15 @@ const generatedA1Questions: MeaningMatchQuestion[] = A1_CORE_VOCABULARY
         .map((candidate) => candidate.meaningTr)
         .filter((meaning) => meaning !== entry.meaningTr)
     )).slice(0, 2);
-    return { id: `a1-core-${entry.word.replace(/[^a-z]/g, "-")}`, mode: "MEANING_MATCH", level: "A1", topic: entry.topic, word: entry.word, meaning: entry.meaningTr, wrongOptions, xp: 10, difficulty: 1, partOfSpeech: entry.partOfSpeech, exampleSentence: `Learn and use the word “${entry.word}” in a simple sentence.`, exampleTranslation: `“${entry.word}” kelimesini basit bir cümlede öğren ve kullan.`, contextNote: `${entry.topic} konusu için güvenli A1 çekirdek kelimesi.`, pronunciation: entry.word, hint: `${entry.topic} konusundaki temel kelimeyi seç.`, prompt: entry.word, answer: entry.meaningTr, options: [entry.meaningTr, ...wrongOptions] };
+    // Every generated word carries a real, hand-written sentence pulled from
+    // A1_EXAMPLE_SENTENCES — the single repeated template this used to emit
+    // ("Learn and use the word 'x' in a simple sentence.") taught nothing
+    // about how the word actually behaves. The template is kept only as a
+    // last-resort fallback for a word that somehow has no bank entry.
+    const example = A1_EXAMPLE_SENTENCES[entry.word.toLowerCase()];
+    const exampleSentence = example?.en || `Learn and use the word “${entry.word}” in a simple sentence.`;
+    const exampleTranslation = example?.tr || `“${entry.word}” kelimesini basit bir cümlede öğren ve kullan.`;
+    return { id: `a1-core-${entry.word.replace(/[^a-z]/g, "-")}`, mode: "MEANING_MATCH", level: "A1", topic: entry.topic, word: entry.word, meaning: entry.meaningTr, wrongOptions, xp: computeXpReward("A1", entry.word), difficulty: computeDifficulty("A1", entry.word), partOfSpeech: entry.partOfSpeech, exampleSentence, exampleTranslation, contextNote: `${entry.topic} konusu için güvenli A1 çekirdek kelimesi.`, pronunciation: entry.word, hint: `${entry.topic} konusundaki temel kelimeyi seç.`, prompt: entry.word, answer: entry.meaningTr, options: [entry.meaningTr, ...wrongOptions] };
   });
 
 const A1_UNIT_SIZE = 30;
