@@ -10,20 +10,22 @@ Her dosya bağımsız bir **birim** — kendi başına planlanabilir, kendi baş
 
 ## Birimler ve öncelik sırası
 
-| # | Birim | Dosya | Neden bu sırada |
-|---|---|---|---|
-| 1 | İçerik Genişletme | [01-content-expansion.md](01-content-expansion.md) | **Her şeyin önkoşulu.** İçerik olmadan hiçbir parametre gerçek veriyle sınanamaz. |
-| 2 | Çok Günlü Doğrulama Altyapısı | [04-multiday-verification.md](04-multiday-verification.md) | İçerik gelince hemen ihtiyaç duyulacak — mastery/terfi/bahçe zincirini gerçek zamanda test etme aracı olmadan hiçbir parametre kalibre edilemez. |
-| 3 | Telemetri ve Analitik | [05-telemetry-analytics.md](05-telemetry-analytics.md) | Parametreleri doğrulamanın **tek yolu** ölçmek. Bu olmadan #2 sadece "bende çalıştı" seviyesinde kalır. |
-| 4 | Parametre Doğrulaması | [02-parameter-validation.md](02-parameter-validation.md) | #2 ve #3 hazır olunca asıl kalibrasyon işi burada yapılır. |
-| 5 | SRS Algoritması v2 | [03-srs-algorithm-v2.md](03-srs-algorithm-v2.md) | Parametre verisi gelmeye başlayınca ikili (doğru/yanlış) modelden kaliteli SM-2'ye geçiş. |
-| 6 | Sessiz Davranış Boşlukları | [06-behavior-messaging-gaps.md](06-behavior-messaging-gaps.md) | Küçük ama kullanıcı güvenini doğrudan etkiliyor — bağımsız, hızlı kapatılabilir. |
-| 7 | Senkron Sağlamlığı | [07-sync-robustness.md](07-sync-robustness.md) | Çoklu cihaz kullanımı yaygınlaşmadan önce kapatılmalı. |
-| 8 | Migration Temizliği | [08-migration-cleanup.md](08-migration-cleanup.md) | Teknik borç — birikmeye devam etmeden bir kerede toparlanmalı. |
-| 9 | Erişilebilirlik Doğrulaması | [09-accessibility.md](09-accessibility.md) | Yayın öncesi zorunlu, ama diğer birimlerden bağımsız yürütülebilir. |
-| 10 | Oyun Çeşitliliği ve İçerik Kalitesi | [10-game-variety-and-content-quality.md](10-game-variety-and-content-quality.md) | #1 ile birlikte yürür, ayrı ele alınır çünkü farklı beceri seti gerektirir (oyun tasarımı vs. içerik üretimi). |
-| 11 | Rozet/İlerleme Tutarlılığı | [11-badge-progression-consistency.md](11-badge-progression-consistency.md) | Dört ayrı ilerleme göstergesinin (bahçe, bölüm, terfi, rozet) birbiriyle çelişmediğinden emin olma turu. |
-| 12 | Yayına Hazırlık Kapısı | [12-launch-readiness-checklist.md](12-launch-readiness-checklist.md) | Hepsinin toplandığı son kontrol listesi — "yayınla" demeden önce. |
+| # | Birim | Dosya | Sprint | Neden bu sırada |
+|---|---|---|---|---|
+| 1 | İçerik Genişletme | [01-content-expansion.md](01-content-expansion.md) | S6 | **Her şeyin önkoşulu.** İçerik olmadan hiçbir parametre gerçek veriyle sınanamaz. |
+| 2 | Çok Günlü Doğrulama Altyapısı | [04-multiday-verification.md](04-multiday-verification.md) | S7 | İçerik gelince hemen ihtiyaç duyulacak — mastery/terfi/bahçe zincirini gerçek zamanda test etme aracı olmadan hiçbir parametre kalibre edilemez. |
+| 3 | Telemetri ve Analitik | [05-telemetry-analytics.md](05-telemetry-analytics.md) | S7 | Parametreleri doğrulamanın **tek yolu** ölçmek. Bu olmadan #2 sadece "bende çalıştı" seviyesinde kalır. |
+| 4 | Parametre Doğrulaması | [02-parameter-validation.md](02-parameter-validation.md) | S10 | #2 ve #3 hazır olunca asıl kalibrasyon işi burada yapılır. |
+| 5 | SRS Algoritması v2 | [03-srs-algorithm-v2.md](03-srs-algorithm-v2.md) | S11-S12 | Parametre verisi gelmeye başlayınca ikili (doğru/yanlış) modelden kaliteli SM-2'ye geçiş. |
+| 6 | Sessiz Davranış Boşlukları | [06-behavior-messaging-gaps.md](06-behavior-messaging-gaps.md) | S6 | Küçük ama kullanıcı güvenini doğrudan etkiliyor — bağımsız, hızlı kapatılabilir. |
+| 7 | Senkron Sağlamlığı | [07-sync-robustness.md](07-sync-robustness.md) | S8 | Çoklu cihaz kullanımı yaygınlaşmadan önce kapatılmalı. |
+| 8 | Migration Temizliği | [08-migration-cleanup.md](08-migration-cleanup.md) | S8 | Teknik borç — birikmeye devam etmeden bir kerede toparlanmalı. |
+| 9 | Erişilebilirlik Doğrulaması | [09-accessibility.md](09-accessibility.md) | S9 | Yayın öncesi zorunlu, ama diğer birimlerden bağımsız yürütülebilir. |
+| 10 | Oyun Çeşitliliği ve İçerik Kalitesi | [10-game-variety-and-content-quality.md](10-game-variety-and-content-quality.md) | S6 + S9 | #1 ile birlikte yürür (§10.2, §10.3), ayrıca §10.1 bağımsız hızlı kazanım olarak S9'da. §10.4 bilinçli olarak backlog'da (P3). |
+| 11 | Rozet/İlerleme Tutarlılığı | [11-badge-progression-consistency.md](11-badge-progression-consistency.md) | S11 | Dört ayrı ilerleme göstergesinin (bahçe, bölüm, terfi, rozet) birbiriyle çelişmediğinden emin olma turu. |
+| 12 | Yayına Hazırlık Kapısı | [12-launch-readiness-checklist.md](12-launch-readiness-checklist.md) | S12 | Hepsinin toplandığı son kontrol listesi — "yayınla" demeden önce. |
+
+**Sprint'lere tam dağılım, kalem sayıları ve zaman çizelgesi için:** [13-sprint-plan.md](13-sprint-plan.md)
 
 ## Zaman çizelgesi (kabaca)
 
