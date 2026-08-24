@@ -1,0 +1,24 @@
+{
+  "expo": {
+    "name": "LingoRise",
+    "slug": "lingorise",
+    "scheme": "lingorise",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "icon": "./assets/lingorise-app-icon.png",
+    "android": {
+      "package": "com.lingorise.app"
+    },
+    "ios": {
+      "bundleIdentifier": "com.lingorise.app"
+    },
+    "plugins": [
+      "expo-asset",
+      "expo-notifications",
+      "expo-font",
+      "expo-sharing",
+      "expo-status-bar"
+    ]
+  }
+}

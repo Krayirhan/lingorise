@@ -1,0 +1,10 @@
+appId: com.lingorise.app
+---
+- launchApp:
+    clearState: true
+- tapOn: "Başla"
+- tapOn: "Seviyemi seç"
+- tapOn: "A1"
+- tapOn: "Bahçeme Başla"
+- tapOn: "Pratik"
+- assertVisible: "Bugün ne çalışmak istersin?"

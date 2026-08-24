@@ -1,0 +1,45 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // User progress and profile data: Only authenticated owner can read & write
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+
+      match /progress/{document=**} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+
+      match /dailyTasks/{document=**} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+
+      // Per-word SRS state belongs only to its owner.
+      match /items/{itemId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+
+    // Published catalogue is public read-only. Publishing is performed only by
+    // the trusted migration script using an administrator OAuth token.
+    match /contentMeta/{documentId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /contentVersions/{versionId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /units/{unitId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /items/{itemId} {
+      allow read: if true;
+      allow write: if false;
+    }
+  }
+}

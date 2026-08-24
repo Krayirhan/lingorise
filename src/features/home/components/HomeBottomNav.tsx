@@ -1,0 +1,132 @@
+import { Ionicons } from "@expo/vector-icons";
+import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { C, radius } from "../../../theme/colors";
+import { Copy } from "../../../i18n/en";
+import { HomeTab } from "../home.types";
+
+interface Props {
+  copy: Copy;
+  activeTab?: HomeTab;
+  dueReviewCount: number;
+  onTabPress: (tab: HomeTab) => void;
+}
+
+const TABS: {
+  id: HomeTab;
+  iconActive: keyof typeof Ionicons.glyphMap;
+  iconInactive: keyof typeof Ionicons.glyphMap;
+  labelKey: "tabGarden" | "tabPractice" | "tabProgress" | "tabProfile";
+}[] = [
+  { id: "garden", iconActive: "leaf", iconInactive: "leaf-outline", labelKey: "tabGarden" },
+  { id: "practice", iconActive: "flash", iconInactive: "flash-outline", labelKey: "tabPractice" },
+  { id: "progress", iconActive: "stats-chart", iconInactive: "stats-chart-outline", labelKey: "tabProgress" },
+  { id: "profile", iconActive: "person", iconInactive: "person-outline", labelKey: "tabProfile" },
+];
+
+export function HomeBottomNav({
+  copy,
+  activeTab = "garden",
+  dueReviewCount,
+  onTabPress,
+}: Props) {
+  return (
+    <View style={S.nav} accessibilityRole="tablist">
+      {TABS.map((tab) => {
+        const isSel = activeTab === tab.id;
+        const label = copy.home?.[tab.labelKey] || tab.id;
+        const hasDueReviews = tab.id === "progress" && dueReviewCount > 0;
+        const accessibilityLabel = hasDueReviews
+          ? `${label}, ${dueReviewCount} ${copy.home?.reviewBadgeSuffix || "tekrar"} bekliyor`
+          : label;
+
+        return (
+          <Pressable
+            key={tab.id}
+            accessibilityRole="tab"
+            accessibilityLabel={accessibilityLabel}
+            accessibilityState={{ selected: isSel }}
+            style={S.item}
+            onPress={() => onTabPress(tab.id)}
+          >
+            <View style={[S.tabPill, isSel && S.tabPillActive]}>
+              <View style={S.iconWrap}>
+                <Ionicons
+                  name={isSel ? tab.iconActive : tab.iconInactive}
+                  size={22}
+                  color={isSel ? "#6B4355" : "#8D8883"}
+                />
+                {hasDueReviews && <View style={S.dot} />}
+              </View>
+              <Text style={isSel ? S.lblActive : S.lbl}>{label}</Text>
+            </View>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
+const S = StyleSheet.create({
+  nav: {
+    height: 64,
+    backgroundColor: "#FFFFFF",
+    borderTopWidth: 1,
+    borderTopColor: "#E7E1D7",
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "center",
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+  },
+  item: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    minWidth: 60,
+    minHeight: 48,
+  },
+  tabPill: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 12,
+    height: 48,
+    borderRadius: 24,
+    gap: 3,
+  },
+  tabPillActive: {
+    backgroundColor: "#F1E8ED",
+  },
+  iconWrap: {
+    position: "relative",
+    width: 24,
+    height: 24,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  lblActive: {
+    color: "#6B4355",
+    fontSize: 11,
+    fontWeight: "800",
+  },
+  lbl: {
+    color: "#8D8883",
+    fontSize: 11,
+    fontWeight: "600",
+  },
+  dot: {
+    position: "absolute",
+    top: -2,
+    right: -4,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: C.attention,
+    borderWidth: 1.5,
+    borderColor: "#FFFFFF",
+  },
+});
+

@@ -1,0 +1,38 @@
+import { assertFails, assertSucceeds, initializeTestEnvironment, RulesTestEnvironment } from "@firebase/rules-unit-testing";
+import { doc, getDoc, setDoc } from "firebase/firestore";
+import fs from "node:fs";
+
+async function main() {
+  let env: RulesTestEnvironment | undefined;
+  try {
+    env = await initializeTestEnvironment({
+      projectId: "lingorise-rules-test",
+      firestore: { rules: fs.readFileSync("firestore.rules", "utf8") },
+    });
+
+    const alice = env.authenticatedContext("alice").firestore();
+    const bob = env.authenticatedContext("bob").firestore();
+    const anonymous = env.unauthenticatedContext().firestore();
+
+    await assertSucceeds(setDoc(doc(alice, "users/alice"), { xp: 10 }));
+    await assertSucceeds(setDoc(doc(alice, "users/alice/progress/main"), { xp: 10 }));
+    await assertSucceeds(setDoc(doc(alice, "users/alice/dailyTasks/today"), { status: "open" }));
+    await assertFails(getDoc(doc(bob, "users/alice")));
+    await assertFails(setDoc(doc(bob, "users/alice/progress/main"), { xp: 999 }));
+    await assertFails(getDoc(doc(anonymous, "users/alice")));
+    await assertSucceeds(getDoc(doc(anonymous, "contentMeta/current")));
+    await assertSucceeds(getDoc(doc(anonymous, "items/a1-mm-01")));
+    await assertFails(setDoc(doc(anonymous, "items/a1-mm-01"), { word: "tamper" }));
+    await assertSucceeds(setDoc(doc(alice, "users/alice/items/a1-mm-01"), { status: "learning" }));
+    await assertFails(getDoc(doc(bob, "users/alice/items/a1-mm-01")));
+
+    console.log("Firestore rules: PASS");
+  } finally {
+    await env?.cleanup();
+  }
+}
+
+void main().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});

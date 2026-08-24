@@ -1,0 +1,29 @@
+node_modules/
+.expo/
+dist/
+web-build/
+graphify-out/
+android/local.properties
+.env
+.env.*
+!.env.example
+
+# Build/dev session artifacts — not project deliverables
+*.log
+android/app/build/
+android/build/
+android/.gradle/
+*.apk
+*.aab
+
+# Ad-hoc debug screenshots taken during development sessions
+lingorise-logo-check.png
+lingorise-topbar-check.png
+navbar_check.png
+redesign_bottom.png
+redesign_top.png
+screen_bottom_v2.png
+screen_final_bottom.png
+screen_final_top.png
+screen_top_v2.png
+screenshot_action_ready.png
