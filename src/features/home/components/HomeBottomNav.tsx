@@ -30,8 +30,14 @@ export function HomeBottomNav({
   dueReviewCount,
   onTabPress,
 }: Props) {
+  const insets = useSafeAreaInsets();
+  // The bar owns its own clearance from the system gesture area — a fixed
+  // floor guards against devices that under-report (or zero out) the inset
+  // despite drawing a home indicator, so it never looks flush against it.
+  const bottomPadding = Math.max(insets.bottom, 10);
+
   return (
-    <View style={S.nav} accessibilityRole="tablist">
+    <View style={[S.nav, { paddingBottom: bottomPadding }]} accessibilityRole="tablist">
       {TABS.map((tab) => {
         const isSel = activeTab === tab.id;
         const label = copy.home?.[tab.labelKey] || tab.id;
@@ -69,18 +75,21 @@ export function HomeBottomNav({
 
 const S = StyleSheet.create({
   nav: {
-    height: 64,
+    minHeight: 64,
+    paddingTop: 6,
     backgroundColor: "#FFFFFF",
     borderTopWidth: 1,
     borderTopColor: "#E7E1D7",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
     flexDirection: "row",
     justifyContent: "space-around",
     alignItems: "center",
     elevation: 4,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
   },
   item: {
     flex: 1,

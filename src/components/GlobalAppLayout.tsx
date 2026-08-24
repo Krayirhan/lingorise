@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { StatusBar, StyleSheet, View } from "react-native";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { GlobalTopBar, GlobalTopBarProps } from "./GlobalTopBar";
 import { GlobalBottomNav } from "./GlobalBottomNav";
 import { Copy } from "../i18n/en";
@@ -24,12 +24,10 @@ export function GlobalAppLayout({
   onTabPress,
   children,
 }: GlobalAppLayoutProps) {
-  const insets = useSafeAreaInsets();
-
   return (
     <SafeAreaView style={S.safe} edges={["top"]}>
       <StatusBar barStyle="dark-content" />
-      <View style={[S.shell, { paddingBottom: insets.bottom }]}>
+      <View style={S.shell}>
         {/* Unified Global Top Bar */}
         <GlobalTopBar {...topBarProps} />
 
