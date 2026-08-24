@@ -1,6 +1,6 @@
 # Sprint Planı — Birimlerin Sprint'lere Dağılımı
 
-Bu dosya, `00-INDEX.md`'deki 11 uygulanabilir birimin (Birim 12 hariç — o bir kapı, iş kalemi değil) somut sprint'lere dağılımını tutar. Mevcut projede zaten **6 sprint** (S0-S5) tamamlanmış durumda; buradaki plan **S6'dan başlar**.
+Bu dosya, `00-INDEX.md`'deki 11 uygulanabilir birimin (Birim 12 hariç — o bir kapı, iş kalemi değil) somut sprint'lere dağılımını tutar. Mevcut projede zaten **7 sprint** (S0-S6) tamamlanmış durumda; kalan plan **S7'den başlar**.
 
 ## Önceki sprintler (tamamlandı, referans için)
 
@@ -12,19 +12,22 @@ Bu dosya, `00-INDEX.md`'deki 11 uygulanabilir birimin (Birim 12 hariç — o bir
 | S3 | Bahçe & Bölümler | 9 | ✅ |
 | S4 | Terfi & Seviye | 5 | ✅ |
 | S5 | Tutarlılık | 12 | ✅ |
+| S6 | İçerik Genişletme + Hızlı Kazanımlar | 9 | ✅ |
 
-## Yeni sprintler (planlandı)
+## S6 — Tamamlandı (kanıtlı)
 
-### S6 — İçerik Genişletme + Hızlı Kazanımlar
+| Kaynak | Kalem | Kanıt |
+|---|---|---|
+| [01-content-expansion.md](01-content-expansion.md) §1.1 | A2 → 254 kelime (5 curated + 249 yeni, 7 konu) | `src/content/questions/a2Generated.ts` · `isLevelReady("A2") === true` artık geçiyor |
+| [01-content-expansion.md](01-content-expansion.md) §1.2 | A1'in 320 sorusunun tamamı gerçek örnek cümle taşıyor, şablon kalmadı | `src/content/vocabulary/a1ExampleSentences.ts` · yeni test: "No question ships a template example sentence" |
+| [06-behavior-messaging-gaps.md](06-behavior-messaging-gaps.md) §6.1 | Tekrar borcu limiti (40) aşılınca Pratik Merkezi nedenini açıklıyor | `PracticeHubScreen.tsx` `isDebtCapped` dalı, cihazda doğrulandı |
+| [06-behavior-messaging-gaps.md](06-behavior-messaging-gaps.md) §6.2-6.3 | Sessiz davranış taraması | Bu roadmap'in kendisi + §6.1 uygulaması |
+| [10-game-variety-and-content-quality.md](10-game-variety-and-content-quality.md) §10.2 | Zorluk/XP artık seviye + kelime uzunluğuna göre hesaplanıyor, sabit değil | `src/content/questions/difficulty.ts` |
+| [10-game-variety-and-content-quality.md](10-game-variety-and-content-quality.md) §10.3 | Pick the Word modu — yeni içerik gerektirmeden mevcut sorulardan türetiliyor | `src/domain/practice/reverseMode.ts` · cihazda "TÜRKÇE → İNGİLİZCE" akışı doğrulandı |
 
-| Kaynak | Kalem |
-|---|---|
-| [01-content-expansion.md](01-content-expansion.md) §1.1-1.4 | A2 → 250+ kelime, A1'in 315 şablon cümlesinin gerçek cümlelerle değiştirilmesi |
-| [06-behavior-messaging-gaps.md](06-behavior-messaging-gaps.md) §6.1-6.3 | Tekrar borcu limiti mesajı, sessiz davranış taraması |
-| [10-game-variety-and-content-quality.md](10-game-variety-and-content-quality.md) §10.2 | Zorluk ölçeklemesi — içerik üretimiyle birlikte yapılmalı |
-| [10-game-variety-and-content-quality.md](10-game-variety-and-content-quality.md) §10.3 | Pick the Word modu — mevcut veriden türetilir |
+**Toplam katalog: 590 soru** (A1: 320, A2: 254, B1-C2: 16). **Testler: 179 → 189.** Commit `36d665f`.
 
-**9 kalem · içerik-ağırlıklı, haftalarca sürebilir · kritik yolun başlangıcı**
+**Planla farkı:** §10.4 (Quick Review modu) zaten S6 kapsamı dışında bırakılmıştı, değişmedi. Diğer her kalem plandaki gibi kapatıldı.
 
 ### S7 — Doğrulama Altyapısı
 
