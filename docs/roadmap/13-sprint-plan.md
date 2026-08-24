@@ -1,6 +1,6 @@
 # Sprint Planı — Birimlerin Sprint'lere Dağılımı
 
-Bu dosya, `00-INDEX.md`'deki 11 uygulanabilir birimin (Birim 12 hariç — o bir kapı, iş kalemi değil) somut sprint'lere dağılımını tutar. Mevcut projede zaten **8 sprint** (S0-S7) tamamlanmış durumda; kalan plan **S8'den başlar**.
+Bu dosya, `00-INDEX.md`'deki 11 uygulanabilir birimin (Birim 12 hariç — o bir kapı, iş kalemi değil) somut sprint'lere dağılımını tutar. Mevcut projede zaten **9 sprint** (S0-S8) tamamlanmış durumda; kalan plan **S9'dan başlar**.
 
 ## Önceki sprintler (tamamlandı, referans için)
 
@@ -14,6 +14,7 @@ Bu dosya, `00-INDEX.md`'deki 11 uygulanabilir birimin (Birim 12 hariç — o bir
 | S5 | Tutarlılık | 12 | ✅ |
 | S6 | İçerik Genişletme + Hızlı Kazanımlar | 9 | ✅ |
 | S7 | Doğrulama Altyapısı | 8 | ✅ |
+| S8 | Sağlamlaştırma | 8 | ✅ |
 
 ## S6 — Tamamlandı (kanıtlı)
 
@@ -62,6 +63,21 @@ Bu dosya, `00-INDEX.md`'deki 11 uygulanabilir birimin (Birim 12 hariç — o bir
 | [08-migration-cleanup.md](08-migration-cleanup.md) §8.1-8.4 | Versiyonlu göç sistemi, mevcut üç göç yolunun toparlanması |
 
 **8 kalem · bağımsız, S6-S7 ile paralel yürütülebilir**
+
+## S8 — Tamamlandı (kanıtlı)
+
+| Kaynak | Kalem | Kanıt |
+|---|---|---|
+| [07-sync-robustness.md](07-sync-robustness.md) §7.1 | Üç çakışma senaryosu birim testiyle kapsandı | Yeni testler 40-41: saat kayması (clock skew) tie-break, 3 günlük offline/online cihaz senaryosu, paylaşılan kelimede zengin kaydın kazanması, `nextReviewAt`/`easeFactor`'ün asla parçalı (spliced) karışmadığının doğrulanması |
+| [07-sync-robustness.md](07-sync-robustness.md) §7.2 | Birleştirme kararı artık cihaz saatine değil sunucu zaman damgasına güveniyor | `src/domain/learning/mastery.ts` `pickRicherRecord` — attempts eşitse ve her iki taraf da en az bir kez senkron olduysa `serverSyncedAt` (Firestore `serverTimestamp()`) karar verir, cihaz saati (`lastAnsweredAt`) yalnızca hiç senkron olmamış kayıtlarda devre dışı yedek. `src/services/firestore.ts`: `syncUserData` her `learningProgress` öğesine `serverSyncedAt: serverTimestamp()` damgalıyor, `fetchUserData` Firestore `Timestamp` nesnelerini `.toMillis()` ile epoch ms'e çeviriyor |
+| [07-sync-robustness.md](07-sync-robustness.md) §7.3 | Gerçek çoklu cihaz testi | **Kısmi** — bu ortamda tek emülatör örneği var (S7'de tek emülatörün bile debug-build bağlantısında sorun yaşadığı görüldü), iki fiziksel/emülatör cihazla canlı Firestore testi yapılamadı. Bunun yerine testler 40-41, `mergeAndSyncUserData`'nın gerçekte çağırdığı aynı `mergeLearningProgress` fonksiyonunu, gerçek çok-cihaz senaryolarının ürettiği veri şekilleriyle (ayrık kelime kümeleri, ortak kelimede farklı zenginlikte kayıt, saat kayması) doğruluyor — üretim kod yolunun kendisi, sahte/mock bir kopyası değil. Gerçek iki-cihaz testi bir sonraki fırsatta (iki fiziksel cihaz veya iki ayrı emülatör + gerçek Firebase projesi ile) yapılmalı |
+| [07-sync-robustness.md](07-sync-robustness.md) §7.4 | Veri kaybı savunma hattı | Roadmap'in kendi koşuluna göre değerlendirildi: "sadece 7.1-7.3'te gerçek bir veri kaybı riski gözlemlenirse uygulanmalı". 7.1 testleri hiçbir senaryoda veri kaybı göstermedi (tüm kelimeler her durumda hayatta kaldı) — bu yüzden **bilinçli olarak uygulanmadı**, gereksiz karmaşıklık eklemekten kaçınıldı |
+| [08-migration-cleanup.md](08-migration-cleanup.md) §8.1 | Migration versiyonlama sistemi | `src/services/storage.ts`: `CURRENT_SCHEMA_VERSION = 3`, `detectStoredSchemaVersion()` versiyonsuz eski veriyi şekline bakarak sınıflandırıyor, `normalizeUserData` artık her zaman `schemaVersion` damgalıyor. Mevcut üç göç fonksiyonu (`migrateLearningProgress`, `isLegacyQuestSet`, `isSeededDemoProfile`) davranışı değiştirilmeden aynen korundu — DoD'nin "davranış değişmemeli" şartı gereği |
+| [08-migration-cleanup.md](08-migration-cleanup.md) §8.2 | Eski göç kodu izolasyonu | Mevcut fonksiyonlar zaten tek-sorumluluklu ve izoleydi (Sprint 0-2'de bu şekilde yazılmışlardı) — 8.1'in versiyon dedektörü bunların üzerine ekstra bir gözlemlenebilirlik katmanı olarak eklendi, mevcut kod yeniden yazılmadı |
+| [08-migration-cleanup.md](08-migration-cleanup.md) §8.3 | Göç telemetrisi | `src/services/telemetry.ts`'e `migration_applied` event'i eklendi (`fromVersion`, `toVersion`, `hadLegacyReviewQueue`, `hadLegacyQuestSet`) · `loadUserData()` artık her yüklemede versiyonu tespit edip, gerçek bir göç olduğunda (fromVersion < CURRENT_SCHEMA_VERSION) bu event'i tetikliyor |
+| [08-migration-cleanup.md](08-migration-cleanup.md) §8.4 | Eski göç yollarının silinme kriteri | Roadmap'in kendi metninde zaten belgeli: "bir son tarih değil, bir koşul" — telemetri `migration_applied` artık üretimde veri topluyor; bu veri birkaç ay boyunca sıfır göç gösterirse eski yollar güvenle silinebilir. Kod değişikliği gerektirmiyor, sadece karar kriterinin belgeli kaldığını teyit ediyoruz |
+
+**Testler: 198 → 211.** TypeScript: temiz. Release APK cihazda derlenip kuruldu, mevcut kullanıcı verisiyle (S7'den kalan ilerleme) sorunsuz açıldı — yeni `schemaVersion`/`serverSyncedAt` alanları geriye dönük uyumlu (opsiyonel alanlar), var olan hiçbir kaydı bozmadı.
 
 ### S9 — Erişilebilirlik + Çeşitlilik
 

@@ -32,7 +32,7 @@ import {
   countMasteredWords,
   mergeLearningProgress,
 } from "../src/domain/learning/mastery";
-import { DEFAULT_USER_DATA, normalizeUserData } from "../src/services/storage";
+import { DEFAULT_USER_DATA, normalizeUserData, CURRENT_SCHEMA_VERSION } from "../src/services/storage";
 import { ReviewItem, UserData } from "../src/types/user";
 import { useHomeViewModel } from "../src/features/home/hooks/useHomeViewModel";
 import { LevelCode } from "../src/types/content";
@@ -920,6 +920,114 @@ console.log("\n39. Telemetry Event Recording (roadmap Birim 5):");
     threw = true;
   }
   assert(!threw, "Every event in the roadmap's §5.2 event set is callable without throwing");
+}
+
+// 40. Merge conflict resolution survives device clock skew (roadmap Birim 7.1-7.2)
+console.log("\n40. Cross-Device Merge — Clock Skew (roadmap Birim 7.1-7.2):");
+{
+  // Equal attempts, but the local device's clock is skewed two hours into
+  // the future — lastAnsweredAt alone would wrongly pick the local record
+  // even though the remote one is genuinely the more recent answer. Once
+  // both sides carry a Firestore serverSyncedAt, that (not the device
+  // clock) must win the tie-break.
+  const twoHoursMs = 2 * 60 * 60 * 1000;
+  const now = 1_800_000_000_000;
+  const localSkewed = recordLearningOutcome(undefined, true, "2026-08-24", now + twoHoursMs);
+  const remoteReal = recordLearningOutcome(undefined, true, "2026-08-24", now);
+  assert(localSkewed.attempts === remoteReal.attempts, "Both records have the same attempt count — this is a true tie-break case");
+
+  const localWithOldServerStamp = { ...localSkewed, serverSyncedAt: now - DAY_MS };
+  const remoteWithNewServerStamp = { ...remoteReal, serverSyncedAt: now };
+  const resolved = mergeLearningProgress({ w: localWithOldServerStamp }, { w: remoteWithNewServerStamp });
+  assert(
+    resolved.w.serverSyncedAt === remoteWithNewServerStamp.serverSyncedAt,
+    "When both sides have synced before, the server-stamped record wins even though the device clock disagrees"
+  );
+
+  // Neither side has ever synced (serverSyncedAt undefined on both) — falls
+  // back to the pre-existing device-clock comparison, unchanged from before.
+  const neitherSynced = mergeLearningProgress({ w: localSkewed }, { w: remoteReal });
+  assert(
+    neitherSynced.w.lastAnsweredAt === localSkewed.lastAnsweredAt,
+    "Before either side has ever synced, the device clock is still the only signal available — same as pre-Sprint-8 behavior"
+  );
+
+  // The whole record is taken atomically — the winning record's own
+  // nextReviewAt/easeFactor/repetitions can never end up mismatched.
+  assert(
+    resolved.w.nextReviewAt === remoteWithNewServerStamp.nextReviewAt &&
+      resolved.w.easeFactor === remoteWithNewServerStamp.easeFactor,
+    "The winning record's schedule fields all come from the same record — never spliced from the loser"
+  );
+}
+
+// 41. A device offline for days must not lose or corrupt either side's work
+console.log("\n41. Cross-Device Merge — Multi-Day Offline Gap (roadmap Birim 7.1):");
+{
+  // Device A goes offline for 3 days and practices 3 words nobody else saw.
+  // Device B stays online for the same window and practices 3 different
+  // words. Neither device knows about the other's words until A reconnects.
+  const deviceAWords = ["offline-1", "offline-2", "offline-3"];
+  const deviceBWords = ["online-1", "online-2", "online-3"];
+  const deviceAProgress: Record<string, ReturnType<typeof recordLearningOutcome>> = {};
+  const deviceBProgress: Record<string, ReturnType<typeof recordLearningOutcome>> = {};
+
+  deviceAWords.forEach((id, i) => {
+    deviceAProgress[id] = recordLearningOutcome(undefined, true, "2026-09-01", 1000 + i);
+  });
+  deviceBWords.forEach((id, i) => {
+    deviceBProgress[id] = recordLearningOutcome(undefined, true, "2026-09-01", 2000 + i);
+  });
+
+  const reconciled = mergeLearningProgress(deviceAProgress, deviceBProgress);
+  assert(Object.keys(reconciled).length === 6, "All 6 words from both the offline device and the online device survive reconciliation");
+  assert(deviceAWords.every((id) => reconciled[id] !== undefined), "Every word the offline device learned is present after sync");
+  assert(deviceBWords.every((id) => reconciled[id] !== undefined), "Every word the online device learned is present after sync");
+
+  // The same word answered on both devices while A was offline: B answered
+  // it correctly 3 times (mastered on day 2), A only once. The richer
+  // record (more attempts) must win, carrying its OWN correct status —
+  // never a hybrid of the two.
+  const sharedWordOnA = recordLearningOutcome(undefined, true, "2026-09-01", 3000);
+  const sharedWordOnBDay1 = recordLearningOutcome(undefined, true, "2026-09-01", 4000);
+  const sharedWordOnBDay2 = recordLearningOutcome(sharedWordOnBDay1, true, "2026-09-02", 4001);
+  const sharedMerge = mergeLearningProgress({ shared: sharedWordOnA }, { shared: sharedWordOnBDay2 });
+  assert(sharedMerge.shared.attempts === sharedWordOnBDay2.attempts, "The device with more real practice on the shared word wins the merge");
+  assert(
+    deriveStatus(sharedMerge.shared) === deriveStatus(sharedWordOnBDay2),
+    "The merged record's status matches its own field values — not recomputed from a mix of both devices"
+  );
+}
+
+// 42. Migration versioning (roadmap Birim 8.1, 8.3)
+console.log("\n42. Migration Schema Versioning:");
+{
+  // Data with no schemaVersion at all, but already has the learningProgress
+  // structure — this is what every real user's stored data looked like
+  // before Sprint 8 shipped the version field.
+  const preVersioningUser = normalizeUserData({
+    xp: 90,
+    learningProgress: { "a1-mm-01": recordLearningOutcome(undefined, true, "2026-08-01", 1) },
+  } as Partial<UserData>);
+  assert(
+    preVersioningUser.schemaVersion === CURRENT_SCHEMA_VERSION,
+    `normalizeUserData always stamps the current schema version (${CURRENT_SCHEMA_VERSION}) even on unversioned input`
+  );
+
+  // Once-normalized data carries its version forward untouched.
+  const alreadyVersioned = normalizeUserData({ ...preVersioningUser } as Partial<UserData>);
+  assert(alreadyVersioned.schemaVersion === CURRENT_SCHEMA_VERSION, "Already-normalized data keeps the current schema version on reload");
+
+  // The oldest possible shape (solvedQuestionIds only, no learningProgress at
+  // all) still migrates cleanly and ends up on the current version — this is
+  // the exact case tests 16 and 25 already exercise; confirming schemaVersion
+  // doesn't break that path.
+  const oldestShape = normalizeUserData({
+    xp: 50,
+    solvedQuestionIds: ["a1-mm-02"],
+  } as Partial<UserData>);
+  assert(oldestShape.schemaVersion === CURRENT_SCHEMA_VERSION, "The oldest pre-learningProgress shape still normalizes to the current version");
+  assert(Object.keys(oldestShape.learningProgress).length === 1, "Migration 25's behavior is unchanged by the version stamp");
 }
 
 console.log("\n=========================================");

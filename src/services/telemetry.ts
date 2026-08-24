@@ -32,7 +32,8 @@ export type TelemetryEvent =
   | { name: "level_switch_warning_shown"; params: { currentLevel: string; targetLevel: string; currentMasteredPercent: number } }
   | { name: "level_switch_confirmed_ahead"; params: { currentLevel: string; targetLevel: string } }
   | { name: "daily_quest_completed"; params: { questId: string; xpEarned: number } }
-  | { name: "session_abandoned"; params: { questionsAnswered: number; questionsTotal: number } };
+  | { name: "session_abandoned"; params: { questionsAnswered: number; questionsTotal: number } }
+  | { name: "migration_applied"; params: { fromVersion: number; toVersion: number; hadLegacyReviewQueue: boolean; hadLegacyQuestSet: boolean } };
 
 const STORAGE_KEY = "@lingorise_telemetry_ring_v1";
 const RING_BUFFER_SIZE = 200;

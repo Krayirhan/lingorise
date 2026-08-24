@@ -4,7 +4,7 @@ import { createDailyQuests, DAILY_QUEST_PRACTICE_ID } from "../domain/gamificati
 import { LearningItemProgress } from "../types/user";
 import { deriveStatus } from "../domain/learning/mastery";
 import { DEFAULT_EASE_FACTOR } from "../domain/review/spacedRepetition";
-import { clearTelemetry } from "./telemetry";
+import { clearTelemetry, track } from "./telemetry";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 /** Days across which previously solved words are re-scheduled on upgrade. */
@@ -23,6 +23,36 @@ interface LegacyReviewItem {
 
 const STORAGE_KEY = "@lingorise_user_data_v2";
 const LEGACY_STORAGE_KEY = "@lingorise_user_data_v1";
+
+/**
+ * Migration versioning (roadmap Birim 8.1). Each version bump corresponds to
+ * one of the three migration paths that used to be detected only by "does
+ * this old field exist" checks scattered through normalizeUserData:
+ *   v1 — pre-learningProgress data: only solvedQuestionIds and/or the old
+ *        mistake-queue (`reviewQueue`) existed.
+ *   v2 — learningProgress introduced (Sprint 1-2), but quest records could
+ *        still carry the old target:2 shape from before the daily-rollover
+ *        rewrite.
+ *   v3 — current: schemaVersion is now stamped explicitly so future
+ *        migrations never again have to infer version from field shape.
+ * The migrations themselves (migrateLearningProgress, isLegacyQuestSet)
+ * still run their own idempotent shape checks below — this constant and
+ * detector exist for observability (8.3) and so a future v4 has a version
+ * number to gate on instead of one more "does this field exist" check.
+ */
+export const CURRENT_SCHEMA_VERSION = 3;
+
+/** Infers the version of data written before schemaVersion existed. */
+function detectStoredSchemaVersion(
+  data: Partial<UserData> & { reviewQueue?: LegacyReviewItem[]; schemaVersion?: number }
+): number {
+  if (typeof data.schemaVersion === "number") return data.schemaVersion;
+  if (data.learningProgress && typeof data.learningProgress === "object" && !Array.isArray(data.learningProgress)) {
+    return 2;
+  }
+  if (Array.isArray(data.solvedQuestionIds) || Array.isArray(data.reviewQueue)) return 1;
+  return CURRENT_SCHEMA_VERSION; // no recognizable legacy shape — nothing to migrate
+}
 
 export const DEFAULT_USER_DATA: UserData = {
   onboardingCompleted: false,
@@ -91,6 +121,7 @@ function migrateLearningProgress(
         easeFactor: item.easeFactor || DEFAULT_EASE_FACTOR,
         nextReviewAt: item.nextReviewAt ?? 0,
         lastAnsweredAt: item.lastAnsweredAt,
+        serverSyncedAt: item.serverSyncedAt,
       };
       migrated[id] = { ...repaired, status: deriveStatus(repaired) };
     }
@@ -210,6 +241,7 @@ export function normalizeUserData(data: Partial<UserData>): UserData {
     practiceHistory: Array.isArray(parsed.practiceHistory) ? parsed.practiceHistory : [],
     questHistory: Array.isArray(parsed.questHistory) ? parsed.questHistory : [],
     activeSession: parsed.activeSession || null,
+    schemaVersion: CURRENT_SCHEMA_VERSION,
   };
 }
 
@@ -233,7 +265,18 @@ export async function loadUserData(): Promise<UserData> {
       return DEFAULT_USER_DATA;
     }
 
-    return normalizeUserData(JSON.parse(raw));
+    const parsedRaw = JSON.parse(raw);
+    const fromVersion = detectStoredSchemaVersion(parsedRaw);
+    const normalized = normalizeUserData(parsedRaw);
+    if (fromVersion < CURRENT_SCHEMA_VERSION) {
+      track("migration_applied", {
+        fromVersion,
+        toVersion: CURRENT_SCHEMA_VERSION,
+        hadLegacyReviewQueue: Array.isArray(parsedRaw.reviewQueue) && parsedRaw.reviewQueue.length > 0,
+        hadLegacyQuestSet: isLegacyQuestSet(parsedRaw.dailyQuests),
+      });
+    }
+    return normalized;
   } catch (error) {
     console.warn("LingoRise: Error loading user data, fallback to defaults", error);
     return DEFAULT_USER_DATA;

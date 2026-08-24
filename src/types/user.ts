@@ -86,6 +86,13 @@ export interface LearningItemProgress {
   /** When this word should be asked again, epoch ms. */
   nextReviewAt: number;
   lastAnsweredAt?: number;
+  /**
+   * Firestore server time (epoch ms) of this record's last successful cloud
+   * sync. Device clocks can be skewed or simply wrong; this cannot be, which
+   * is why cross-device merge prefers it over lastAnsweredAt when both sides
+   * have one. Undefined until a record has synced at least once.
+   */
+  serverSyncedAt?: number;
 }
 
 export interface UserData {
@@ -120,6 +127,8 @@ export interface UserData {
   questHistory: QuestHistoryEntry[];
   activeSession?: ActiveSessionState | null;
   lastSyncSuccessAt?: number;
+  /** Storage schema version this record was last normalized to. Absent on data written before Sprint 8. */
+  schemaVersion?: number;
   lastCompletedWord?: {
     word: string;
     meaning: string;

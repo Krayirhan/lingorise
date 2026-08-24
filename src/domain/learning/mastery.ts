@@ -127,6 +127,30 @@ export function summarizeMastery(
 }
 
 /**
+ * Picks which of two records for the same word survives a merge. Attempt
+ * count is the primary signal because it never depends on either device's
+ * clock. When attempts tie, prefer Firestore's serverSyncedAt over the
+ * device-clock lastAnsweredAt — two devices can disagree about what time it
+ * is, but the server cannot disagree with itself. Only when neither side has
+ * ever synced (both serverSyncedAt undefined) does the tie-break fall back to
+ * the device clock, same as before this existed.
+ *
+ * The whole record is taken atomically, never spliced field-by-field, so the
+ * winning nextReviewAt/easeFactor/repetitions can never end up mismatched
+ * against each other.
+ */
+function pickRicherRecord(
+  a: LearningItemProgress,
+  b: LearningItemProgress
+): LearningItemProgress {
+  if (a.attempts !== b.attempts) return a.attempts > b.attempts ? a : b;
+  if (a.serverSyncedAt !== undefined && b.serverSyncedAt !== undefined) {
+    return a.serverSyncedAt >= b.serverSyncedAt ? a : b;
+  }
+  return (a.lastAnsweredAt || 0) >= (b.lastAnsweredAt || 0) ? a : b;
+}
+
+/**
  * Reconciles two recall records for the same learner (device and cloud).
  * The richer history wins per word, so signing in can never erase practice
  * that only one side saw.
@@ -139,15 +163,7 @@ export function mergeLearningProgress(
 
   for (const [id, localItem] of Object.entries(local || {})) {
     const remoteItem = merged[id];
-    if (!remoteItem) {
-      merged[id] = localItem;
-      continue;
-    }
-    const localIsRicher =
-      localItem.attempts > remoteItem.attempts ||
-      (localItem.attempts === remoteItem.attempts &&
-        (localItem.lastAnsweredAt || 0) >= (remoteItem.lastAnsweredAt || 0));
-    merged[id] = localIsRicher ? localItem : remoteItem;
+    merged[id] = remoteItem ? pickRicherRecord(localItem, remoteItem) : localItem;
   }
 
   return merged;

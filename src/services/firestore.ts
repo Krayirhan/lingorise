@@ -8,7 +8,7 @@ import {
   setDoc,
 } from "firebase/firestore";
 import { db } from "./firebase";
-import { UserData } from "../types/user";
+import { LearningItemProgress, UserData } from "../types/user";
 import { MeaningMatchQuestion } from "../types/content";
 import { mergeLearningProgress } from "../domain/learning/mastery";
 import { normalizeUserData } from "./storage";
@@ -16,13 +16,37 @@ import { normalizeUserData } from "./storage";
 import { withRetry } from "./errorReporter";
 import { logger } from "../utils/logger";
 
+/**
+ * Firestore returns serverTimestamp() fields as Timestamp objects, not plain
+ * numbers. Every other layer (merge logic, storage, tests) works in epoch ms,
+ * so the conversion happens once, right at the network boundary.
+ */
+function resolveServerSyncedTimestamps(
+  learningProgress: Record<string, LearningItemProgress> | undefined
+): Record<string, LearningItemProgress> | undefined {
+  if (!learningProgress || typeof learningProgress !== "object") return learningProgress;
+  const resolved: Record<string, LearningItemProgress> = {};
+  for (const [id, item] of Object.entries(learningProgress)) {
+    const raw: unknown = (item as LearningItemProgress & { serverSyncedAt?: unknown }).serverSyncedAt;
+    const serverSyncedAt =
+      raw && typeof (raw as { toMillis?: () => number }).toMillis === "function"
+        ? (raw as { toMillis: () => number }).toMillis()
+        : typeof raw === "number"
+          ? raw
+          : undefined;
+    resolved[id] = { ...item, serverSyncedAt };
+  }
+  return resolved;
+}
+
 /** Fetches remote user document from Firestore */
 export async function fetchUserData(userId: string): Promise<UserData | null> {
   try {
     return await withRetry(async () => {
       const snap = await getDoc(doc(db, "users", userId));
       if (snap.exists()) {
-        return snap.data() as UserData;
+        const data = snap.data() as UserData;
+        return { ...data, learningProgress: resolveServerSyncedTimestamps(data.learningProgress) || {} };
       }
       return null;
     }, 2, 400);
@@ -49,10 +73,20 @@ export async function deleteUserData(userId: string): Promise<void> {
 export async function syncUserData(userId: string, data: UserData): Promise<void> {
   try {
     await withRetry(async () => {
+      // Every word gets stamped with the server's clock, not this device's,
+      // so the next merge can resolve a tie without trusting either device's
+      // idea of what time it is.
+      const learningProgress = Object.fromEntries(
+        Object.entries(data.learningProgress || {}).map(([id, item]) => [
+          id,
+          { ...item, serverSyncedAt: serverTimestamp() },
+        ])
+      );
       await setDoc(
         doc(db, "users", userId),
         {
           ...data,
+          learningProgress,
           userId,
           updatedAt: serverTimestamp(),
         },
