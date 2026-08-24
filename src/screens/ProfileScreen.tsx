@@ -79,6 +79,7 @@ export function ProfileScreen({
             onValueChange={onNotificationToggle}
             trackColor={{ false: C.line, true: C.primary }}
             thumbColor={C.white}
+            accessibilityLabel={copy.profile?.remindersTitle || "Günlük Hatırlatıcılar"}
           />
         </View>
 

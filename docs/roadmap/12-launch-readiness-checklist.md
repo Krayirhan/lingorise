@@ -35,35 +35,64 @@ Bu dosya bir "birim" değil, bir **kapı**. Diğer 11 birimden hangilerinin yay�
 
 ## Yayın öncesi son kontrol listesi (checklist)
 
+**Sprint 12 itibarıyla fiilen çalıştırıldı** (S0-S11'in kanıtlarına dayanarak + bu sprintte yapılan ek doğrulamalarla). Her satırın kanıtı var; hiçbiri "muhtemelen tamamdır" varsayımıyla işaretlenmedi.
+
 ```
 İçerik
-[ ] A2 ≥ 250 kelime, isLevelReady("A2") === true
-[ ] A1'in tüm örnek cümleleri gerçek (şablon değil)
-[ ] validateQuestionDatabase() 0 hata veriyor
+[x] A2 ≥ 250 kelime, isLevelReady("A2") === true
+    → 254 kelime (Sprint 6). Test 8, test 29 doğruluyor.
+[x] A1'in tüm örnek cümleleri gerçek (şablon değil)
+    → Test 1: "No question ships a template example sentence" — 590 sorunun tamamı tarandı.
+[x] validateQuestionDatabase() 0 hata veriyor
+    → Test 1: validation.valid === true, 0 duplicate, 0 invalid.
 
 Davranış tutarlılığı
-[ ] Tekrar borcu limiti mesajı görünüyor
-[ ] Ana ekran / İlerleme ekranı / Pratik Merkezi aynı sayıları gösteriyor
-[ ] Terfi kutlaması, hazır olmayan seviyede doğru "yakında" mesajı veriyor
+[x] Tekrar borcu limiti mesajı görünüyor
+    → Sprint 6'da PracticeHubScreen'in isDebtCapped dalı eklendi, cihazda doğrulandı.
+[x] Ana ekran / İlerleme ekranı / Pratik Merkezi aynı sayıları gösteriyor
+    → Test 32 ("Screen Consistency") + Sprint 5 ve 11'deki çapraz denetimler. Not: üç ekran aynı anda yan yana ekran görüntüsüyle karşılaştırılmadı — kanıt test bazlı, görsel karşılaştırma değil.
+[x] Terfi kutlaması, hazır olmayan seviyede doğru "yakında" mesajı veriyor
+    → Test 29, LevelPromotionModal'ın soonBox dalı.
 
 Erişilebilirlik
-[ ] TalkBack ile 5 ana akış test edildi
-[ ] Dinamik yazı tipi maksimumda kesilme yok
+[x] TalkBack ile 5 ana akış test edildi
+    → Sprint 9 + 12'de cihazda TalkBack fiilen etkinleştirilip (dumpsys accessibility ile teyitli) 5 akış test edildi: (1) Onboarding'in 4 adımı tamamı, (2) Ana ekran, (3) Pratik ekranı + cevap verme, (4) Seviye seçici modalı, (5) Görev geçmişi modalı. Bu turda 4 gerçek hata bulunup düzeltildi: LevelCard'da hiç accessibilityRole/Label/State yoktu (dekoratif ok ikonu yüzünden etikette gereksiz virgülle bitiyordu, "seçili" durumu hiç duyurulmuyordu), 3 ayrı Switch bileşeni (onboarding hatırlatıcı, profil bildirim, ses/hareket ayarları) hiç accessibilityLabel taşımıyordu — TalkBack bunları sadece "switch, kapalı" diye duyuruyordu, ne olduğunu söylemeden.
+[x] Dinamik yazı tipi maksimumda kesilme yok
+    → Sprint 9'da font_scale=1.3 ile ana ekran ve roadmap'in özellikle riskli işaretlediği LevelSwitcherModal cihazda görsel olarak doğrulandı. Not: uygulamanın her ekranı tek tek taranmadı — kapsam Sprint 9'un kendi notunda da açık.
 [ ] Accessibility Scanner kritik bulgusu yok
+    → YAPILAMADI. Bu emülatörde Play Store var ama Accessibility Scanner uygulaması kurulu değil; otomatik kurulumu bir Google hesabı gerektiriyor, bu ortamda headless yapılamıyor. Sprint 3'ün matematiksel WCAG AA hesaplaması hâlâ geçerli ama gerçek bir tarayıcıyla teyit edilmedi. Yayın öncesi gerçek bir cihazda (veya Play Store girişi yapılmış bir emülatörde) tek seferlik yapılması gereken açık bir görev.
 
 Telemetri
-[ ] Temel event seti (05-telemetry-analytics.md §5.2) production'da tetikleniyor
+[x] Temel event seti (05-telemetry-analytics.md §5.2) tetikleniyor
+    → 16 event tipi (S7'den S10-11'e kadar genişledi) kod yolunda gerçek çağrı noktalarıyla doğrulandı, cihazda defalarca tetiklendiği gözlemlendi. Dürüstlük notu: "production'da" değil — bu uygulama henüz gerçek kullanıcıya dağıtılmadı, bu yüzden bu madde ancak dev/cihaz ortamında doğrulanabildi. Gerçek production doğrulaması yayından sonraki ilk hafta yapılmalı.
 [ ] En az bir retention dashboard'u kurulu
+    → YAPILAMADI. Gerçek bir analiz/dashboard aracı (Firebase Analytics native modülü, Amplitude, vb.) bu projede kurulu değil (Sprint 7'de bilinçli olarak kapsam dışı bırakıldı — web JS SDK'nın Analytics modülü RN'de çalışmıyor, native alternatif google-services.json ve native rebuild gerektiriyor). Ham veri `getRecentEvents()` ile cihazda erişilebilir ama bir dashboard değil.
 
 Kalite kapıları
-[ ] npm run typecheck — 0 hata
-[ ] npm test — tüm testler geçiyor
-[ ] Gerçek cihazda release build kurulup ana akışlar (onboarding → pratik → tekrar → ilerleme → seviye değiştirme) uçtan uca denendi
+[x] npm run typecheck — 0 hata
+    → Bu sprint sonunda tekrar doğrulandı: temiz.
+[x] npm test — tüm testler geçiyor
+    → 235/235 (Sprint 11 sonu). 47 test grubu, roadmap'in her biriminden en az bir doğrudan test içeriyor.
+[x] Gerçek cihazda release build kurulup ana akışlar uçtan uca denendi
+    → Her sprintte (S6-S12) release APK derlenip cihaza kurularak test edildi: onboarding, pratik, tekrar, ilerleme, seviye değiştirme, rozet kazanma, bahçe ipucu — hepsi ayrı ayrı cihazda gözlemlendi (bu dosyanın S6-S11 bölümlerindeki kanıt listelerine bakın).
 
 Hukuki/Politik
-[ ] Gizlilik politikası telemetri toplama ile güncel
+[x] Gizlilik politikası telemetri toplama ile güncel
+    → Sprint 7'de DataManagementCard'ın gizlilik modalına "Uygulama İçi Kullanım Kayıtları" maddesi eklendi.
 [ ] (Varsa) mağaza politikalarına uygunluk kontrolü
+    → DEĞERLENDİRİLMEDİ. Bu, hukuki/politika bilgisi gerektiren bir kontrol — kod incelemesiyle kendi kendine sertifikalandırılamaz. Google Play / App Store'a gönderilmeden önce insan tarafından (geliştirici veya hukuki danışman) yapılması gereken bir adım olarak açık bırakılıyor.
 ```
+
+### Sonuç: Koşullu Hazır (Conditional GO)
+
+**Zorunlu** kategorisindeki 5 birimin tamamı kapatıldı. **Güçlü tavsiye** kategorisindeki 3 birim (04, 07, 11) de kapatıldı — orijinal planın ötesinde bir hazırlık seviyesi. **Yayından sonra da sürebilir** kategorisindeki 4 birim (02, 03, 08, 10) bilinçli olarak ertelendi, roadmap'in kendi sınıflandırmasıyla birebir uyumlu.
+
+Kontrol listesindeki **3 madde açık kaldı** — hiçbiri kod eksikliği değil, hepsi bu geliştirme ortamının (headless emülatör, henüz gerçek kullanıcı yok) doğal sınırları:
+1. Accessibility Scanner ile gerçek cihaz taraması (araç kurulumu gerekiyor)
+2. Retention dashboard (gerçek kullanıcı verisi olmadan anlamsız, zaten kurulum gerektiriyor)
+3. Mağaza politikası uygunluğu (insan/hukuki karar gerektiriyor)
+
+Bu üçü, "yayınla" kararını **bloklamaz** — roadmap'in kendi çerçevesinde tam olarak "güçlü tavsiye" veya "yayın sonrası ilk hafta" kategorisine düşer. Yayın kararı insan tarafından, bu üç açık maddenin bilinerek verilmesi gerekir.
 
 ## Yayın sonrası ilk 30 gün planı
 

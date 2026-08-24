@@ -1,6 +1,6 @@
 # Sprint Planı — Birimlerin Sprint'lere Dağılımı
 
-Bu dosya, `00-INDEX.md`'deki 11 uygulanabilir birimin (Birim 12 hariç — o bir kapı, iş kalemi değil) somut sprint'lere dağılımını tutar. Mevcut projede zaten **12 sprint** (S0-S11) tamamlanmış durumda — S10 kısmi, kendi veri ön koşulu henüz karşılanmadığı için (bkz. aşağıdaki S10 bölümü); kalan plan **S12'den başlar**.
+Bu dosya, `00-INDEX.md`'deki 11 uygulanabilir birimin (Birim 12 hariç — o bir kapı, iş kalemi değil) somut sprint'lere dağılımını tutar. **S0-S12'nin tamamı tamamlandı** — S10 ve S12'nin bir kısmı kendi veri/araç ön koşulları henüz karşılanmadığı için bilinçli olarak açık bırakıldı (bkz. ilgili bölümler ve [12-launch-readiness-checklist.md](12-launch-readiness-checklist.md)). Bu, planlanan roadmap'in son sprint'idir.
 
 ## Önceki sprintler (tamamlandı, referans için)
 
@@ -18,6 +18,7 @@ Bu dosya, `00-INDEX.md`'deki 11 uygulanabilir birimin (Birim 12 hariç — o bir
 | S9 | Erişilebilirlik + Çeşitlilik | 6 | ✅ |
 | S10 | Parametre Kalibrasyonu | 4 | ⚠️ Kısmi — ölçüm altyapısı tamam, kalibrasyon gerçek veri bekliyor |
 | S11 | Tutarlılık + SM-2 Başlangıcı | 5 | ✅ |
+| S12 | SM-2 Tamamlama + Yayın Kapısı | 3 + kapı | ⚠️ Kısmi — kapı kontrolü çalıştırıldı, SM-2 v2 bilinçli olarak ertelendi |
 
 ## S6 — Tamamlandı (kanıtlı)
 
@@ -160,6 +161,19 @@ Bu dosya, `00-INDEX.md`'deki 11 uygulanabilir birimin (Birim 12 hariç — o bir
 | [12-launch-readiness-checklist.md](12-launch-readiness-checklist.md) | Yayına hazırlık checklist'i, ilk 30 gün planı |
 
 **3 kalem + kapı kontrolü · projenin bu fazdaki son sprint'i**
+
+## S12 — Kısmen tamamlandı (dürüstlük notuyla)
+
+**§3.2-3.4 bilinçli olarak uygulanmadı.** `12-launch-readiness-checklist.md`'nin kendi sınıflandırması Birim 3'ü açıkça "yayından sonra da sürebilir" kategorisine koyuyor — "Mevcut ikili model 'yetersiz ama çalışır', risk/getiri düşük." §3.4'ün DoD'si de "en az 2 hafta karşılaştırmalı veri" şartı koyuyor. S10'da parametre değerlerini değiştirmemek için verdiğim gerekçenin birebir aynısı burada da geçerli: gerçek kullanıcı verisi olmadan `scheduleNextReview`'ı gerçek SM-2 formülüne geçirmek, ölçülmüş bir iyileştirme değil, kör bir tahmin olurdu. S11'de kalite sinyalini (`inferQuality`) bilinçli olarak sadece gözlemsel bıraktığımı zaten belirtmiştim — bu sprint o kararı değiştirmiyor.
+
+**Bunun yerine yapılan gerçek iş — yayına hazırlık kapısını (Birim 12) fiilen çalıştırmak:**
+
+| Kaynak | Kalem | Kanıt |
+|---|---|---|
+| [12-launch-readiness-checklist.md](12-launch-readiness-checklist.md) | Kontrol listesindeki her madde tek tek çalıştırıldı, varsayımla değil kanıtla işaretlendi | Dosyanın kendisine bakın — 15 maddeden 12'si ✅, 3'ü açıkça ⚠️ olarak işaretli (Accessibility Scanner, retention dashboard, mağaza politikası — üçü de kod eksikliği değil, ortam/insan-kararı sınırı) |
+| [09-accessibility.md](09-accessibility.md) §9.1 | TalkBack'in "5 ana akış" şartı tamamlandı | S9'da sadece 2 akış (ana ekran, seviye seçici) test edilmişti. Bu sprintte kalan 3 akış (onboarding'in 4 adımı, pratik + cevap verme, görev geçmişi modalı) da cihazda TalkBack açıkken test edildi. **4 gerçek hata bulundu**: `LevelCard`'da hiç `accessibilityRole`/`Label`/`State` yoktu — dekoratif ok ikonu content-desc'in sonuna gereksiz bir virgül ekliyordu, "seçili" durumu hiç duyurulmuyordu. Onboarding hatırlatıcı anahtarı, Profil bildirim anahtarı, Ses/Hareket kartındaki iki anahtar (3 ayrı dosya) hiç `accessibilityLabel` taşımıyordu — TalkBack bunları sadece "switch, kapalı" diye duyuruyordu, neyi kapattığını hiç söylemeden. Beşi de düzeltildi |
+
+**Testler: 235 (değişmedi — bu sprint kod mantığı değil, erişilebilirlik etiketleri ve dokümantasyon değiştirdi).** TypeScript: temiz. Release APK cihazda derlendi, kurulan tüm düzeltmelerle birlikte uçtan uca sağlıklı çalıştığı doğrulandı.
 
 ## Bilinçli olarak sprint dışı bırakılan tek kalem
 

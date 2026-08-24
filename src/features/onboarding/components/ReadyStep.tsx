@@ -53,6 +53,7 @@ export function ReadyStep({ copy, notificationsEnabled = true, onStartGuest, onC
           onValueChange={setReminders}
           trackColor={{ false: C.line, true: C.primary }}
           thumbColor={C.white}
+          accessibilityLabel={copy.onboarding?.remindersTitle || "Bahçeni yeşil tutmak ister misin?"}
         />
       </View>
 

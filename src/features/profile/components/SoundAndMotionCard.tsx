@@ -33,6 +33,7 @@ export function SoundAndMotionCard({
           onValueChange={onSoundToggle}
           trackColor={{ false: C.line, true: C.primary }}
           thumbColor={C.white}
+          accessibilityLabel={copy.profile?.soundEffectsTitle || "Ses Efektleri"}
         />
       </View>
 
@@ -49,6 +50,7 @@ export function SoundAndMotionCard({
           onValueChange={onReduceMotionToggle}
           trackColor={{ false: C.line, true: C.primary }}
           thumbColor={C.white}
+          accessibilityLabel={copy.profile?.reduceMotionTitle || "Hareketi Azalt"}
         />
       </View>
     </View>
