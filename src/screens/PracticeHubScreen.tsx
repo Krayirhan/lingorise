@@ -112,8 +112,7 @@ export function PracticeHubScreen({
           </View>
           <Text style={S.sessionSizeHint}>{fill(copy.game?.hubSessionLengthHint || "Her pratikte {count} kelime gelir.", { count: practiceSessionSize })}</Text>
 
-          {/* Pick the Word reuses the same data reversed — no new content
-              needed, only which side is shown as the prompt. */}
+          {/* Directional Mode Switcher (EN -> TR / TR -> EN) */}
           <View style={S.modeRow}>
             <Pressable
               accessibilityRole="button"
@@ -122,7 +121,7 @@ export function PracticeHubScreen({
               onPress={() => setReverseMode(false)}
             >
               <Text style={[S.modeButtonText, !reverseMode && S.modeButtonTextActive]}>
-                {copy.game?.hubModePickMeaning || "Anlamı bul"}
+                {copy.game?.hubModePickMeaning || "İngilizce → Türkçe"}
               </Text>
             </Pressable>
             <Pressable
@@ -132,7 +131,7 @@ export function PracticeHubScreen({
               onPress={() => setReverseMode(true)}
             >
               <Text style={[S.modeButtonText, reverseMode && S.modeButtonTextActive]}>
-                {copy.game?.hubModePickWord || "Kelimeyi bul"}
+                {copy.game?.hubModePickWord || "Türkçe → İngilizce"}
               </Text>
             </Pressable>
           </View>
