@@ -6,6 +6,8 @@ import {
   DEFAULT_EASE_FACTOR,
   applyIntervalJitter,
   nextIntervalDays,
+  bringForward,
+  RELEARN_DELAY_MS,
 } from "../src/services/spacedRepetition";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -16,7 +18,9 @@ import {
   updateDailyQuests,
   applyDailyRollover,
   createDailyQuests,
+  archiveDailyQuests,
   DAILY_QUEST_PRACTICE_ID,
+  DAILY_QUEST_REVIEW_ID,
 } from "../src/services/gamification";
 import { applyPracticeAnswer } from "../src/domain/practice/answer";
 import { buildDailySession, REVIEW_DEBT_LIMIT, REVIEW_DEBT_TAPER_START, pickNewWords } from "../src/state/useAppSession";
@@ -1514,6 +1518,53 @@ console.log("\n54. Content-Generated XP/Difficulty:");
   assert(
     computeXpReward("B1", "a piece of cake") === 25,
     "A long/multi-word entry pays the level base plus the +5 long-word bonus, not a separately compounding amount"
+  );
+}
+
+// 55. Daily Quest Archiving & Manual Reschedule (roadmap 18-srs-flow-hardening.md CORE-003):
+console.log("\n55. Daily Quest Archiving & Manual Reschedule:");
+{
+  const quests = [
+    { id: DAILY_QUEST_PRACTICE_ID, titleKey: "questDailyPractice", current: 20, target: 20, xpReward: 30, completed: true },
+    { id: DAILY_QUEST_REVIEW_ID, titleKey: "questDailyReview", current: 0, target: 1, xpReward: 20, completed: false },
+  ];
+  const archived = archiveDailyQuests(quests, "2026-08-24");
+  assert(archived.length === 1, "archiveDailyQuests only archives quests that were actually completed");
+  assert(archived[0].questId === DAILY_QUEST_PRACTICE_ID, "The archived entry references the completed quest's id");
+  assert(archived[0].date === "2026-08-24", "The archived entry is stamped with the closing date, not today's date");
+
+  const noneCompleted = [
+    { id: DAILY_QUEST_PRACTICE_ID, titleKey: "questDailyPractice", current: 5, target: 20, xpReward: 30, completed: false },
+  ];
+  assert(
+    archiveDailyQuests(noneCompleted, "2026-08-24").length === 0,
+    "archiveDailyQuests archives nothing when no quest was completed"
+  );
+
+  const now = 1_000_000_000_000;
+  const farOutItem = {
+    status: "learning" as const,
+    attempts: 3,
+    correctCount: 1,
+    wrongCount: 2,
+    consecutiveWrongCount: 2,
+    repetitions: 1,
+    distinctCorrectDays: 1,
+    intervalDays: 30,
+    easeFactor: 2.5,
+    nextReviewAt: now + 30 * DAY_MS,
+  };
+  const broughtForward = bringForward(farOutItem, now);
+  assert(
+    broughtForward.nextReviewAt === now + RELEARN_DELAY_MS,
+    "bringForward pulls a far-future review in to the standard relearn delay"
+  );
+
+  const alreadySoonItem = { ...farOutItem, nextReviewAt: now + 5 * 60 * 1000 };
+  const stillSoon = bringForward(alreadySoonItem, now);
+  assert(
+    stillSoon.nextReviewAt === alreadySoonItem.nextReviewAt,
+    "bringForward never pushes a review LATER — an already-soon item is left untouched"
   );
 }
 
