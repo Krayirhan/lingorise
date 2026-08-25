@@ -73,6 +73,8 @@ export interface LearningItemProgress {
   attempts: number;
   correctCount: number;
   wrongCount: number;
+  /** Consecutive wrong answers. Mirrors `repetitions` (consecutive correct) but counts the opposite streak — resets to 0 on any correct answer. */
+  consecutiveWrongCount?: number;
   /** Consecutive correct recalls. A wrong answer sends this back to zero. */
   repetitions: number;
   /** Separate calendar days this word was recalled correctly. */
@@ -127,6 +129,8 @@ export interface UserData {
   questHistory: QuestHistoryEntry[];
   activeSession?: ActiveSessionState | null;
   lastSyncSuccessAt?: number;
+  /** Last known server date (YYYY-MM-DD or server timestamp) to detect clock anomalies. */
+  lastKnownServerDate?: string;
   /** Storage schema version this record was last normalized to. Absent on data written before Sprint 8. */
   schemaVersion?: number;
   /**

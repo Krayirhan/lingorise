@@ -15,12 +15,33 @@ import { track } from "../services/telemetry";
  */
 export const REVIEW_DEBT_LIMIT = 40;
 
+/** Bu noktadan REVIEW_DEBT_LIMIT'e kadar yeni kelime kotası doğrusal olarak azalır — ani bir kesim yerine yumuşak bir fren. */
+export const REVIEW_DEBT_TAPER_START = 20;
+
 /** Due words, soonest-scheduled first, resolved to real questions. */
 function collectDueQuestions(userData: UserData, limit: number): MeaningMatchQuestion[] {
   return getDueReviewItems(userData.learningProgress || {})
     .slice(0, limit)
     .map((item) => getQuestionById(item.questionId))
     .filter((q): q is MeaningMatchQuestion => q !== undefined);
+}
+
+/**
+ * Picks new words ordered by increasing difficulty (1-5), with randomized order
+ * within each difficulty group to prevent rote memorization while ensuring a gentle ramp.
+ */
+export function pickNewWords(freshWords: MeaningMatchQuestion[], count: number): MeaningMatchQuestion[] {
+  const byDifficulty = new Map<number, MeaningMatchQuestion[]>();
+  for (const q of freshWords) {
+    const d = q.difficulty || 1;
+    if (!byDifficulty.has(d)) byDifficulty.set(d, []);
+    byDifficulty.get(d)!.push(q);
+  }
+  const ordered = [...byDifficulty.keys()].sort((a, b) => a - b).flatMap((d) => {
+    const group = byDifficulty.get(d)!;
+    return [...group].sort(() => Math.random() - 0.5); // grup içinde hâlâ rastgele — ezber riski kalmıyor
+  });
+  return ordered.slice(0, count);
 }
 
 /**
@@ -35,13 +56,19 @@ function buildDailySessionCore(userData: UserData): MeaningMatchQuestion[] {
   const totalDue = getDueReviewItems(userData.learningProgress || {}).length;
   if (remainingSlots <= 0 || totalDue >= REVIEW_DEBT_LIMIT) return dueQuestions;
 
+  let newWordBudget = remainingSlots;
+  if (totalDue > REVIEW_DEBT_TAPER_START) {
+    const taperRatio = 1 - (totalDue - REVIEW_DEBT_TAPER_START) / (REVIEW_DEBT_LIMIT - REVIEW_DEBT_TAPER_START);
+    newWordBudget = Math.max(0, Math.round(remainingSlots * taperRatio));
+  }
+
   const unitQuestions = getCurrentLevelUnitQuestions(userData.level, userData.solvedQuestionIds);
   const dueIds = new Set(dueQuestions.map((q) => q.id));
   const freshWords = unitQuestions.filter(
     (q) => !userData.rewardedQuestionIds.includes(q.id) && !dueIds.has(q.id)
   );
 
-  const newPortion = [...freshWords].sort(() => Math.random() - 0.5).slice(0, remainingSlots);
+  const newPortion = pickNewWords(freshWords, newWordBudget);
   const session = [...dueQuestions, ...newPortion];
   if (session.length > 0) return session;
 

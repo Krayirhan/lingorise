@@ -18,12 +18,22 @@ export function createLearningItem(): LearningItemProgress {
     attempts: 0,
     correctCount: 0,
     wrongCount: 0,
+    consecutiveWrongCount: 0,
     repetitions: 0,
     distinctCorrectDays: 0,
     intervalDays: 0,
     easeFactor: DEFAULT_EASE_FACTOR,
     nextReviewAt: 0,
   };
+}
+
+/** Anki'nin varsayılan leech eşiğiyle aynı — art arda 8 yanlıştan sonra bir kelime "kronik zor" sayılır. */
+export const LEECH_THRESHOLD = 8;
+
+/** Chronic error (leech) detection: words failed 8 or more times in a row. */
+export function isLeech(item: LearningItemProgress | undefined): boolean {
+  if (!item) return false;
+  return (item.consecutiveWrongCount || 0) >= LEECH_THRESHOLD;
 }
 
 /**
@@ -57,6 +67,7 @@ export function recordLearningOutcome(
 
   const isNewCorrectDay = isCorrect && base.lastCorrectDate !== todayDate;
   const repetitions = isCorrect ? base.repetitions + 1 : 0;
+  const consecutiveWrongCount = isCorrect ? 0 : (base.consecutiveWrongCount || 0) + 1;
 
   // Recall record and schedule move together, from one answer, so they can
   // never disagree about how well a word is known.
@@ -71,6 +82,7 @@ export function recordLearningOutcome(
     attempts: base.attempts + 1,
     correctCount: base.correctCount + (isCorrect ? 1 : 0),
     wrongCount: base.wrongCount + (isCorrect ? 0 : 1),
+    consecutiveWrongCount,
     repetitions,
     distinctCorrectDays: base.distinctCorrectDays + (isNewCorrectDay ? 1 : 0),
     lastCorrectDate: isCorrect ? todayDate : base.lastCorrectDate,

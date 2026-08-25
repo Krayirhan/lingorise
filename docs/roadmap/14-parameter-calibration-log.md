@@ -10,6 +10,7 @@ Bu dosya [02-parameter-validation.md](02-parameter-validation.md)'nin DoD'sindek
 |---|---|---|
 | Mastery eşiği | 3 ardışık doğru + 2 farklı gün | `src/domain/learning/mastery.ts` (`MASTERED_THRESHOLD`, `MASTERED_MIN_DISTINCT_DAYS`) |
 | Tekrar borcu limiti | 40 kelime | `src/state/useAppSession.ts` (`REVIEW_DEBT_LIMIT`) |
+| Tekrar borcu kademeli azalma başlangıcı | 20 kelime | `src/state/useAppSession.ts` (`REVIEW_DEBT_TAPER_START`) |
 | Bölüm boyutu | 30 kelime | `src/content/questions/index.ts` (`CONTENT_UNIT_SIZE`) |
 | Terfi eşiği | %80 mastery | `src/domain/learning/promotion.ts` (`PROMOTION_THRESHOLD_PERCENT`) |
 | Yeniden öğrenme gecikmesi | 20 dakika | `src/domain/review/spacedRepetition.ts` (`RELEARN_DELAY_MS`) |

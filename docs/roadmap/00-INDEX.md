@@ -33,6 +33,8 @@ Her dosya bağımsız bir **birim** — kendi başına planlanabilir, kendi baş
 
 **Faz 2'nin sprint dağılımı (S13-S18) için:** [16-phase2-sprint-plan.md](16-phase2-sprint-plan.md)
 
+**Günlük akış ve SRS sağlamlaştırması (yeni denetim bulguları) için:** [18-srs-flow-hardening.md](18-srs-flow-hardening.md)
+
 ## Zaman çizelgesi (kabaca)
 
 ```

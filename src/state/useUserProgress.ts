@@ -8,10 +8,10 @@ import { applyDailyRollover } from "../domain/gamification/dailyRollover";
 import { bringForward, getDueReviewItems } from "../domain/review/spacedRepetition";
 import { applyPracticeAnswer, PracticeSessionMode } from "../domain/practice/answer";
 import { auth } from "../services/firebase";
-import { syncLearningItemProgress, syncUserData, syncUserProgress } from "../services/firestore";
+import { fetchUserData, syncLearningItemProgress, syncUserData, syncUserProgress } from "../services/firestore";
 import { cancelDailyReminder, scheduleDailyReminder } from "../services/notificationService";
 import { track } from "../services/telemetry";
-import { deriveStatus, countMasteredWords } from "../domain/learning/mastery";
+import { deriveStatus, countMasteredWords, isLeech } from "../domain/learning/mastery";
 import { calculateGardenProgress } from "../domain/gamification/xp";
 import { detectUnitJustCompleted } from "../content/questions";
 import { inferQuality } from "../domain/review/qualitySignal";
@@ -21,6 +21,20 @@ function daysBetween(fromISO: string, toISO: string): number {
   const from = new Date(`${fromISO}T00:00:00Z`).getTime();
   const to = new Date(`${toISO}T00:00:00Z`).getTime();
   return Math.round((to - from) / (24 * 60 * 60 * 1000));
+}
+
+function checkServerDateAnomaly(lastKnownServerDate?: string, todayFormatted?: string) {
+  const user = auth.currentUser;
+  if (user && lastKnownServerDate && todayFormatted) {
+    const diffDays = daysBetween(lastKnownServerDate, todayFormatted);
+    if (diffDays > 1) {
+      track("suspicious_date_jump", {
+        deviceDate: todayFormatted,
+        lastKnownServerDate,
+        daysDifference: diffDays,
+      });
+    }
+  }
 }
 
 export function useUserProgress() {
@@ -34,6 +48,8 @@ export function useUserProgress() {
     async function init() {
       const loaded = await loadUserData();
       const streakResult = updateDailyStreak(loaded.lastActiveDate, loaded.streak);
+
+      checkServerDateAnomaly(loaded.lastKnownServerDate, streakResult.todayFormatted);
 
       track("session_started", {
         daysSinceLastOpen: loaded.lastActiveDate
@@ -97,6 +113,23 @@ export function useUserProgress() {
   const refresh = useCallback(async () => {
     const loaded = await loadUserData();
     const streakResult = updateDailyStreak(loaded.lastActiveDate, loaded.streak);
+
+    // The locally cached lastKnownServerDate is only ever written at sign-in
+    // (AppBootstrap's onAuthStateChanged flow) or here. A long session between
+    // sign-ins would otherwise check clock-manipulation against an
+    // increasingly stale reference, so every refresh() re-anchors it against
+    // Firestore's actual clock for signed-in users — cheap because refresh()
+    // is already a deliberate, infrequent action (pull-to-refresh, sign-in).
+    const user = auth.currentUser;
+    let lastKnownServerDate = loaded.lastKnownServerDate;
+    if (user) {
+      const remote = await fetchUserData(user.uid);
+      if (remote?.lastKnownServerDate) {
+        lastKnownServerDate = remote.lastKnownServerDate;
+      }
+    }
+
+    checkServerDateAnomaly(lastKnownServerDate, streakResult.todayFormatted);
     if (streakResult.isNewDay) {
       track("daily_rollover_applied", {
         streakBefore: loaded.streak,
@@ -111,10 +144,10 @@ export function useUserProgress() {
       ...rolled,
       streak: streakResult.newStreak,
       lastActiveDate: streakResult.todayFormatted,
+      lastKnownServerDate,
     };
     setUserData(updated);
     await saveUserData(updated);
-    const user = auth.currentUser;
     if (user) {
       await Promise.all([syncUserData(user.uid, updated), syncUserProgress(user.uid, updated)]);
     }
@@ -170,6 +203,15 @@ export function useUserProgress() {
           const toStatus = deriveStatus(nextItem);
           if (fromStatus !== toStatus) {
             track("word_mastery_changed", { fromStatus, toStatus, questionId: question.id });
+          }
+
+          const wasLeech = isLeech(prevItem);
+          const nowLeech = isLeech(nextItem);
+          if (!wasLeech && nowLeech) {
+            track("word_marked_leech", {
+              questionId: question.id,
+              consecutiveWrongCount: nextItem.consecutiveWrongCount || 0,
+            });
           }
         }
 

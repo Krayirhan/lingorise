@@ -53,6 +53,8 @@ export type TelemetryEvent =
   | { name: "session_abandoned"; params: { questionsAnswered: number; questionsTotal: number } }
   | { name: "practice_session_completed"; params: { questionsAnswered: number; questionsTotal: number; correctCount: number; sessionMode: string } }
   | { name: "unit_completed"; params: { level: string; unitIndex: number; wordsInUnit: number } }
+  | { name: "word_marked_leech"; params: { questionId: string; consecutiveWrongCount: number } }
+  | { name: "suspicious_date_jump"; params: { deviceDate: string; lastKnownServerDate: string; daysDifference: number } }
   | { name: "migration_applied"; params: { fromVersion: number; toVersion: number; hadLegacyReviewQueue: boolean; hadLegacyQuestSet: boolean } };
 
 const STORAGE_KEY = "@lingorise_telemetry_ring_v1";

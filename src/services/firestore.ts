@@ -41,14 +41,33 @@ function resolveServerSyncedTimestamps(
   return resolved;
 }
 
+function resolveServerDate(raw: unknown): string | undefined {
+  if (!raw) return undefined;
+  if (typeof raw === "string") return raw;
+  if (raw && typeof (raw as { toDate?: () => Date }).toDate === "function") {
+    return (raw as { toDate: () => Date }).toDate().toISOString().split("T")[0];
+  }
+  if (raw && typeof (raw as { toMillis?: () => number }).toMillis === "function") {
+    return new Date((raw as { toMillis: () => number }).toMillis()).toISOString().split("T")[0];
+  }
+  if (typeof raw === "number") {
+    return new Date(raw).toISOString().split("T")[0];
+  }
+  return undefined;
+}
+
 /** Fetches remote user document from Firestore */
 export async function fetchUserData(userId: string): Promise<UserData | null> {
   try {
     return await withRetry(async () => {
       const snap = await getDoc(doc(db, "users", userId));
       if (snap.exists()) {
-        const data = snap.data() as UserData;
-        return { ...data, learningProgress: resolveServerSyncedTimestamps(data.learningProgress) || {} };
+        const data = snap.data() as UserData & { lastKnownServerDate?: unknown };
+        return {
+          ...data,
+          learningProgress: resolveServerSyncedTimestamps(data.learningProgress) || {},
+          lastKnownServerDate: resolveServerDate(data.lastKnownServerDate),
+        };
       }
       return null;
     }, 2, 400);
@@ -108,6 +127,7 @@ export async function syncUserData(userId: string, data: UserData): Promise<void
           ...data,
           learningProgress,
           userId,
+          lastKnownServerDate: serverTimestamp(),
           updatedAt: serverTimestamp(),
         },
         { merge: true }

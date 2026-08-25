@@ -4,6 +4,8 @@ import {
   getDueReviewItems,
   isItemDue,
   DEFAULT_EASE_FACTOR,
+  applyIntervalJitter,
+  nextIntervalDays,
 } from "../src/services/spacedRepetition";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -17,7 +19,7 @@ import {
   DAILY_QUEST_PRACTICE_ID,
 } from "../src/services/gamification";
 import { applyPracticeAnswer } from "../src/domain/practice/answer";
-import { buildDailySession, REVIEW_DEBT_LIMIT } from "../src/state/useAppSession";
+import { buildDailySession, REVIEW_DEBT_LIMIT, REVIEW_DEBT_TAPER_START, pickNewWords } from "../src/state/useAppSession";
 import {
   evaluatePromotion,
   assessLevelChoice,
@@ -32,6 +34,8 @@ import {
   summarizeMastery,
   countMasteredWords,
   mergeLearningProgress,
+  isLeech,
+  LEECH_THRESHOLD,
 } from "../src/domain/learning/mastery";
 import { DEFAULT_USER_DATA, normalizeUserData, CURRENT_SCHEMA_VERSION, migrateV1ToV2, migrateV2ToV3 } from "../src/services/storage";
 import { ReviewItem, UserData } from "../src/types/user";
@@ -40,7 +44,7 @@ import { LevelCode } from "../src/types/content";
 import { getAuthErrorMessage } from "../src/services/authErrors";
 import { isOfflineError } from "../src/services/errorReporter";
 import { componentSizes, iconSizes } from "../src/theme/tokens";
-import { track } from "../src/services/telemetry";
+import { track, getRecentEvents, clearTelemetry } from "../src/services/telemetry";
 import { randomizeDistractors } from "../src/domain/practice/distractors";
 import { inferQuality } from "../src/domain/review/qualitySignal";
 import * as fs from "fs";
@@ -1279,6 +1283,200 @@ console.log("\n48. Isolated Migration Steps (roadmap Birim 8/20):");
     v3Shape.dailyQuests === alreadyV3Quests,
     "migrateV2ToV3 returns the exact same quest array reference when it is already current — a true no-op, not a reconstruction"
   );
+}
+
+// 49. Interval Jitter & Load Balancing (roadmap Birim 18.1):
+console.log("\n49. Interval Jitter & Load Balancing (roadmap Birim 18.1):");
+{
+  // 1 and 3-day fixed steps are never jittered
+  assert(applyIntervalJitter(1, () => 1.0) === 1, "Interval 1 day is untouched by jitter");
+  assert(applyIntervalJitter(2, () => 1.0) === 2, "Interval 2 days is untouched by jitter");
+  assert(applyIntervalJitter(3, () => 1.0) === 3, "Interval 3 days is untouched by jitter");
+  assert(applyIntervalJitter(3, () => 0.0) === 3, "Interval 3 days is untouched even with min random");
+
+  // Deterministic random injection test: days = 100, ratio = 0.05 -> range = 5
+  // random = 0 -> offset = -5 -> 95
+  assert(applyIntervalJitter(100, () => 0) === 95, "applyIntervalJitter min boundary (-5% at 100 days)");
+  // random = 0.9999 -> offset = +5 -> 105
+  assert(applyIntervalJitter(100, () => 0.9999) === 105, "applyIntervalJitter max boundary (+5% at 100 days)");
+  // random = 0.5 -> offset = 0 -> 100
+  assert(applyIntervalJitter(100, () => 0.5) === 100, "applyIntervalJitter midpoint (0% offset at 100 days)");
+
+  // Minimum floor test: jittered value never falls below JITTER_MIN_DAYS (4)
+  assert(applyIntervalJitter(4, () => 0) >= 4, "applyIntervalJitter never falls below JITTER_MIN_DAYS (4)");
+
+  // nextIntervalDays behavior with repetition steps
+  assert(nextIntervalDays(1, 0, 2.5) === 1, "nextIntervalDays for repetition 1 remains exactly 1 day");
+  assert(nextIntervalDays(2, 1, 2.5) === 3, "nextIntervalDays for repetition 2 remains exactly 3 days");
+
+  // Multi-item load balancing simulation: 20 words scheduled on the same day
+  const simulatedIntervals = new Set<number>();
+  for (let i = 0; i < 20; i++) {
+    // repetitions = 3, previousInterval = 8, easeFactor = 2.5 -> grown = 20
+    const interval = nextIntervalDays(3, 8, 2.5);
+    simulatedIntervals.add(interval);
+  }
+  // ±5% of 20 is ±1 (19, 20, 21) -> at least 2 distinct values out of 20 samples (~30% variation)
+  assert(
+    simulatedIntervals.size >= 2,
+    `20 simulated words scheduled on the same day distribute across multiple days (${simulatedIntervals.size} distinct intervals)`
+  );
+}
+
+// 50. Chronic Error (Leech) Detection (roadmap Birim 18.2):
+console.log("\n50. Chronic Error (Leech) Detection (roadmap Birim 18.2):");
+{
+  assert(LEECH_THRESHOLD === 8, "LEECH_THRESHOLD is defined as 8 consecutive wrong answers");
+
+  let item = recordLearningOutcome(undefined, false, "2026-08-25", 1000);
+  assert(item.consecutiveWrongCount === 1, "First wrong answer sets consecutiveWrongCount to 1");
+  assert(!isLeech(item), "Item with 1 wrong answer is not a leech");
+
+  // Up to 7 consecutive wrong answers
+  for (let i = 2; i <= 7; i++) {
+    item = recordLearningOutcome(item, false, "2026-08-25", 1000 + i * 1000);
+    assert(item.consecutiveWrongCount === i, `Consecutive wrong count is ${i}`);
+    assert(!isLeech(item), `Item with ${i} consecutive wrong answers is not yet a leech`);
+  }
+
+  // 8th consecutive wrong answer reaches threshold
+  item = recordLearningOutcome(item, false, "2026-08-25", 9000);
+  assert(item.consecutiveWrongCount === 8, "8th wrong answer reaches consecutiveWrongCount 8");
+  assert(isLeech(item), "Item with 8 consecutive wrong answers is marked as leech");
+
+  // 9th consecutive wrong answer stays a leech
+  item = recordLearningOutcome(item, false, "2026-08-25", 10000);
+  assert(item.consecutiveWrongCount === 9, "9th wrong answer increments consecutiveWrongCount to 9");
+  assert(isLeech(item), "Item with 9 consecutive wrong answers remains a leech");
+
+  // A single correct answer resets the streak
+  item = recordLearningOutcome(item, true, "2026-08-26", 20000);
+  assert(item.consecutiveWrongCount === 0, "Correct answer resets consecutiveWrongCount to 0");
+  assert(!isLeech(item), "Item is no longer a leech after a correct answer");
+
+  // Telemetry event call test
+  track("word_marked_leech", { questionId: "a1-mm-test", consecutiveWrongCount: 8 });
+  assert(true, "word_marked_leech telemetry event is callable without errors");
+}
+
+// 51. Difficulty-Based New Word Ordering (roadmap Birim 18.3):
+console.log("\n51. Difficulty-Based New Word Ordering (roadmap Birim 18.3):");
+{
+  const testPool: any[] = [
+    { id: "q-d3-1", word: "complex", difficulty: 3, level: "A1" },
+    { id: "q-d1-1", word: "cat", difficulty: 1, level: "A1" },
+    { id: "q-d2-1", word: "water", difficulty: 2, level: "A1" },
+    { id: "q-d1-2", word: "dog", difficulty: 1, level: "A1" },
+    { id: "q-d3-2", word: "difficult", difficulty: 3, level: "A1" },
+    { id: "q-d2-2", word: "bread", difficulty: 2, level: "A1" },
+    { id: "q-d1-3", word: "sun", difficulty: 1, level: "A1" },
+  ];
+
+  const picked = pickNewWords(testPool, 7);
+  assert(picked.length === 7, "pickNewWords returns requested count of words");
+
+  // All difficulty 1 words must precede difficulty 2 words, which must precede difficulty 3 words
+  const diffs = picked.map((q) => q.difficulty || 1);
+  let isMonotonic = true;
+  for (let i = 1; i < diffs.length; i++) {
+    if (diffs[i] < diffs[i - 1]) {
+      isMonotonic = false;
+      break;
+    }
+  }
+  assert(isMonotonic, `New words arrive in ascending difficulty order (${diffs.join(", ")})`);
+
+  // Group-internal variation check: multiple calls shuffle words within the same difficulty bucket
+  const bucketPool: any[] = [
+    { id: "b-1", word: "one", difficulty: 2, level: "A1" },
+    { id: "b-2", word: "two", difficulty: 2, level: "A1" },
+    { id: "b-3", word: "three", difficulty: 2, level: "A1" },
+    { id: "b-4", word: "four", difficulty: 2, level: "A1" },
+    { id: "b-5", word: "five", difficulty: 2, level: "A1" },
+  ];
+  const orderings = new Set<string>();
+  for (let trial = 0; trial < 15; trial++) {
+    const res = pickNewWords(bucketPool, 5);
+    orderings.add(res.map((q) => q.id).join("-"));
+  }
+  assert(
+    orderings.size > 1,
+    `Words in the same difficulty group vary in order across runs (${orderings.size} permutations seen) to prevent rote memorization`
+  );
+}
+
+// 52. Review Debt Tapered Reduction (roadmap Birim 18.4):
+console.log("\n52. Review Debt Tapered Reduction (roadmap Birim 18.4):");
+{
+  assert(REVIEW_DEBT_TAPER_START === 20, "REVIEW_DEBT_TAPER_START is set to 20");
+  assert(REVIEW_DEBT_LIMIT === 40, "REVIEW_DEBT_LIMIT is set to 40");
+
+  const a1Pool = getQuestionsByLevel("A1");
+
+  // Simulate user data with total due below taper start (10 due words)
+  const userBelowTaper: UserData = {
+    ...DEFAULT_USER_DATA,
+    practiceSessionSize: 20,
+    learningProgress: Object.fromEntries(
+      a1Pool.slice(0, 10).map((q) => [
+        q.id,
+        { status: "learning", attempts: 1, correctCount: 1, wrongCount: 0, repetitions: 1, distinctCorrectDays: 1, intervalDays: 1, easeFactor: 2.5, nextReviewAt: 0 },
+      ])
+    ),
+  };
+  const sessionBelow = buildDailySession(userBelowTaper);
+  assert(sessionBelow.length === 20, "Session with 10 due words fills full 20 slots");
+  // 10 due + 10 fresh words (remainingSlots = 10, no taper applied)
+  const freshCountBelow = sessionBelow.length - 10;
+  assert(freshCountBelow === 10, `Full quota of 10 new words introduced when total due (10) <= taper start (20)`);
+
+  // Simulate user data with total due at midpoint of taper (30 due words)
+  // Let's test with practiceSessionSize = 40, collectDueQuestions takes 30, remainingSlots = 10:
+  // Using questions from unit 2 (slice 30..60) as due, so unit 1 still has fresh words.
+  const userMidTaper: UserData = {
+    ...DEFAULT_USER_DATA,
+    practiceSessionSize: 40 as any,
+    learningProgress: Object.fromEntries(
+      a1Pool.slice(30, 60).map((q) => [
+        q.id,
+        { status: "learning", attempts: 1, correctCount: 1, wrongCount: 0, repetitions: 1, distinctCorrectDays: 1, intervalDays: 1, easeFactor: 2.5, nextReviewAt: 0 },
+      ])
+    ),
+  };
+  const sessionMid = buildDailySession(userMidTaper);
+  // remainingSlots = 40 - 30 = 10; totalDue = 30; taperRatio = 1 - (30 - 20)/(40 - 20) = 0.5 -> newWordBudget = round(10 * 0.5) = 5
+  // total session length = 30 due + 5 fresh = 35
+  const freshCountMid = sessionMid.length - 30;
+  assert(
+    freshCountMid === 5,
+    `Tapered quota of 5 new words (50% of 10) introduced when total due (30) is midway between 20 and 40`
+  );
+
+  // Simulate user data at review debt cap (40 due words)
+  const userCapped: UserData = {
+    ...DEFAULT_USER_DATA,
+    practiceSessionSize: 40 as any,
+    learningProgress: Object.fromEntries(
+      a1Pool.slice(0, 40).map((q) => [
+        q.id,
+        { status: "learning", attempts: 1, correctCount: 1, wrongCount: 0, repetitions: 1, distinctCorrectDays: 1, intervalDays: 1, easeFactor: 2.5, nextReviewAt: 0 },
+      ])
+    ),
+  };
+  const sessionCapped = buildDailySession(userCapped);
+  const freshCountCapped = sessionCapped.length - 40;
+  assert(freshCountCapped === 0, `0 new words introduced when total due (40) reaches REVIEW_DEBT_LIMIT`);
+}
+
+// 53. Server Date Anomaly Detection (roadmap Birim 18.5):
+console.log("\n53. Server Date Anomaly Detection (roadmap Birim 18.5):");
+{
+  track("suspicious_date_jump", {
+    deviceDate: "2026-08-30",
+    lastKnownServerDate: "2026-08-25",
+    daysDifference: 5,
+  });
+  assert(true, "suspicious_date_jump telemetry event recorded without errors");
 }
 
 console.log("\n=========================================");
