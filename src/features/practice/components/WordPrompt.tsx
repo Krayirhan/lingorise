@@ -52,7 +52,12 @@ export function WordPrompt({
           {posLabel ? <View style={S.posBadge}><Text style={S.posText}>{posLabel}</Text></View> : null}
         </View>
         {question.hint && (
-          <Pressable style={S.hintBtn} onPress={onToggleHint}>
+          <Pressable
+            style={S.hintBtn}
+            onPress={onToggleHint}
+            accessibilityRole="button"
+            accessibilityLabel={showHint ? (copy.game?.hintActive || "İpucu açık") : (copy.game?.hint || "İpucu")}
+          >
             <Ionicons name="bulb-outline" size={13} color={showHint ? C.rewardText : C.muted} />
             <Text style={[S.hintTxt, showHint && S.hintTxtAct]}>{showHint ? (copy.game?.hintActive || "İpucu açık") : (copy.game?.hint || "İpucu")}</Text>
           </Pressable>
@@ -67,7 +72,12 @@ export function WordPrompt({
           {question.phonetic && <Text style={S.pho}>{question.phonetic}</Text>}
         </View>
         <Animated.View style={!isMotionReduced && isSpeaking ? { transform: [{ scale: audioPulse }] } : undefined}>
-          <Pressable style={({ pressed }) => [S.audioBtn, isSpeaking && S.audioBtnAct, pressed && S.audioBtnPre]} onPress={onToggleSpeech}>
+          <Pressable
+            style={({ pressed }) => [S.audioBtn, isSpeaking && S.audioBtnAct, pressed && S.audioBtnPre]}
+            onPress={onToggleSpeech}
+            accessibilityRole="button"
+            accessibilityLabel={isSpeaking ? (copy.game?.playingAudio || "Seslendiriliyor...") : (copy.game?.listenTooltip || "Telaffuzu dinle")}
+          >
             <Ionicons name={isSpeaking ? "volume-high" : "volume-medium"} size={19} color={isSpeaking ? C.white : C.primary} />
           </Pressable>
         </Animated.View>

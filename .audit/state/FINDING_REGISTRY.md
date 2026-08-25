@@ -10,7 +10,7 @@
 | ARCH-003 | P2 | Architecture | CLOSED | RUN-001-BASELINE | FIX-2026-08-25-02 | Oversized multi-responsibility auth/account screens |
 | CORE-003 | P3 | Core correctness / Testing | CLOSED | RUN-001-BASELINE | FIX-2026-08-25-03 | archiveDailyQuests/bringForward untested |
 | ARCH-001 | P3 | Architecture | CLOSED | RUN-001-BASELINE | FIX-2026-08-25-03 | One dead duplicate file (i18n/formatters.ts, deleted) |
-| ACC-001 | P3 | Accessibility | OPEN | RUN-001-BASELINE | RUN-001-BASELINE | Accessibility DoD 0/5 confirmed |
+| ACC-001 | P3 | Accessibility | PARTIAL | RUN-001-BASELINE | FIX-2026-08-25-07 | Real TalkBack + dynamic-type pass done (2/5 DoD items), 3 real bugs found & fixed; onboarding/promotion-modal/Scanner/reduceMotion still untested |
 | DEPLOY-001 | P3 | Deployment | ACCEPTED_RISK | RUN-001-BASELINE | FIX-2026-08-25-05 | No CI at all (GitHub Actions removed — account cost constraint); verification is manual-only |
 | ARCH-002 | P4 | Architecture | CLOSED | RUN-001-BASELINE | FIX-2026-08-25-06 | Two layering inversions |
 | ARCH-004 | P4 | Architecture | CLOSED (scope corrected) | RUN-001-BASELINE | FIX-2026-08-25-06 | Dead getDailyTaskCollection removed; firestore.rules dailyTasks rule kept (tested, harmless, not orphaned) |

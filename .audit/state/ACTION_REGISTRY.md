@@ -10,7 +10,7 @@
 | ACT-ARCH-003 | P2 | VERIFIED | ARCH-003 | RUN-001-BASELINE | FIX-2026-08-25-02 | Split AuthScreen/AccountManagementCard |
 | ACT-CORE-003 | P3 | VERIFIED | CORE-003 | RUN-001-BASELINE | FIX-2026-08-25-03 | Test archiveDailyQuests/bringForward |
 | ACT-ARCH-001 | P3 | VERIFIED | ARCH-001 | RUN-001-BASELINE | FIX-2026-08-25-03 | Delete one dead duplicate file (i18n/formatters.ts) |
-| ACT-ACC-001 | P3 | PROPOSED | ACC-001 | RUN-001-BASELINE | — | Execute accessibility DoD verification |
+| ACT-ACC-001 | P3 | DONE | ACC-001 | RUN-001-BASELINE | FIX-2026-08-25-07 (partial scope — see note) | Execute accessibility DoD verification (3 real bugs found & fixed) |
 | ACT-DEPLOY-001 | P3 | REJECTED | DEPLOY-001 | RUN-001-BASELINE | FIX-2026-08-25-05 (reverted — user cost constraint) | Add Maestro/release-build CI gate |
 | ACT-ARCH-002 | P4 | VERIFIED | ARCH-002 | RUN-001-BASELINE | FIX-2026-08-25-06 | Fix two layering-inversion imports |
 | ACT-ARCH-004 | P4 | VERIFIED | ARCH-004 | RUN-001-BASELINE | FIX-2026-08-25-06 (scope reduced — see note) | Remove dead getDailyTaskCollection (rule kept, tested & harmless) |

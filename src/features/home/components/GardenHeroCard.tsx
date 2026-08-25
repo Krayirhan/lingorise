@@ -117,7 +117,16 @@ export function GardenHeroCard({
               style={S.speechText}
               numberOfLines={3}
               adjustsFontSizeToFit
-              minimumFontScale={0.75}
+              minimumFontScale={0.5}
+              // adjustsFontSizeToFit only shrinks on LINE overflow, not on a
+              // single word breaking mid-character — a broken word can still
+              // fit inside numberOfLines without ever triggering the shrink.
+              // Capping how far this small fixed-width bubble grows with the
+              // system font size (roadmap 18-srs-flow-hardening.md ACC-001,
+              // dynamic-type pass) keeps "Hazırsan başlayalım!" whole at large
+              // accessibility text sizes; it still scales, just less than 1:1
+              // — the same information is also in the card's own headline.
+              maxFontSizeMultiplier={1.3}
             >
               {mascotPrompt}
             </Text>
