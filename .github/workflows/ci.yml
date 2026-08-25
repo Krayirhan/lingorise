@@ -69,9 +69,7 @@ jobs:
 
   # The only real end-to-end UI check this project has was never wired into
   # CI (roadmap 18-srs-flow-hardening.md DEPLOY-001) — a broken runtime flow
-  # could merge undetected even with every check above green. Uses a debug
-  # build (faster than release) since this job only needs the app installed,
-  # not a shippable artifact — that's android-build's job.
+  # could merge undetected even with every check above green.
   e2e-smoke:
     runs-on: ubuntu-latest
     steps:
@@ -93,11 +91,18 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
-      - name: Build debug APK
+      # A debug build was tried first for speed, but React Native debug
+      # builds don't embed the JS bundle by default — they expect a live
+      # Metro server, which doesn't exist in CI. That produced a native
+      # "Unable to load script" error screen every time, which looked like a
+      # timing/config issue in Maestro's text-only output until an actual
+      # screenshot was captured and inspected. A release build always embeds
+      # the bundle, so it actually has JS to run.
+      - name: Build release APK
         working-directory: android
         run: |
           chmod +x ./gradlew
-          ./gradlew assembleDebug --no-daemon
+          ./gradlew assembleRelease --no-daemon
       - name: Install Maestro CLI
         run: |
           curl -Ls "https://get.maestro.mobile.dev" | bash
@@ -121,7 +126,7 @@ jobs:
           profile: pixel_6
           disable-animations: true
           script: |
-            adb install -r android/app/build/outputs/apk/debug/app-debug.apk
+            adb install -r android/app/build/outputs/apk/release/app-release.apk
             maestro test .maestro/smoke.yaml || echo "MAESTRO_FAILED=1" >> "$GITHUB_ENV"
             adb shell screencap -p /sdcard/ci_debug.png
             adb pull /sdcard/ci_debug.png ci_debug_screenshot.png
