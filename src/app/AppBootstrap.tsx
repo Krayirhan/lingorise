@@ -23,7 +23,28 @@ export function AppBootstrap() {
   const userProgress = useUserProgress();
 
   useEffect(() => {
+    // onAuthStateChanged has no timeout of its own — on a network that can't
+    // reach Firebase at all, the callback may simply never fire, leaving
+    // authUser stuck at undefined and the whole app on "Bağlantı
+    // hazırlanıyor..." forever, with no way forward even for someone who
+    // only wants to use the app as a guest. Same class of bug as the
+    // unbounded catalogue fetch this session already fixed (found chasing a
+    // CI smoke test that kept hanging past every timeout tried, up to 150s).
+    // Falling back to the guest/signed-out state after a bounded wait is
+    // exactly this app's existing offline-first design intent (see 02
+    // Purpose: "guest mode works fully without an account") — this makes
+    // that guarantee hold even when the very first network call fails.
+    let settled = false;
+    const authTimeout = setTimeout(() => {
+      if (!settled) {
+        settled = true;
+        setAuthUser((current) => (current === undefined ? null : current));
+      }
+    }, 8000);
+
     const unsub = onAuthStateChanged(auth, async (user) => {
+      settled = true;
+      clearTimeout(authTimeout);
       setAuthUser(user);
       if (user) {
         try {
@@ -36,7 +57,10 @@ export function AppBootstrap() {
         }
       }
     });
-    return () => unsub();
+    return () => {
+      clearTimeout(authTimeout);
+      unsub();
+    };
   }, []);
 
   useEffect(() => {
