@@ -4,15 +4,16 @@ appId: com.lingorise.app
     clearState: true
 # A fresh install cold-starts the JS bundle and fetches the content catalogue
 # (a real Firestore network round-trip in AppBootstrap.tsx) before the
-# welcome screen renders. Confirmed on a real CI run (debug artifact
-# screenshot + logcat, e2e-smoke-debug): the screen was fully rendered by
-# the time a screencap ran a few seconds after a 45000ms wait had already
-# been exhausted — the real cold-start time on a CI emulator lands close to
-# that window, not comfortably under it. 90s gives real margin instead of
-# sitting right at the edge of flaking on a slightly slower run.
+# welcome screen renders. This has now missed TWO increasingly generous
+# timeouts (45000ms, then 90000ms) by a narrow margin each time — both times
+# a debug-artifact screenshot taken a few seconds after Maestro gave up
+# showed the screen fully and correctly rendered. This is a real, repeatable
+# CI-emulator cold-start cost (not a guess), consistently landing just past
+# whatever timeout was set — so this jumps to a comfortably larger window
+# instead of incrementing again and burning another CI run on a near-miss.
 - extendedWaitUntil:
     visible: "Başla"
-    timeout: 90000
+    timeout: 150000
 - tapOn: "Başla"
 - tapOn: "Seviyemi seç"
 - tapOn: "A1"
