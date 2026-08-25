@@ -2,30 +2,32 @@ appId: com.lingorise.app
 ---
 - launchApp:
     clearState: true
-# Three increasingly generous waits (45s, 90s, 150s) all failed right at
-# their own limit — proof this wasn't "almost enough time," the app was
-# genuinely stuck. Root cause (found via a real debug-artifact screenshot +
-# logcat, not a guess): src/services/catalogueService.ts's Firestore calls
-# had no timeout at all, so a slow/degraded network path from the CI runner
-# blocked the loading screen indefinitely. Fixed at the source with an 8s
-# timeout that falls through to the bundled content fallback. Confirmed via
-# a fresh debug-artifact screenshot that the fix works — the screen now
-# renders well inside a bounded time (a 20000ms wait still missed by ~1s,
-# so 35000ms gives real margin over cold-start + the 8s fallback path).
+# Even after fixing two real unbounded network waits in the app itself
+# (catalogueService.ts, AppBootstrap.tsx's auth wait), this assertion kept
+# failing at exactly its own configured timeout every single time (45s,
+# 90s, 150s, 35s twice) — and Maestro's OWN debug screenshot at the failure
+# instant consistently showed the exact target button rendered, visible,
+# enabled, with the exact expected text. The element was never missing.
+# Remaining theory, now being tested directly: Maestro's `textRegex` may
+# require the ENTIRE element text to match the pattern (Regex.matches, not
+# Regex.find) — "Başla" as a bare pattern would then never match against
+# the fuller string "Hemen Başla" no matter how long you wait, regardless
+# of the app's actual load time. Wrapping every pattern here in explicit
+# `.*...*` wildcards works under either matching semantics.
 - extendedWaitUntil:
-    visible: "Başla"
+    visible: ".*Başla.*"
     timeout: 35000
-- tapOn: "Başla"
+- tapOn: ".*Başla.*"
 - tapOn: "Seviyemi seç"
 - tapOn: "A1"
 # Selecting a level card only marks it selected (LevelStep.tsx) — it does not
 # auto-advance. A separate "<level> seviyesinde başla" button must be tapped
 # to actually leave this step. The script previously skipped this and tried
 # to tap ReadyStep's button directly, which was never on screen yet.
-- tapOn: "seviyesinde başla"
+- tapOn: ".*seviyesinde başla.*"
 # ReadyStep's real guest-start label is "Hemen Başla (Misafir Olarak) →"
 # (src/i18n/onboarding.ts onboardingTr.startAsGuest) — the script previously
 # looked for "Bahçeme Başla", which does not exist anywhere in the app copy.
-- tapOn: "Hemen Başla"
+- tapOn: ".*Hemen Başla.*"
 - tapOn: "Pratik"
 - assertVisible: "Bugün ne çalışmak istersin?"
