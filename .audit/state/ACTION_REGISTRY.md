@@ -16,3 +16,6 @@
 | ACT-ARCH-004 | P4 | VERIFIED | ARCH-004 | RUN-001-BASELINE | FIX-2026-08-25-06 (scope reduced — see note) | Remove dead getDailyTaskCollection (rule kept, tested & harmless) |
 | ACT-SEC-002 | P4 | VERIFIED | SEC-002 | RUN-001-BASELINE | FIX-2026-08-25-06 | Replace real IDs in .env.example |
 | ACT-DEP-001 | P4 | VERIFIED | DEP-001 | RUN-001-BASELINE | FIX-2026-08-25-06 | Run npm audit, triage findings (accepted risk) |
+| ACT-ACC-002 | P4 | VERIFIED | ACC-002 | FIX-2026-08-25-07 | FIX-2026-08-25-07 | Fix hint button malformed label |
+| ACT-ACC-003 | P3 | VERIFIED | ACC-003 | FIX-2026-08-25-07 | FIX-2026-08-25-07 | Add accessible name to audio button |
+| ACT-ACC-004 | P3 | VERIFIED | ACC-004 | FIX-2026-08-25-07 | FIX-2026-08-25-07 | Fix mascot bubble mid-word break at max font scale |

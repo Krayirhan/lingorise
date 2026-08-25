@@ -16,3 +16,6 @@
 | ARCH-004 | P4 | Architecture | CLOSED (scope corrected) | RUN-001-BASELINE | FIX-2026-08-25-06 | Dead getDailyTaskCollection removed; firestore.rules dailyTasks rule kept (tested, harmless, not orphaned) |
 | SEC-002 | P4 | Security | CLOSED | RUN-001-BASELINE | FIX-2026-08-25-06 | Real Firebase IDs in .env.example |
 | DEP-001 | P4 | Dependency health | ACCEPTED_RISK | RUN-001-BASELINE | FIX-2026-08-25-06 | npm audit: 17 moderate/0 high/0 critical, all build-time-only tooling, no dependency changes made |
+| ACC-002 | P4 | Accessibility | CLOSED | FIX-2026-08-25-07 | FIX-2026-08-25-07 | Hint button malformed accessibility label (", İpucu") |
+| ACC-003 | P3 | Accessibility | CLOSED | FIX-2026-08-25-07 | FIX-2026-08-25-07 | Audio/pronunciation button had zero accessible name |
+| ACC-004 | P3 | Accessibility | CLOSED | FIX-2026-08-25-07 | FIX-2026-08-25-07 | Mascot speech bubble breaks word mid-character at 2.0x font scale |

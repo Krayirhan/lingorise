@@ -7,7 +7,7 @@ This file is populated/updated by DISCOVER or BASELINE.
 ## Identity
 - Project: LingoRise
 - Repository: Krayirhan/lingorise (local checkout: D:\LingoRise)
-- Current revision: 4a80283 (main)
+- Current revision: 3436a1b (main) — reaudited; CI/CD removed (see RUN-002-REAUDIT)
 - Platform/product type: React Native / Expo mobile app (Android buildable; iOS config-only, no committed `ios/` project)
 - Release target: Public consumer app store release (Google Play primary) — pre-launch stage
 
@@ -23,4 +23,4 @@ This file is populated/updated by DISCOVER or BASELINE.
 ## Risk class
 - Aggregate: R3 — Connected authenticated product (low end of R3; local-first architecture keeps most R2 simplicity)
 - Last reviewed: 2026-08-25
-- Source run: RUN-001-BASELINE
+- Source run: RUN-002-REAUDIT (rubric unchanged from RUN-001-BASELINE)
