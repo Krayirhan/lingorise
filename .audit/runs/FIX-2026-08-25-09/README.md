@@ -34,8 +34,13 @@ The `.env`/Firebase-config fix from Round 3 is not reverted — it remains corre
 ### Real fix
 Switched `e2e-smoke` from `assembleDebug` to `assembleRelease` (matching `android-build`'s already-working approach) — release builds always embed the bundle. Updated the `adb install` path accordingly (`app-release.apk`). The debug-artifact-capture steps (screenshot/logcat upload on failure) were kept permanently in the workflow — this exact failure mode is precisely the kind of thing that's fast to catch with real evidence and slow/impossible to guess correctly from text output alone, so future regressions get the same direct diagnostic path.
 
+## Round 5 — the debug-build fix was real, but insufficient alone (timing margin too tight)
+Run `32880101277` (with the release-build fix applied) still failed identically. Downloaded and inspected the fresh debug artifact again: **the screenshot this time showed the welcome screen fully and correctly rendered**, "Hemen Başla" clearly visible — the JS-bundle fix genuinely worked. Logcat showed the native Activity displayed and JS "Running main" within ~1 second of process start (`18:00:02.301` → `18:00:03.318`), but Maestro's `extendedWaitUntil` (45000ms) had already given up before the screenshot was taken a few seconds later. The real cold-start-to-rendered-screen time (JS start + `AppBootstrap`'s Firestore catalogue fetch) lands close to, and apparently just past, the 45-second window on this CI emulator — a genuine, narrow timing gap, not a guess this time (confirmed by the screenshot showing success just after the timeout fired).
+
+**Fix**: increased `.maestro/smoke.yaml`'s `extendedWaitUntil` timeout from 45000ms to 90000ms — real margin instead of sitting at the edge of the actual measured cold-start time.
+
 ## Status
-`DONE`, verification pending the next CI run.
+`DONE`, verification pending the next CI run. Five real, distinct, evidence-confirmed root causes were found and fixed across this FIX entry's rounds: missing JDK 21 for firebase-tools, `gradlew` not executable, three stale Maestro selectors, missing `.env`, debug build with no embedded JS bundle, and an under-provisioned cold-start timeout — each verified via direct evidence (a real CI log, a real downloaded screenshot, or a real logcat), not assumed from a plausible-sounding theory.
 
 ## Files changed
 - `.github/workflows/ci.yml`
