@@ -1,0 +1,50 @@
+# Package Manifest
+
+Total packaged files (excluding this manifest): **46**
+
+- `.auditignore`
+- `AUDIT_MASTER.md`
+- `README_TR.md`
+- `VERSION.md`
+- `engine/00_AUDIT_CONSTITUTION.md`
+- `engine/01_OPERATION_MODES.md`
+- `engine/02_PROJECT_DISCOVERY_PROTOCOL.md`
+- `engine/03_PURPOSE_ANALYSIS_PROTOCOL.md`
+- `engine/04_SCOPE_AND_RISK_PROTOCOL.md`
+- `engine/05_CONTEXTUAL_RUBRIC_BUILDER.md`
+- `engine/06_EVIDENCE_POLICY.md`
+- `engine/07_TOOL_DISCOVERY_AND_GRAPH_ANALYSIS.md`
+- `engine/08_SECRET_ZERO_EXPOSURE_POLICY.md`
+- `engine/09_EXECUTION_SAFETY.md`
+- `engine/10_SCORING_PROTOCOL.md`
+- `engine/11_FINDING_PROTOCOL.md`
+- `engine/12_ACTION_PROTOCOL.md`
+- `engine/13_FIX_PROTOCOL.md`
+- `engine/14_REAUDIT_PROTOCOL.md`
+- `engine/15_DELTA_AND_REGRESSION_PROTOCOL.md`
+- `engine/16_RELEASE_CERTIFICATION_PROTOCOL.md`
+- `engine/17_REPORTING_CONTRACT.md`
+- `engine/18_STACK_ADAPTER_GUIDANCE.md`
+- `engine/19_FALSE_POSITIVE_AND_OVERENGINEERING_POLICY.md`
+- `prompts/BASELINE.md`
+- `prompts/CERTIFY.md`
+- `prompts/DISCOVER.md`
+- `prompts/FIX.md`
+- `prompts/PLAN.md`
+- `prompts/REAUDIT.md`
+- `runs/RUN-000-EXAMPLE/README.md`
+- `state/ACTION_REGISTRY.md`
+- `state/CURRENT_PROJECT_PROFILE.md`
+- `state/CURRENT_PURPOSE.md`
+- `state/FINDING_REGISTRY.md`
+- `state/RUBRIC_LOCK.md`
+- `templates/01_PROJECT_UNDERSTANDING_TEMPLATE.md`
+- `templates/02_PROJECT_PURPOSE_TEMPLATE.md`
+- `templates/03_AUDIT_SCOPE_AND_RISK_TEMPLATE.md`
+- `templates/04_CONTEXTUAL_RUBRIC_TEMPLATE.md`
+- `templates/05_EVIDENCE_INDEX_TEMPLATE.md`
+- `templates/06_SCORECARD_TEMPLATE.md`
+- `templates/07_FINDING_TEMPLATE.md`
+- `templates/08_ACTION_TEMPLATE.md`
+- `templates/09_DELTA_REPORT_TEMPLATE.md`
+- `templates/10_RELEASE_VERDICT_TEMPLATE.md`

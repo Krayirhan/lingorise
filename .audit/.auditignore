@@ -1,0 +1,19 @@
+# Audit traversal hints. Adjust per repository.
+.git/
+node_modules/
+build/
+dist/
+out/
+.gradle/
+.idea/
+.vscode/
+coverage/
+*.apk
+*.aab
+*.ipa
+*.jar
+*.war
+*.class
+*.log
+# Secret-containing files are not "ignored" for existence/security checks,
+# but their raw contents must not be dumped under Secret Zero Exposure policy.
