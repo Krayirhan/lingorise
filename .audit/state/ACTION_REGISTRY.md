@@ -11,7 +11,7 @@
 | ACT-CORE-003 | P3 | VERIFIED | CORE-003 | RUN-001-BASELINE | FIX-2026-08-25-03 | Test archiveDailyQuests/bringForward |
 | ACT-ARCH-001 | P3 | VERIFIED | ARCH-001 | RUN-001-BASELINE | FIX-2026-08-25-03 | Delete one dead duplicate file (i18n/formatters.ts) |
 | ACT-ACC-001 | P3 | PROPOSED | ACC-001 | RUN-001-BASELINE | — | Execute accessibility DoD verification |
-| ACT-DEPLOY-001 | P3 | PROPOSED | DEPLOY-001 | RUN-001-BASELINE | — | Add Maestro/release-build CI gate |
+| ACT-DEPLOY-001 | P3 | DONE | DEPLOY-001 | RUN-001-BASELINE | FIX-2026-08-25-04 (partial — see note) | Add Maestro/release-build CI gate |
 | ACT-ARCH-002 | P4 | PROPOSED | ARCH-002 | RUN-001-BASELINE | — | Fix two layering-inversion imports |
 | ACT-ARCH-004 | P4 | PROPOSED | ARCH-004 | RUN-001-BASELINE | — | Remove dead getDailyTaskCollection + rule |
 | ACT-SEC-002 | P4 | PROPOSED | SEC-002 | RUN-001-BASELINE | — | Replace real IDs in .env.example |
