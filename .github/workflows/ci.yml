@@ -130,7 +130,10 @@ jobs:
             maestro test .maestro/smoke.yaml || echo "MAESTRO_FAILED=1" >> "$GITHUB_ENV"
             adb shell screencap -p /sdcard/ci_debug.png
             adb pull /sdcard/ci_debug.png ci_debug_screenshot.png
+            adb shell uiautomator dump /sdcard/ci_debug_uiautomator.xml
+            adb pull /sdcard/ci_debug_uiautomator.xml ci_debug_uiautomator.xml
             adb logcat -d > ci_debug_logcat.txt
+            cp -r ~/.maestro/tests ci_debug_maestro_tests || true
       - name: Upload debug artifacts
         if: always()
         uses: actions/upload-artifact@v4
@@ -138,7 +141,9 @@ jobs:
           name: e2e-smoke-debug
           path: |
             ci_debug_screenshot.png
+            ci_debug_uiautomator.xml
             ci_debug_logcat.txt
+            ci_debug_maestro_tests
           retention-days: 5
       - name: Fail if Maestro failed
         if: env.MAESTRO_FAILED == '1'
