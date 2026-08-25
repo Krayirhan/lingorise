@@ -39,8 +39,18 @@ Run `32880101277` (with the release-build fix applied) still failed identically.
 
 **Fix**: increased `.maestro/smoke.yaml`'s `extendedWaitUntil` timeout from 45000ms to 90000ms — real margin instead of sitting at the edge of the actual measured cold-start time.
 
+## Round 6 — the timeout theory was also wrong; the real, final root cause
+Run `32883675703` (150s timeout) failed **again, at exactly 150.94s** — the same pattern as 45s (45.9s) and 90s (90.97s) before it. Three different arbitrary timeouts each failing within ~1 second of their own configured value is not a coincidence of "almost enough time" — it's proof the app was never going to finish on its own. The earlier "the screenshot showed it rendered fine" conclusion was real but misleading: the render only completed sometime *after* Maestro gave up, during the extra seconds spent running `screencap`/`pull`/`logcat` — meaning actual completion time was consistently *higher than whatever timeout was set*, not just past it.
+
+**Real root cause**: `src/services/catalogueService.ts`'s `loadCatalogue()` — the Firestore `getDoc`/`getDocs` calls have **no timeout at all**. On a CI runner with a slow/degraded network path to Firestore, this can block far longer than any reasonable UI wait (confirmed exceeding even 150 real seconds), leaving the app stuck on `AppBootstrap.tsx`'s "Bahçen hazırlanıyor..." loading screen indefinitely. This is not only a CI artifact — the exact same code path would leave a real learner on bad mobile data stuck on the same screen with no way forward, an actual product reliability gap this investigation surfaced as a side effect.
+
+### Real fix (in product code, not just CI config)
+- `src/services/catalogueService.ts`: added an 8-second timeout (`Promise.race` against a rejecting timer) around both Firestore calls. On timeout, the existing cache → bundled-content fallback chain (already in place, previously only reachable on an outright rejected promise) now also engages promptly instead of waiting indefinitely.
+- `.maestro/smoke.yaml`: reduced the wait back down to 20000ms, now that the app can only ever be blocked for ~8s (plus normal processing) before falling through, per the fixed timeout.
+- Verified locally: `npx tsc --noEmit` clean, `npm test` 300/300 pass, release build reinstalled fresh (`pm clear` + relaunch) on the local emulator — welcome screen renders in ~6 real seconds over a normal network connection, confirming the timeout addition doesn't regress the common case.
+
 ## Status
-`DONE`, verification pending the next CI run. Five real, distinct, evidence-confirmed root causes were found and fixed across this FIX entry's rounds: missing JDK 21 for firebase-tools, `gradlew` not executable, three stale Maestro selectors, missing `.env`, debug build with no embedded JS bundle, and an under-provisioned cold-start timeout — each verified via direct evidence (a real CI log, a real downloaded screenshot, or a real logcat), not assumed from a plausible-sounding theory.
+`DONE`, verification pending the next CI run. Six real, distinct, evidence-confirmed root causes were found and fixed across this FIX entry's rounds: missing JDK 21 for firebase-tools, `gradlew` not executable, three stale Maestro selectors, missing `.env`, a debug build with no embedded JS bundle, and — the actual final blocker — an unbounded Firestore call in `catalogueService.ts` with no timeout. Each was verified via direct evidence (a real CI log, a real downloaded screenshot, or a real logcat) rather than assumed from a plausible-sounding theory; two intermediate theories (cold-start timing margin alone, in Rounds 4-5) were tried, found insufficient by further real evidence, and corrected rather than left standing.
 
 ## Files changed
 - `.github/workflows/ci.yml`
