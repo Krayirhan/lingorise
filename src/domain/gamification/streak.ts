@@ -41,6 +41,20 @@ export function updateDailyStreak(
     };
   }
 
+  // A clock correction (NTP resync, timezone change, manual adjustment) can
+  // make "today" appear on or before lastActiveDate without an exact string
+  // match above (e.g. a date-only diff of 0 computed from differing
+  // times-of-day, or a genuinely backward jump). That is not a missed day —
+  // treat it as a no-op rather than punishing the streak for the device
+  // clock moving the wrong way.
+  if (diffDays <= 0) {
+    return {
+      newStreak: Math.max(1, currentStreak),
+      todayFormatted,
+      isNewDay: false,
+    };
+  }
+
   return {
     newStreak: 1,
     todayFormatted,

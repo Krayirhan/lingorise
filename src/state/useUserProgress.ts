@@ -42,6 +42,28 @@ export function useUserProgress() {
   const [userData, setUserData] = useState<UserData>(DEFAULT_USER_DATA);
   const [badgeUnlockQueue, setBadgeUnlockQueue] = useState<string[]>([]);
   const knownBadgesRef = useRef<string[]>(DEFAULT_USER_DATA.unlockedBadges);
+  const [saveFailureNotice, setSaveFailureNotice] = useState<string | null>(null);
+  const consecutiveSaveFailuresRef = useRef(0);
+  const saveFailureAlertedRef = useRef(false);
+
+  // A single failed write is often transient (a momentary AsyncStorage
+  // hiccup); only surface it once progress has actually failed to persist
+  // more than once in a row, so the learner isn't told anything is wrong
+  // while continuing to play with data that never made it to disk.
+  const noteSaveOutcome = useCallback((succeeded: boolean) => {
+    if (succeeded) {
+      consecutiveSaveFailuresRef.current = 0;
+      saveFailureAlertedRef.current = false;
+      return;
+    }
+    consecutiveSaveFailuresRef.current += 1;
+    if (consecutiveSaveFailuresRef.current >= 2 && !saveFailureAlertedRef.current) {
+      saveFailureAlertedRef.current = true;
+      setSaveFailureNotice("İlerlemen kaydedilemiyor. Lütfen cihazında yeterli depolama alanı olduğundan emin ol.");
+    }
+  }, []);
+
+  const clearSaveFailureNotice = useCallback(() => setSaveFailureNotice(null), []);
 
   // Hydrate on mount and calculate daily streak
   useEffect(() => {
@@ -74,7 +96,19 @@ export function useUserProgress() {
         lastActiveDate: streakResult.todayFormatted,
       };
       setUserData(updated);
-      await saveUserData(updated);
+      // A signed-in cold start also runs AppBootstrap's onAuthStateChanged
+      // merge (local + remote, then a single authoritative save), which
+      // finishes by calling refresh() to re-sync this hook's state. If this
+      // local-only rollover write also persisted here, whichever of the two
+      // writes lands second would silently clobber the other — observed as
+      // remote-only progress disappearing after a merge (roadmap
+      // 18-srs-flow-hardening.md DATA-001). Skipping the write when a user is
+      // already signed in leaves the merge as the sole writer for that cold
+      // start; the guest path (no signed-in user) is unaffected and persists
+      // exactly as before.
+      if (!auth.currentUser) {
+        await saveUserData(updated);
+      }
       setIsHydrated(true);
     }
     init();
@@ -99,7 +133,7 @@ export function useUserProgress() {
   const updateAndPersist = useCallback((updater: (prev: UserData) => UserData) => {
     setUserData((prev) => {
       const next = updater(prev);
-      saveUserData(next);
+      saveUserData(next).then(noteSaveOutcome);
       const user = auth.currentUser;
       if (user) {
         Promise.all([syncUserData(user.uid, next), syncUserProgress(user.uid, next)]).catch((error) => {
@@ -149,7 +183,11 @@ export function useUserProgress() {
     setUserData(updated);
     await saveUserData(updated);
     if (user) {
-      await Promise.all([syncUserData(user.uid, updated), syncUserProgress(user.uid, updated)]);
+      try {
+        await Promise.all([syncUserData(user.uid, updated), syncUserProgress(user.uid, updated)]);
+      } catch (error) {
+        console.warn("LingoRise: Firebase sync failed during refresh; local data is safe", error);
+      }
     }
   }, []);
 
@@ -405,5 +443,7 @@ export function useUserProgress() {
     toggleFavoriteWord,
     badgeUnlockQueue,
     dismissBadgeUnlock,
+    saveFailureNotice,
+    clearSaveFailureNotice,
   };
 }

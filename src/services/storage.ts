@@ -336,11 +336,14 @@ export async function loadUserData(): Promise<UserData> {
 
 export const STORAGE_VERSION = "2.2.0";
 
-export async function saveUserData(data: UserData): Promise<void> {
+/** Returns false on failure instead of swallowing it, so callers can surface a signal to the user on repeated failures. */
+export async function saveUserData(data: UserData): Promise<boolean> {
   try {
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    return true;
   } catch (error) {
     console.warn("LingoRise: Error saving user data", error);
+    return false;
   }
 }
 

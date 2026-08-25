@@ -47,6 +47,7 @@ import { componentSizes, iconSizes } from "../src/theme/tokens";
 import { track, getRecentEvents, clearTelemetry } from "../src/services/telemetry";
 import { randomizeDistractors } from "../src/domain/practice/distractors";
 import { inferQuality } from "../src/domain/review/qualitySignal";
+import { computeDifficulty, computeXpReward } from "../src/content/questions/difficulty";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -152,6 +153,13 @@ console.log("\n4. Streak Tracker:");
 const s1 = updateDailyStreak("2026-08-21", 3);
 const sSame = updateDailyStreak(new Date().toISOString().split("T")[0], 5);
 assert(sSame.newStreak === 5, "Same-day activity preserves streak at 5");
+
+// roadmap 18-srs-flow-hardening.md CORE-001 — a backward clock correction
+// (NTP resync, timezone change, manual fix) must not reset a real streak.
+const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+const sBackward = updateDailyStreak(tomorrow, 12);
+assert(sBackward.newStreak === 12, "A device clock moving backward across a date boundary does not reset the streak");
+assert(!sBackward.isNewDay, "A backward clock reading is not treated as a new day");
 
 // 5. Badge Unlocking Engine
 console.log("\n5. Badge Evaluation:");
@@ -1477,6 +1485,36 @@ console.log("\n53. Server Date Anomaly Detection (roadmap Birim 18.5):");
     daysDifference: 5,
   });
   assert(true, "suspicious_date_jump telemetry event recorded without errors");
+}
+
+// 54. Content-Generated XP/Difficulty (roadmap 18-srs-flow-hardening.md CORE-002):
+console.log("\n54. Content-Generated XP/Difficulty:");
+{
+  assert(computeDifficulty("A1", "cat") === 1, "A short A1 word gets the level's base difficulty (1)");
+  assert(computeDifficulty("C2", "cat") === 5, "A short C2 word gets the level's base difficulty (5)");
+  assert(
+    computeDifficulty("A1", "unbelievable") === 2,
+    "A long A1 word (>=9 chars) is nudged one band above the level base (1 -> 2)"
+  );
+  assert(
+    computeDifficulty("C1", "a piece of cake") === 5,
+    "A long/multi-word C1 entry is nudged up but capped at 5, never exceeding the max band"
+  );
+  assert(
+    computeDifficulty("A2", "go") === 2,
+    "A short word never gets nudged up regardless of level"
+  );
+
+  assert(computeXpReward("A1", "cat") === 10, "A short A1 word pays the level's base XP (10)");
+  assert(computeXpReward("C2", "cat") === 35, "A short C2 word pays the level's base XP (35)");
+  assert(
+    computeXpReward("A1", "unbelievable") === 15,
+    "A long A1 word pays a +5 XP bonus over the level base (10 -> 15)"
+  );
+  assert(
+    computeXpReward("B1", "a piece of cake") === 25,
+    "A long/multi-word entry pays the level base plus the +5 long-word bonus, not a separately compounding amount"
+  );
 }
 
 console.log("\n=========================================");

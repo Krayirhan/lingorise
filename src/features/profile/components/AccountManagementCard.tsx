@@ -1,20 +1,14 @@
 import { useState } from "react";
-import {
-  ActivityIndicator,
-  Alert,
-  Platform,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { ActivityIndicator, Alert, Platform, Pressable, Text, View } from "react-native";
 import { updateProfile } from "firebase/auth";
 import { Ionicons } from "@expo/vector-icons";
 import { auth } from "../../../services/firebase";
 import { deleteAccount, logout, resetPassword, sendVerificationEmail } from "../../../services/auth";
 import { Copy } from "../../../i18n/en";
-import { C, radius } from "../../../theme/colors";
+import { C } from "../../../theme/colors";
+import { AvatarPicker, AVATARS } from "./AvatarPicker";
+import { EditableAccountName } from "./EditableAccountName";
+import { S } from "./AccountManagementCard.styles";
 
 interface Props {
   copy: Copy;
@@ -25,14 +19,6 @@ interface Props {
   onOpenAuth: () => void;
   onLoggedOut?: () => void;
 }
-
-const AVATARS = [
-  { id: "sprig", icon: "leaf-outline" as const, label: "Filiz" },
-  { id: "sprout", icon: "sunny-outline" as const, label: "Işık" },
-  { id: "flower", icon: "flower-outline" as const, label: "Çiçek" },
-  { id: "tree", icon: "earth-outline" as const, label: "Doğa" },
-  { id: "heart", icon: "heart-outline" as const, label: "Sevgi" },
-];
 
 export function AccountManagementCard({
   copy,
@@ -166,27 +152,15 @@ export function AccountManagementCard({
           </View>
           <View style={S.copy}>
             <View style={S.nameRow}>
-              {editingName ? (
-                <View style={S.editNameBox}>
-                  <TextInput
-                    value={nameInput}
-                    onChangeText={setNameInput}
-                    style={S.nameInput}
-                    autoFocus
-                  />
-                  <Pressable onPress={handleSaveName} style={S.saveNameBtn}>
-                    <Ionicons name="checkmark" size={16} color={C.white} />
-                  </Pressable>
-                </View>
-              ) : (
-                <Pressable
-                  onPress={() => setEditingName(true)}
-                  style={S.namePressable}
-                >
-                  <Text style={S.title}>{displayName}</Text>
-                  <Ionicons name="pencil-outline" size={14} color={C.muted} />
-                </Pressable>
-              )}
+              <EditableAccountName
+                name={displayName}
+                nameStyle={S.title}
+                editing={editingName}
+                nameInput={nameInput}
+                onNameInputChange={setNameInput}
+                onStartEdit={() => setEditingName(true)}
+                onSave={handleSaveName}
+              />
             </View>
             <Text style={S.subtitle}>
               {copy.profile?.accountGuestSubtitle ||
@@ -195,28 +169,7 @@ export function AccountManagementCard({
           </View>
         </View>
 
-        {/* Avatar Picker Row */}
-        <View style={S.avatarRow}>
-          <Text style={S.avatarLabel}>Avatar Seç:</Text>
-          <View style={S.avatarList}>
-            {AVATARS.map((av) => (
-              <Pressable
-                key={av.id}
-                onPress={() => onAvatarChange && onAvatarChange(av.id)}
-                style={[
-                  S.avatarBtn,
-                  avatarId === av.id && S.avatarBtnActive,
-                ]}
-              >
-                <Ionicons
-                  name={av.icon}
-                  size={18}
-                  color={avatarId === av.id ? C.white : C.primary}
-                />
-              </Pressable>
-            ))}
-          </View>
-        </View>
+        <AvatarPicker avatarId={avatarId} onAvatarChange={onAvatarChange} />
 
         <Pressable
           accessibilityRole="button"
@@ -241,69 +194,38 @@ export function AccountManagementCard({
         </View>
         <View style={S.copy}>
           <View style={S.nameRow}>
-            {editingName ? (
-              <View style={S.editNameBox}>
-                <TextInput
-                  value={nameInput}
-                  onChangeText={setNameInput}
-                  style={S.nameInput}
-                  autoFocus
-                />
-                <Pressable onPress={handleSaveName} style={S.saveNameBtn}>
-                  <Ionicons name="checkmark" size={16} color={C.white} />
-                </Pressable>
-              </View>
-            ) : (
-              <Pressable
-                onPress={() => setEditingName(true)}
-                style={S.namePressable}
-              >
-                <Text style={S.userName}>{user.displayName || displayName}</Text>
-                <Ionicons name="pencil-outline" size={14} color={C.muted} />
-              </Pressable>
-            )}
-            {user.emailVerified ? (
-              <View style={S.verifiedBadge}>
-                <Ionicons name="checkmark-circle" size={12} color={C.success} />
-                <Text style={S.verifiedBadgeTxt}>
-                  {copy.profile?.verifiedBadge || "Doğrulandı"}
-                </Text>
-              </View>
-            ) : (
-              <View style={S.unverifiedBadge}>
-                <Ionicons name="alert-circle" size={12} color={C.attention} />
-                <Text style={S.unverifiedBadgeTxt}>
-                  {copy.profile?.unverifiedBadge || "Doğrulanmadı"}
-                </Text>
-              </View>
-            )}
+            <EditableAccountName
+              name={user.displayName || displayName}
+              nameStyle={S.userName}
+              editing={editingName}
+              nameInput={nameInput}
+              onNameInputChange={setNameInput}
+              onStartEdit={() => setEditingName(true)}
+              onSave={handleSaveName}
+              badge={
+                user.emailVerified ? (
+                  <View style={S.verifiedBadge}>
+                    <Ionicons name="checkmark-circle" size={12} color={C.success} />
+                    <Text style={S.verifiedBadgeTxt}>
+                      {copy.profile?.verifiedBadge || "Doğrulandı"}
+                    </Text>
+                  </View>
+                ) : (
+                  <View style={S.unverifiedBadge}>
+                    <Ionicons name="alert-circle" size={12} color={C.attention} />
+                    <Text style={S.unverifiedBadgeTxt}>
+                      {copy.profile?.unverifiedBadge || "Doğrulanmadı"}
+                    </Text>
+                  </View>
+                )
+              }
+            />
           </View>
           <Text style={S.userEmail}>{user.email}</Text>
         </View>
       </View>
 
-      {/* Avatar Picker Row */}
-      <View style={S.avatarRow}>
-        <Text style={S.avatarLabel}>Avatar Seç:</Text>
-        <View style={S.avatarList}>
-          {AVATARS.map((av) => (
-            <Pressable
-              key={av.id}
-              onPress={() => onAvatarChange && onAvatarChange(av.id)}
-              style={[
-                S.avatarBtn,
-                avatarId === av.id && S.avatarBtnActive,
-              ]}
-            >
-              <Ionicons
-                name={av.icon}
-                size={18}
-                color={avatarId === av.id ? C.white : C.primary}
-              />
-            </Pressable>
-          ))}
-        </View>
-      </View>
+      <AvatarPicker avatarId={avatarId} onAvatarChange={onAvatarChange} />
 
       {notice && (
         <View style={S.noticeBox}>
@@ -368,227 +290,3 @@ export function AccountManagementCard({
     </View>
   );
 }
-
-const S = StyleSheet.create({
-  card: {
-    backgroundColor: C.surface,
-    borderRadius: radius.lg || 18,
-    borderWidth: 1,
-    borderColor: C.line,
-    padding: 16,
-    gap: 12,
-  },
-  headerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  iconCircleGuest: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: C.primarySoft,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  iconCircleUser: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: C.primarySoft,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  copy: {
-    flex: 1,
-    gap: 2,
-  },
-  title: {
-    color: C.ink,
-    fontSize: 15.5,
-    fontWeight: "700",
-  },
-  subtitle: {
-    color: C.muted,
-    fontSize: 12.5,
-    lineHeight: 16,
-  },
-  nameRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  userName: {
-    color: C.ink,
-    fontSize: 15.5,
-    fontWeight: "700",
-  },
-  userEmail: {
-    color: C.muted,
-    fontSize: 13,
-  },
-  verifiedBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 3,
-    backgroundColor: C.successSoft,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: radius.xs || 8,
-  },
-  verifiedBadgeTxt: {
-    color: C.successText,
-    fontSize: 10,
-    fontWeight: "700",
-  },
-  unverifiedBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 3,
-    backgroundColor: C.attentionSoft,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: radius.xs || 8,
-  },
-  unverifiedBadgeTxt: {
-    color: C.attentionText,
-    fontSize: 10,
-    fontWeight: "700",
-  },
-  authBtn: {
-    minHeight: 46,
-    backgroundColor: C.reward,
-    borderRadius: radius.button || 16,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    paddingHorizontal: 16,
-  },
-  authBtnTxt: {
-    color: C.ink,
-    fontSize: 14.5,
-    fontWeight: "700",
-  },
-  noticeBox: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    backgroundColor: C.primarySoft,
-    padding: 10,
-    borderRadius: radius.md || 12,
-  },
-  noticeTxt: {
-    color: C.primary,
-    fontSize: 12,
-    fontWeight: "600",
-    flex: 1,
-  },
-  actionRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-    marginTop: 4,
-  },
-  subBtn: {
-    minHeight: 38,
-    backgroundColor: C.primarySoft,
-    borderWidth: 1,
-    borderColor: C.primaryBorder,
-    borderRadius: radius.md || 12,
-    paddingHorizontal: 12,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  subBtnTxt: {
-    color: C.primary,
-    fontSize: 12.5,
-    fontWeight: "700",
-  },
-  logoutBtn: {
-    minHeight: 38,
-    backgroundColor: C.lineSoft,
-    borderWidth: 1,
-    borderColor: C.line,
-    borderRadius: radius.md || 12,
-    paddingHorizontal: 14,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  logoutBtnTxt: {
-    color: C.ink,
-    fontSize: 12.5,
-    fontWeight: "600",
-  },
-  deleteBtn: {
-    alignSelf: "center",
-    paddingVertical: 6,
-    paddingHorizontal: 8,
-  },
-  deleteBtnTxt: {
-    color: C.attentionText,
-    fontSize: 12,
-    fontWeight: "600",
-  },
-  namePressable: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  editNameBox: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    flex: 1,
-  },
-  nameInput: {
-    flex: 1,
-    height: 34,
-    borderWidth: 1,
-    borderColor: C.primary,
-    borderRadius: radius.sm || 8,
-    paddingHorizontal: 8,
-    fontSize: 14,
-    color: C.ink,
-    backgroundColor: C.canvas,
-  },
-  saveNameBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: C.primary,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  avatarRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    backgroundColor: C.canvas,
-    padding: 8,
-    borderRadius: radius.md || 12,
-  },
-  avatarLabel: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: C.muted,
-  },
-  avatarList: {
-    flexDirection: "row",
-    gap: 6,
-  },
-  avatarBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: C.surface,
-    borderWidth: 1,
-    borderColor: C.line,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  avatarBtnActive: {
-    backgroundColor: C.primary,
-    borderColor: C.primary,
-  },
-});

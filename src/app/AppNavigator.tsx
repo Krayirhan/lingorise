@@ -21,6 +21,7 @@ import { countMasteredWords, summarizeMastery } from "../domain/learning/mastery
 import { evaluatePromotion } from "../domain/learning/promotion";
 import { LevelPromotionModal } from "../features/home/components/LevelPromotionModal";
 import { LevelSwitcherModal } from "../features/home/components/LevelSwitcherModal";
+import { useToast } from "../context/ToastContext";
 
 interface Props {
   userProgress: ReturnType<typeof useUserProgress>;
@@ -30,9 +31,16 @@ interface Props {
 }
 
 export function AppNavigator({ userProgress, onAccountPress, deepLinkTarget, onDeepLinkConsumed }: Props) {
-  const { userData, recordAnswer, bookmarkQuestion, setLocale, setLevel, markLevelCelebrated, markGardenExplainerSeen, completeOnboarding, badgeUnlockQueue, dismissBadgeUnlock } = userProgress;
+  const { userData, recordAnswer, bookmarkQuestion, setLocale, setLevel, markLevelCelebrated, markGardenExplainerSeen, completeOnboarding, badgeUnlockQueue, dismissBadgeUnlock, saveFailureNotice, clearSaveFailureNotice } = userProgress;
   const session = useAppSession(userData, userProgress.setActiveSession);
   const [levelSwitcherOpen, setLevelSwitcherOpen] = useState(false);
+  const { showToast } = useToast();
+
+  useEffect(() => {
+    if (!saveFailureNotice) return;
+    showToast({ message: saveFailureNotice, type: "attention", durationMs: 5000 });
+    clearSaveFailureNotice();
+  }, [saveFailureNotice, showToast, clearSaveFailureNotice]);
 
   const copy = copyByLocale[userData.locale];
   const homeViewModel = useHomeViewModel(userData, copy, userData.locale);
