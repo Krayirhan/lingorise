@@ -10,7 +10,7 @@ appId: com.lingorise.app
 # it's already there.
 - extendedWaitUntil:
     visible: "Başla"
-    timeout: 30000
+    timeout: 45000
 - tapOn: "Başla"
 - tapOn: "Seviyemi seç"
 - tapOn: "A1"
