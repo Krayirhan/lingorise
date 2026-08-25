@@ -1,12 +1,8 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { MeaningMatchQuestion } from "../../../types/content";
+import { AnswerQualityMeta } from "../../../domain/review/qualitySignal";
 
-export interface AnswerQualityMeta {
-  /** Wall-clock time from the question appearing to this check, ms. */
-  responseTimeMs: number;
-  /** 1 on a clean first try; incremented for each prior wrong attempt on this same question. */
-  attemptNumber: number;
-}
+export type { AnswerQualityMeta };
 
 export function usePracticeSession(
   question: MeaningMatchQuestion,

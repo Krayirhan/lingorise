@@ -231,7 +231,3 @@ export async function mergeAndSyncUserData(userId: string, localData: UserData):
 
   return mergedData;
 }
-
-export function getDailyTaskCollection(userId: string) {
-  return collection(db, "users", userId, "dailyTasks");
-}

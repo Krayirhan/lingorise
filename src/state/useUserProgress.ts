@@ -14,8 +14,7 @@ import { track } from "../services/telemetry";
 import { deriveStatus, countMasteredWords, isLeech } from "../domain/learning/mastery";
 import { calculateGardenProgress } from "../domain/gamification/xp";
 import { detectUnitJustCompleted } from "../content/questions";
-import { inferQuality } from "../domain/review/qualitySignal";
-import { AnswerQualityMeta } from "../features/practice/hooks/usePracticeSession";
+import { inferQuality, AnswerQualityMeta } from "../domain/review/qualitySignal";
 
 function daysBetween(fromISO: string, toISO: string): number {
   const from = new Date(`${fromISO}T00:00:00Z`).getTime();

@@ -1,5 +1,12 @@
 export type InferredQuality = 0 | 1 | 2 | 3 | 4 | 5;
 
+export interface AnswerQualityMeta {
+  /** Wall-clock time from the question appearing to this check, ms. */
+  responseTimeMs: number;
+  /** 1 on a clean first try; incremented for each prior wrong attempt on this same question. */
+  attemptNumber: number;
+}
+
 /**
  * Roadmap Birim 3 §3.1 — infers an SM-2-style 0-5 quality signal from data
  * already being collected, without asking the learner a new question. This

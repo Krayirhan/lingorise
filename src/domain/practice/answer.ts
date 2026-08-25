@@ -1,7 +1,7 @@
 import { MeaningMatchQuestion } from "../../types/content";
 import { UserData } from "../../types/user";
 import { isItemDue } from "../review/spacedRepetition";
-import { evaluateBadges, updateDailyQuests } from "../../services/gamification";
+import { evaluateBadges, updateDailyQuests } from "../gamification/badges";
 import { recordLearningOutcome } from "../learning/mastery";
 import { now as clockNow, todayISO } from "../../utils/clock";
 
