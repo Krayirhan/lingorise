@@ -11,7 +11,7 @@
 | CORE-003 | P3 | Core correctness / Testing | CLOSED | RUN-001-BASELINE | FIX-2026-08-25-03 | archiveDailyQuests/bringForward untested |
 | ARCH-001 | P3 | Architecture | CLOSED | RUN-001-BASELINE | FIX-2026-08-25-03 | One dead duplicate file (i18n/formatters.ts, deleted) |
 | ACC-001 | P3 | Accessibility | OPEN | RUN-001-BASELINE | RUN-001-BASELINE | Accessibility DoD 0/5 confirmed |
-| DEPLOY-001 | P3 | Deployment | PARTIAL | RUN-001-BASELINE | FIX-2026-08-25-04 | Maestro/release-build not gated in CI |
+| DEPLOY-001 | P3 | Deployment | ACCEPTED_RISK | RUN-001-BASELINE | FIX-2026-08-25-05 | No CI at all (GitHub Actions removed — account cost constraint); verification is manual-only |
 | ARCH-002 | P4 | Architecture | OPEN | RUN-001-BASELINE | RUN-001-BASELINE | Two layering inversions |
 | ARCH-004 | P4 | Architecture | OPEN | RUN-001-BASELINE | RUN-001-BASELINE | Dead getDailyTaskCollection + unused rule |
 | SEC-002 | P4 | Security | OPEN | RUN-001-BASELINE | RUN-001-BASELINE | Real Firebase IDs in .env.example |
