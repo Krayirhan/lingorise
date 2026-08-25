@@ -17,6 +17,13 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm test
+      # firebase-tools (used by test:rules' emulator) requires JDK 21+; the
+      # runner's default Java is older, so this needs its own explicit setup
+      # separate from android-build/e2e-smoke's JDK 17 (Gradle's requirement).
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
       - run: npm run test:rules
 
   # roadmap 18-srs-flow-hardening.md DEPLOY-001 — the domain/rules tests above
@@ -40,7 +47,9 @@ jobs:
           java-version: "17"
       - name: Build release APK
         working-directory: android
-        run: ./gradlew assembleRelease --no-daemon
+        run: |
+          chmod +x ./gradlew
+          ./gradlew assembleRelease --no-daemon
 
   # The only real end-to-end UI check this project has was never wired into
   # CI (roadmap 18-srs-flow-hardening.md DEPLOY-001) — a broken runtime flow
@@ -62,7 +71,9 @@ jobs:
           java-version: "17"
       - name: Build debug APK
         working-directory: android
-        run: ./gradlew assembleDebug --no-daemon
+        run: |
+          chmod +x ./gradlew
+          ./gradlew assembleDebug --no-daemon
       - name: Install Maestro CLI
         run: |
           curl -Ls "https://get.maestro.mobile.dev" | bash
