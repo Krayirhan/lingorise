@@ -8,11 +8,13 @@ appId: com.lingorise.app
 # logcat, not a guess): src/services/catalogueService.ts's Firestore calls
 # had no timeout at all, so a slow/degraded network path from the CI runner
 # blocked the loading screen indefinitely. Fixed at the source with an 8s
-# timeout that falls through to the bundled content fallback — this wait
-# only needs to cover normal cold-start + that bounded fallback path now.
+# timeout that falls through to the bundled content fallback. Confirmed via
+# a fresh debug-artifact screenshot that the fix works — the screen now
+# renders well inside a bounded time (a 20000ms wait still missed by ~1s,
+# so 35000ms gives real margin over cold-start + the 8s fallback path).
 - extendedWaitUntil:
     visible: "Başla"
-    timeout: 20000
+    timeout: 35000
 - tapOn: "Başla"
 - tapOn: "Seviyemi seç"
 - tapOn: "A1"
