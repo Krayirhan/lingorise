@@ -11,7 +11,7 @@
 | CORE-003 | P3 | Core correctness / Testing | CLOSED | RUN-001-BASELINE | FIX-2026-08-25-03 | archiveDailyQuests/bringForward untested |
 | ARCH-001 | P3 | Architecture | CLOSED | RUN-001-BASELINE | FIX-2026-08-25-03 | One dead duplicate file (i18n/formatters.ts, deleted) |
 | ACC-001 | P3 | Accessibility | PARTIAL | RUN-001-BASELINE | FIX-2026-08-25-07 | Real TalkBack + dynamic-type pass done (2/5 DoD items), 3 real bugs found & fixed; onboarding/promotion-modal/Scanner/reduceMotion still untested |
-| DEPLOY-001 | P3 | Deployment | ACCEPTED_RISK | RUN-001-BASELINE | FIX-2026-08-25-05 | No CI at all (GitHub Actions removed — account cost constraint); verification is manual-only |
+| DEPLOY-001 | P3 | Deployment | REOPENED→FIX_APPLIED | RUN-001-BASELINE | FIX-2026-08-25-08 | CI restored after repo made public (Actions free/unlimited for public repos) — cost constraint resolved, not yet confirmed by a live successful run |
 | ARCH-002 | P4 | Architecture | CLOSED | RUN-001-BASELINE | FIX-2026-08-25-06 | Two layering inversions |
 | ARCH-004 | P4 | Architecture | CLOSED (scope corrected) | RUN-001-BASELINE | FIX-2026-08-25-06 | Dead getDailyTaskCollection removed; firestore.rules dailyTasks rule kept (tested, harmless, not orphaned) |
 | SEC-002 | P4 | Security | CLOSED | RUN-001-BASELINE | FIX-2026-08-25-06 | Real Firebase IDs in .env.example |
