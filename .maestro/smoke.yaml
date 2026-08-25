@@ -28,17 +28,19 @@ appId: com.lingorise.app
 # ReadyStep's real guest-start label is "Hemen Başla (Misafir Olarak) →"
 # (src/i18n/onboarding.ts onboardingTr.startAsGuest) — the script previously
 # looked for "Bahçeme Başla", which does not exist anywhere in the app copy.
-- tapOn: ".*Hemen Başla.*"
-# The debug-artifact screenshot at the actual failure point (roadmap trail:
-# 8 root causes chased in this one flow) showed the flow still sitting on
-# this exact ReadyStep screen — the tap above "completed" but the screen
-# never advanced. Root cause: ReadyStep's guest button has the daily
-# reminder toggle on by default, so tapping it calls
-# scheduleDailyReminder() -> Notifications.requestPermissionsAsync(), which
-# on Android 13+ shows a real native system permission dialog (outside the
-# React tree, not something any React Native selector can see) that this
-# script never accounted for. Dismiss it if it appears; optional so this is
-# a no-op if the OS auto-grants/skips it (common on some emulator images).
+# A later run proved even ".*Hemen Başla.*" is unsafe: Maestro's own log
+# showed it tapping coordinate (540, 931) — nowhere near the button (which
+# sits around y=2006) — landing instead on this same screen's headline
+# "Hesap açmadan hemen başlayabilirsin.", because "hemen başla" is literally
+# a case-insensitive substring of "hemen başlayabilirsin". Tapping that
+# plain (non-interactive) heading text is a silent no-op: COMPLETED in the
+# log, zero effect on screen, and every downstream step then executes
+# against a screen that never moved. "Misafir" is unique to the real button.
+- tapOn: ".*Misafir Olarak.*"
+# Whether a native Android 13+ notification-permission dialog appears here
+# depends on scheduleDailyReminder()'s async requestPermissionsAsync() call
+# (outside the React tree, invisible to any RN selector) — dismiss it if it
+# shows; optional so this is a no-op when the OS auto-grants/skips it.
 - tapOn:
     text: "Allow|İzin Ver|İzin ver"
     optional: true
