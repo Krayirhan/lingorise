@@ -11,7 +11,7 @@
 | ACT-CORE-003 | P3 | VERIFIED | CORE-003 | RUN-001-BASELINE | FIX-2026-08-25-03 | Test archiveDailyQuests/bringForward |
 | ACT-ARCH-001 | P3 | VERIFIED | ARCH-001 | RUN-001-BASELINE | FIX-2026-08-25-03 | Delete one dead duplicate file (i18n/formatters.ts) |
 | ACT-ACC-001 | P3 | DONE | ACC-001 | RUN-001-BASELINE | FIX-2026-08-25-07 (partial scope — see note) | Execute accessibility DoD verification (3 real bugs found & fixed) |
-| ACT-DEPLOY-001 | P3 | DONE (restored) | DEPLOY-001 | RUN-001-BASELINE | FIX-2026-08-25-08 | Add Maestro/release-build CI gate — repo made public, workflow re-added, not yet observed running live |
+| ACT-DEPLOY-001 | P3 | CLOSED | DEPLOY-001 | RUN-001-BASELINE | FIX-2026-08-25-09 | Maestro/release-build CI gate live and green end-to-end: https://github.com/Krayirhan/lingorise/actions/runs/32899393092 |
 | ACT-ARCH-002 | P4 | VERIFIED | ARCH-002 | RUN-001-BASELINE | FIX-2026-08-25-06 | Fix two layering-inversion imports |
 | ACT-ARCH-004 | P4 | VERIFIED | ARCH-004 | RUN-001-BASELINE | FIX-2026-08-25-06 (scope reduced — see note) | Remove dead getDailyTaskCollection (rule kept, tested & harmless) |
 | ACT-SEC-002 | P4 | VERIFIED | SEC-002 | RUN-001-BASELINE | FIX-2026-08-25-06 | Replace real IDs in .env.example |
