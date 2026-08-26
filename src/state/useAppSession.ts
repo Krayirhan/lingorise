@@ -8,22 +8,25 @@ import { ActiveSessionState, UserData } from "../types/user";
 import { now } from "../utils/clock";
 import { track } from "../services/telemetry";
 
-/**
- * Above this much overdue material, new words stop being introduced. Piling
- * fresh vocabulary on top of a backlog is how learners end up drowning and
- * quitting, so the garden gets watered before anything new is planted.
- */
-export const REVIEW_DEBT_LIMIT = 40;
-
-/** Bu noktadan REVIEW_DEBT_LIMIT'e kadar yeni kelime kotası doğrusal olarak azalır — ani bir kesim yerine yumuşak bir fren. */
-export const REVIEW_DEBT_TAPER_START = 20;
-
 /** Due words, soonest-scheduled first, resolved to real questions. */
 function collectDueQuestions(userData: UserData, limit: number): MeaningMatchQuestion[] {
   return getDueReviewItems(userData.learningProgress || {})
     .slice(0, limit)
     .map((item) => getQuestionById(item.questionId))
     .filter((q): q is MeaningMatchQuestion => q !== undefined);
+}
+
+/**
+ * Whether the learner has spaced-repetition reviews due right now. As long as
+ * this is true, normal ("new word") practice is gated behind review — a
+ * learner should never be shown a word they've already met a second time
+ * inside what's supposed to be new-word practice, and a due word should never
+ * resurface silently mixed into that flow with no indication of why it's
+ * back. Review is its own mandatory, separate flow instead (see
+ * `startPractice`/`startReview` below, and `PracticeHubScreen`).
+ */
+export function hasPendingReviews(userData: UserData): boolean {
+  return getDueReviewItems(userData.learningProgress || {}).length > 0;
 }
 
 /**
@@ -45,37 +48,34 @@ export function pickNewWords(freshWords: MeaningMatchQuestion[], count: number):
 }
 
 /**
- * One session for the day: overdue reviews first, then new words for whatever
- * room is left. A single flow means the review debt can no longer be skipped.
+ * Normal ("new word") practice, and ONLY new words — a word the learner has
+ * already met is never mixed back in here, by construction. Reviews are a
+ * fully separate mandatory flow (`buildReviewSessionCore`). The empty-while-
+ * pending guard below is enforced here, in the one place both `startPractice`
+ * and any other caller funnel through, rather than trusted to every call
+ * site — a caller that forgets to check `hasPendingReviews` first still gets
+ * a safely empty session instead of silently leaking due words back in.
  */
 function buildDailySessionCore(userData: UserData): MeaningMatchQuestion[] {
+  if (hasPendingReviews(userData)) return [];
+
   const sessionSize = userData.practiceSessionSize || 20;
-  const dueQuestions = collectDueQuestions(userData, sessionSize);
-
-  const remainingSlots = sessionSize - dueQuestions.length;
-  const totalDue = getDueReviewItems(userData.learningProgress || {}).length;
-  if (remainingSlots <= 0 || totalDue >= REVIEW_DEBT_LIMIT) return dueQuestions;
-
-  let newWordBudget = remainingSlots;
-  if (totalDue > REVIEW_DEBT_TAPER_START) {
-    const taperRatio = 1 - (totalDue - REVIEW_DEBT_TAPER_START) / (REVIEW_DEBT_LIMIT - REVIEW_DEBT_TAPER_START);
-    newWordBudget = Math.max(0, Math.round(remainingSlots * taperRatio));
-  }
-
   const unitQuestions = getCurrentLevelUnitQuestions(userData.level, userData.solvedQuestionIds);
-  const dueIds = new Set(dueQuestions.map((q) => q.id));
-  const freshWords = unitQuestions.filter(
-    (q) => !userData.rewardedQuestionIds.includes(q.id) && !dueIds.has(q.id)
-  );
+  const freshWords = unitQuestions.filter((q) => !userData.rewardedQuestionIds.includes(q.id));
 
-  const newPortion = pickNewWords(freshWords, newWordBudget);
-  const session = [...dueQuestions, ...newPortion];
-  if (session.length > 0) return session;
+  const newPortion = pickNewWords(freshWords, sessionSize);
+  if (newPortion.length > 0) return newPortion;
 
-  // Nothing due and no unseen words left in the unit. Rather than leaving the
-  // button dead, offer the words closest to their next review. These pay no XP
-  // — they are not due — so practising ahead cannot be farmed.
+  // Nothing unseen left in the current unit and nothing due yet either.
+  // Rather than leaving the button dead, offer the words closest to their
+  // next review as bonus practice. These pay no XP — they are not due — so
+  // practising ahead cannot be farmed.
   return getDueReviewItemsSoonest(userData, sessionSize);
+}
+
+/** The mandatory review session: every word due right now, oldest-due first. */
+function buildReviewSessionCore(userData: UserData): MeaningMatchQuestion[] {
+  return collectDueQuestions(userData, userData.practiceSessionSize || 20);
 }
 
 /**
@@ -90,6 +90,10 @@ function withFreshDistractors(questions: MeaningMatchQuestion[]): MeaningMatchQu
 
 export function buildDailySession(userData: UserData): MeaningMatchQuestion[] {
   return withFreshDistractors(buildDailySessionCore(userData));
+}
+
+export function buildReviewSession(userData: UserData): MeaningMatchQuestion[] {
+  return withFreshDistractors(buildReviewSessionCore(userData));
 }
 
 /** Known words ordered by how soon they come around again. */
@@ -147,50 +151,72 @@ export function useAppSession(userData: UserData, setActiveSession?: (session: A
     setSubmitted(false);
   }, []);
 
-  const startPractice = useCallback(
-    (customQuestions?: MeaningMatchQuestion[], reverseMode?: boolean) => {
-      let qList: MeaningMatchQuestion[] = [];
-
-      if (customQuestions && customQuestions.length > 0) {
-        qList = withFreshDistractors(customQuestions);
-      } else {
-        qList = buildDailySession(userData);
-      }
-
-      if (qList.length === 0) return;
-
-      if (!customQuestions) {
-        const dueIds = new Set(getDueReviewItems(userData.learningProgress || {}).map((i) => i.questionId));
-        const dueCount = qList.filter((q) => dueIds.has(q.id)).length;
-        const freshCount = qList.length - dueCount;
-        const sessionType = dueCount > 0 && freshCount > 0 ? "mixed" : dueCount > 0 ? "review_only" : "new_only";
-        track("practice_session_started", { sessionType, dueCount, freshCount, reverseMode: Boolean(reverseMode) });
-        if (dueIds.size >= REVIEW_DEBT_LIMIT && freshCount === 0 && dueCount > 0) {
-          track("review_debt_capped", { dueCount: dueIds.size, sessionSize: userData.practiceSessionSize });
-        }
-      }
-
-      if (reverseMode && canUsePickTheWord(qList.length)) {
-        qList = toPickTheWordSession(qList);
-      }
-
+  const beginSession = useCallback(
+    (qList: MeaningMatchQuestion[], mode: SessionMode) => {
+      if (qList.length === 0) return false;
       setSessionQuestions(qList);
       setCurrentIndex(0);
       setSessionAnswers([]);
       setIsSessionCompleted(false);
-      setSessionMode("PRACTICE");
+      setSessionMode(mode);
       resetQuestionState();
       setScreen("practice");
+      return true;
     },
-    [userData, resetQuestionState]
+    [resetQuestionState]
+  );
+
+  const startPractice = useCallback(
+    (customQuestions?: MeaningMatchQuestion[], reverseMode?: boolean) => {
+      // A specific word (word notebook, search, "practice this word") was
+      // chosen deliberately, so it bypasses the review gate below — the
+      // learner asked for exactly this word, review or not.
+      if (customQuestions && customQuestions.length > 0) {
+        let qList = withFreshDistractors(customQuestions);
+        if (reverseMode && canUsePickTheWord(qList.length)) qList = toPickTheWordSession(qList);
+        beginSession(qList, "PRACTICE");
+        return;
+      }
+
+      // Mandatory: due reviews must be cleared before new words are
+      // introduced. Every entry point into "normal practice" (home hero,
+      // practice hub) calls this same function with no custom questions, so
+      // enforcing the gate here — once — means no screen can accidentally
+      // skip it. A learner is never shown a word a second time inside what's
+      // supposed to be new-word practice.
+      if (hasPendingReviews(userData)) {
+        const dueList = buildReviewSessionCore(userData);
+        const qList = withFreshDistractors(dueList);
+        track("practice_session_started", {
+          sessionType: "review_only",
+          dueCount: dueList.length,
+          freshCount: 0,
+          reverseMode: false,
+        });
+        beginSession(qList, "REVIEW");
+        return;
+      }
+
+      let qList = buildDailySession(userData);
+      if (qList.length === 0) return;
+      track("practice_session_started", {
+        sessionType: "new_only",
+        dueCount: 0,
+        freshCount: qList.length,
+        reverseMode: Boolean(reverseMode),
+      });
+      if (reverseMode && canUsePickTheWord(qList.length)) qList = toPickTheWordSession(qList);
+      beginSession(qList, "PRACTICE");
+    },
+    [userData, beginSession]
   );
 
   const startReview = useCallback(() => {
     // No blanket fallback to the whole catalogue — serving un-due words was
     // what quietly defeated the spacing. If nothing is due, hand the learner
-    // the ordinary daily session instead of a dead tap.
-    const dueList = collectDueQuestions(userData, userData.practiceSessionSize);
-    const qList = withFreshDistractors(dueList.length > 0 ? dueList : buildDailySessionCore(userData));
+    // the ordinary new-word session instead of a dead tap.
+    const dueList = buildReviewSessionCore(userData);
+    const qList = dueList.length > 0 ? withFreshDistractors(dueList) : buildDailySession(userData);
     if (qList.length === 0) return;
 
     track("practice_session_started", {
@@ -200,14 +226,8 @@ export function useAppSession(userData: UserData, setActiveSession?: (session: A
       reverseMode: false,
     });
 
-    setSessionQuestions(qList);
-    setCurrentIndex(0);
-    setSessionAnswers([]);
-    setIsSessionCompleted(false);
-    setSessionMode("REVIEW");
-    resetQuestionState();
-    setScreen("practice");
-  }, [userData, resetQuestionState]);
+    beginSession(qList, dueList.length > 0 ? "REVIEW" : "PRACTICE");
+  }, [userData, beginSession]);
 
   const recordSessionStep = useCallback((isCorrect: boolean, xpEarned: number) => {
     const currentQ = sessionQuestions[currentIndex];

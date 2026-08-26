@@ -12,25 +12,37 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { allQuestions } from "../../../content/questions";
 import { LevelCode, MeaningMatchQuestion } from "../../../types/content";
+import { LearningItemProgress, LearningStatus } from "../../../types/user";
 import { speechService } from "../../../services/speechService";
 import { Copy } from "../../../i18n/en";
 import { C, radius, spacing } from "../../../theme/colors";
+import { deriveStatus, isLeech } from "../../../domain/learning/mastery";
 
 interface Props {
   copy: Copy;
   visible: boolean;
-  solvedQuestionIds: string[];
+  /** Drives each row's real mastery status — a word is never just "solved
+   * or not" here. Optional only so existing test/story call sites without
+   * real progress data still render (falls back to "new" for every word). */
+  learningProgress?: Record<string, LearningItemProgress>;
   onClose: () => void;
   onPracticeWord?: (question: MeaningMatchQuestion) => void;
   reduceMotion?: boolean;
 }
+
+const STATUS_STYLE: Record<LearningStatus, { bg: string; fg: string }> = {
+  new: { bg: C.lineSoft, fg: C.muted },
+  learning: { bg: C.primarySoft, fg: C.primary },
+  review: { bg: C.attentionSoft, fg: C.attentionText },
+  mastered: { bg: C.successSoft, fg: C.successText },
+};
 
 const LEVELS: (LevelCode | "ALL")[] = ["ALL", "A1", "A2", "B1", "B2", "C1", "C2"];
 
 export function WordNotebookModal({
   copy,
   visible,
-  solvedQuestionIds,
+  learningProgress,
   onClose,
   onPracticeWord,
   reduceMotion,
@@ -124,7 +136,17 @@ export function WordNotebookModal({
             contentContainerStyle={S.listContent}
             showsVerticalScrollIndicator={false}
             renderItem={({ item }) => {
-              const isSolved = solvedQuestionIds.includes(item.id);
+              const progressItem = learningProgress?.[item.id];
+              const status: LearningStatus = progressItem ? deriveStatus(progressItem) : "new";
+              const leech = isLeech(progressItem);
+              const statusLabel =
+                status === "mastered"
+                  ? copy.progress?.statusMastered || "Ustalaşıldı"
+                  : status === "review"
+                    ? copy.progress?.statusReview || "Tekrar sırasında"
+                    : status === "learning"
+                      ? copy.progress?.statusLearning || "Öğreniliyor"
+                      : copy.progress?.statusNew || "Yeni";
               const word = item.word || item.prompt;
               const meaning = item.meaning || item.answer;
 
@@ -150,16 +172,23 @@ export function WordNotebookModal({
                       >
                         <Ionicons name="volume-medium" size={20} color={C.primary} />
                       </Pressable>
-                      {isSolved && (
-                        <View style={S.solvedBadge}>
-                          <Ionicons
-                            name="checkmark-circle"
-                            size={16}
-                            color={C.success}
-                          />
-                        </View>
-                      )}
                     </View>
+                  </View>
+
+                  {/* Real mastery status, not just solved/unsolved — this is
+                      the one place a learner can see WHY a word keeps coming
+                      back in review, instead of it just silently reappearing
+                      (roadmap 18-srs-flow-hardening.md "pekişme" redesign). */}
+                  <View style={S.statusRow}>
+                    <View style={[S.statusPill, { backgroundColor: STATUS_STYLE[status].bg }]}>
+                      <Text style={[S.statusPillTxt, { color: STATUS_STYLE[status].fg }]}>{statusLabel}</Text>
+                    </View>
+                    {leech && (
+                      <View style={S.leechPill}>
+                        <Ionicons name="fitness-outline" size={11} color={C.attentionText} />
+                        <Text style={S.leechPillTxt}>{copy.progress?.statusLeech || "Zorlanıyorsun"}</Text>
+                      </View>
+                    )}
                   </View>
 
                   <View style={S.meaningRow}>
@@ -353,8 +382,34 @@ const S = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  solvedBadge: {
-    marginLeft: 2,
+  statusRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 6,
+  },
+  statusPill: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: radius.xs,
+  },
+  statusPillTxt: {
+    fontSize: 10.5,
+    fontWeight: "800",
+  },
+  leechPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    backgroundColor: C.attentionSoft,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: radius.xs,
+  },
+  leechPillTxt: {
+    color: C.attentionText,
+    fontSize: 10.5,
+    fontWeight: "800",
   },
   meaningRow: {
     flexDirection: "row",

@@ -36,6 +36,8 @@ interface Props {
   onBack: () => void;
   soundEnabled?: boolean;
   reduceMotion?: boolean;
+  /** True for a word the learner has repeatedly missed — see domain/learning/mastery.ts's isLeech. */
+  isLeech?: boolean;
 }
 
 export function PracticeScreen({
@@ -56,6 +58,7 @@ export function PracticeScreen({
   onBack,
   soundEnabled = true,
   reduceMotion = false,
+  isLeech = false,
 }: Props) {
   const correctAnswer = question.meaning || question.answer || "";
   const wordPrompt = question.word || question.prompt || "";
@@ -63,7 +66,7 @@ export function PracticeScreen({
   const isLastQuestion = index + 1 >= totalQuestions;
 
   const speech = useSpeech(wordPrompt, question.pronunciation, soundEnabled, reduceMotion);
-  const session = usePracticeSession(question, correctAnswer, onCheck);
+  const session = usePracticeSession(question, correctAnswer, onCheck, isLeech);
   const feedback = usePracticeFeedback(submitted, isCorrect, reduceMotion);
 
   const handleRequestExit = () => {
@@ -174,7 +177,8 @@ export function PracticeScreen({
             dynamicFontSize={28}
             isCompactScreen={false}
             showHint={session.showHint}
-            onToggleHint={() => session.setShowHint(!session.showHint)}
+            onToggleHint={session.toggleHint}
+            isLeech={isLeech}
             isSpeaking={speech.isSpeaking}
             audioPulse={speech.audioPulse}
             isMotionReduced={feedback.isMotionReduced}

@@ -24,6 +24,7 @@ export function ProgressScreen({
   levelProgressList,
   topicBreakdown,
   solvedQuestionIds = [],
+  learningProgress,
   lastActiveDate = "",
   practiceHistory = [],
   unlockedBadges = [],
@@ -135,7 +136,7 @@ export function ProgressScreen({
       <WordNotebookModal
         copy={copy}
         visible={notebookVisible}
-        solvedQuestionIds={solvedQuestionIds}
+        learningProgress={learningProgress}
         onClose={() => setNotebookVisible(false)}
         onPracticeWord={onPracticeWord}
         reduceMotion={reduceMotion}

@@ -55,6 +55,7 @@ export function HomeScreen({
           dailyXpEarned={viewModel.dailyXpEarned}
           dailyXpTarget={viewModel.dailyXpTarget}
           isDailyCompleted={viewModel.isDailyCompleted}
+          dueReviewCount={viewModel.reviewCount}
           onPress={onQuestPress}
           onViewProgress={() => onTabPress("progress")}
           onPracticeAgain={onQuestPress}

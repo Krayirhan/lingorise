@@ -23,7 +23,7 @@ import {
   DAILY_QUEST_REVIEW_ID,
 } from "../src/services/gamification";
 import { applyPracticeAnswer } from "../src/domain/practice/answer";
-import { buildDailySession, REVIEW_DEBT_LIMIT, REVIEW_DEBT_TAPER_START, pickNewWords } from "../src/state/useAppSession";
+import { buildDailySession, buildReviewSession, hasPendingReviews, pickNewWords } from "../src/state/useAppSession";
 import {
   evaluatePromotion,
   assessLevelChoice,
@@ -562,44 +562,57 @@ assert(mergedProgress.shared.attempts === richLocal.attempts, "Merge keeps the r
 assert(mergedProgress.localOnly !== undefined, "Device-only practice survives the merge");
 assert(mergedProgress.remoteOnly !== undefined, "Cloud-only practice survives the merge");
 
-// 27. One daily flow: debt before new words
-console.log("\n27. Unified Daily Session:");
+// 27. Review and new-word practice are fully separate, mandatory flows
+// (roadmap 18-srs-flow-hardening.md "pekişme" redesign, 2026-08-26): a
+// learner is never shown an already-met word inside "new word" practice, and
+// due reviews never silently disappear into a mixed session.
+console.log("\n27. Review vs. New-Word Session Separation:");
 const a1Pool = getQuestionsByLevel("A1");
 const overdueWord = { ...recordLearningOutcome(undefined, true, "2026-08-01", 1), nextReviewAt: Date.now() - 1000 };
 
-const mixedSession = buildDailySession({
+const withDueReviews = {
   ...DEFAULT_USER_DATA,
-  practiceSessionSize: 5,
+  practiceSessionSize: 5 as const,
   rewardedQuestionIds: [a1Pool[0].id, a1Pool[1].id],
   solvedQuestionIds: [a1Pool[0].id, a1Pool[1].id],
   learningProgress: { [a1Pool[0].id]: overdueWord, [a1Pool[1].id]: overdueWord },
-});
-assert(mixedSession.length === 5, "Daily session fills up to the chosen session length");
-assert(mixedSession[0].id === a1Pool[0].id, "Overdue reviews are served before anything new");
-assert(mixedSession[1].id === a1Pool[1].id, "All overdue reviews come first");
+};
+
+assert(hasPendingReviews(withDueReviews), "Two overdue words are detected as pending reviews");
 assert(
-  !mixedSession.slice(2).some((q) => [a1Pool[0].id, a1Pool[1].id].includes(q.id)),
-  "New words fill the remaining slots without repeating the reviews"
+  buildDailySession(withDueReviews).length === 0,
+  "New-word practice is entirely gated off while any review is pending — not throttled, fully closed"
+);
+
+const reviewSession = buildReviewSession(withDueReviews);
+assert(reviewSession.length === 2, "The review session contains exactly the due words");
+assert(
+  reviewSession.every((q) => [a1Pool[0].id, a1Pool[1].id].includes(q.id)),
+  "The review session contains only due words, nothing new"
 );
 
 const noDueSession = buildDailySession({ ...DEFAULT_USER_DATA, practiceSessionSize: 5 });
-assert(noDueSession.length === 5, "With nothing due the session is all new words");
+assert(noDueSession.length === 5, "With nothing due, new-word practice fills the full session");
+assert(!hasPendingReviews(DEFAULT_USER_DATA), "A fresh learner has no pending reviews");
 
-// Backlog protection: past the limit, no new vocabulary is introduced
-const drowningProgress: Record<string, any> = {};
-for (let index = 0; index < REVIEW_DEBT_LIMIT + 5; index += 1) {
-  drowningProgress[a1Pool[index].id] = overdueWord;
-}
-const backloggedSession = buildDailySession({
+// A word already mastered (rewarded) but with nothing currently due for it
+// (e.g. its next review is scheduled far in the future) must still never
+// reappear in new-word practice — only rewardedQuestionIds membership
+// decides "already met", not the moment-to-moment due state.
+const alreadyMetButNotDue = {
+  ...recordLearningOutcome(undefined, true, "2026-08-01", 1),
+  nextReviewAt: Date.now() + 30 * DAY_MS,
+};
+const noRepeatSession = buildDailySession({
   ...DEFAULT_USER_DATA,
-  practiceSessionSize: 30,
-  rewardedQuestionIds: Object.keys(drowningProgress),
-  solvedQuestionIds: Object.keys(drowningProgress),
-  learningProgress: drowningProgress,
+  practiceSessionSize: 10,
+  rewardedQuestionIds: [a1Pool[0].id],
+  solvedQuestionIds: [a1Pool[0].id],
+  learningProgress: { [a1Pool[0].id]: alreadyMetButNotDue },
 });
 assert(
-  backloggedSession.every((q) => drowningProgress[q.id] !== undefined),
-  "Past the debt limit no new words are introduced — only the backlog"
+  !noRepeatSession.some((q) => q.id === a1Pool[0].id),
+  "A word already met stays out of new-word practice even when it isn't due yet"
 );
 
 // 28. Units break the level into finishable chunks
@@ -682,25 +695,34 @@ assert(!informedJump.isAhead, "A learner who mastered their level is not warned"
 const stepBack = assessLevelChoice("A1", "A1", {});
 assert(!stepBack.isAhead, "Staying on the current level is never flagged");
 
-// 31. Review debt follows the learner across levels
+// 31. Review debt follows the learner across levels, but stays in the
+// review flow — it never leaks into the new-level's new-word session.
 console.log("\n31. Cross-Level Review Debt:");
 const a2Questions = getQuestionsByLevel("A2");
 const overdueA1 = { ...recordLearningOutcome(undefined, true, "2026-08-01", 1), nextReviewAt: Date.now() - 1000 };
-const crossLevelSession = buildDailySession({
+const crossLevelUser = {
   ...DEFAULT_USER_DATA,
-  level: "A2",
-  practiceSessionSize: 5,
+  level: "A2" as const,
+  practiceSessionSize: 5 as const,
   rewardedQuestionIds: [a1Questions[0].id],
   solvedQuestionIds: [a1Questions[0].id],
   learningProgress: { [a1Questions[0].id]: overdueA1 },
-});
+};
+
+const crossLevelReview = buildReviewSession(crossLevelUser);
 assert(
-  crossLevelSession[0].id === a1Questions[0].id,
-  "An overdue A1 word still comes up after switching to A2"
+  crossLevelReview.length === 1 && crossLevelReview[0].id === a1Questions[0].id,
+  "An overdue A1 word still surfaces for review after switching to A2"
+);
+
+const crossLevelNewSession = buildDailySession(crossLevelUser);
+assert(
+  crossLevelNewSession.every((q) => a2Questions.some((a2) => a2.id === q.id)),
+  "New-word practice draws only from the level the learner is now on"
 );
 assert(
-  crossLevelSession.slice(1).every((q) => a2Questions.some((a2) => a2.id === q.id)),
-  "New words come from the level the learner is now on"
+  !crossLevelNewSession.some((q) => q.id === a1Questions[0].id),
+  "The overdue A1 word does not leak into A2's new-word session"
 );
 
 // 32. One number, one meaning — no raw keys, no divergent counts
@@ -934,11 +956,10 @@ console.log("\n39. Telemetry Event Recording (roadmap Birim 5):");
   try {
     track("session_started", { daysSinceLastOpen: 1 });
     track("daily_rollover_applied", { streakBefore: 3, streakAfter: 4, pendingReviewsAtOpen: 2 });
-    track("practice_session_started", { sessionType: "mixed", dueCount: 3, freshCount: 17, reverseMode: false });
+    track("practice_session_started", { sessionType: "new_only", dueCount: 0, freshCount: 17, reverseMode: false });
     track("question_answered", { questionId: "a1-mm-01", isCorrect: true, isFirstEncounter: true, wasDue: false, usedHint: false, level: "A1", responseTimeMs: 2100, inferredQuality: 5 });
     track("word_mastery_changed", { fromStatus: "review", toStatus: "mastered", questionId: "a1-mm-01" });
     track("garden_stage_changed", { fromStage: "sprout", toStage: "leaf", masteredWords: 25 });
-    track("review_debt_capped", { dueCount: 42, sessionSize: 20 });
     track("level_promotion_shown", { level: "A1", masteredPercent: 82, nextLevelReady: true });
     track("level_promotion_advanced", { fromLevel: "A1", toLevel: "A2" });
     track("level_switch_warning_shown", { currentLevel: "A1", targetLevel: "B1", currentMasteredPercent: 34 });
@@ -1417,67 +1438,41 @@ console.log("\n51. Difficulty-Based New Word Ordering (roadmap Birim 18.3):");
   );
 }
 
-// 52. Review Debt Tapered Reduction (roadmap Birim 18.4):
-console.log("\n52. Review Debt Tapered Reduction (roadmap Birim 18.4):");
+// 52. Mandatory Review Gate (roadmap 18-srs-flow-hardening.md "pekişme"
+// redesign, 2026-08-26 — replaces the retired review-debt taper): no matter
+// how large the review backlog, new words stay fully gated off, and the
+// review session always covers the whole backlog rather than a capped slice.
+console.log("\n52. Mandatory Review Gate:");
 {
-  assert(REVIEW_DEBT_TAPER_START === 20, "REVIEW_DEBT_TAPER_START is set to 20");
-  assert(REVIEW_DEBT_LIMIT === 40, "REVIEW_DEBT_LIMIT is set to 40");
-
   const a1Pool = getQuestionsByLevel("A1");
+  const dueEntry = { status: "learning" as const, attempts: 1, correctCount: 1, wrongCount: 0, repetitions: 1, distinctCorrectDays: 1, intervalDays: 1, easeFactor: 2.5, nextReviewAt: 0 };
 
-  // Simulate user data with total due below taper start (10 due words)
-  const userBelowTaper: UserData = {
+  const userWithSmallBacklog: UserData = {
     ...DEFAULT_USER_DATA,
     practiceSessionSize: 20,
-    learningProgress: Object.fromEntries(
-      a1Pool.slice(0, 10).map((q) => [
-        q.id,
-        { status: "learning", attempts: 1, correctCount: 1, wrongCount: 0, repetitions: 1, distinctCorrectDays: 1, intervalDays: 1, easeFactor: 2.5, nextReviewAt: 0 },
-      ])
-    ),
+    learningProgress: Object.fromEntries(a1Pool.slice(0, 10).map((q) => [q.id, dueEntry])),
   };
-  const sessionBelow = buildDailySession(userBelowTaper);
-  assert(sessionBelow.length === 20, "Session with 10 due words fills full 20 slots");
-  // 10 due + 10 fresh words (remainingSlots = 10, no taper applied)
-  const freshCountBelow = sessionBelow.length - 10;
-  assert(freshCountBelow === 10, `Full quota of 10 new words introduced when total due (10) <= taper start (20)`);
-
-  // Simulate user data with total due at midpoint of taper (30 due words)
-  // Let's test with practiceSessionSize = 40, collectDueQuestions takes 30, remainingSlots = 10:
-  // Using questions from unit 2 (slice 30..60) as due, so unit 1 still has fresh words.
-  const userMidTaper: UserData = {
-    ...DEFAULT_USER_DATA,
-    practiceSessionSize: 40 as any,
-    learningProgress: Object.fromEntries(
-      a1Pool.slice(30, 60).map((q) => [
-        q.id,
-        { status: "learning", attempts: 1, correctCount: 1, wrongCount: 0, repetitions: 1, distinctCorrectDays: 1, intervalDays: 1, easeFactor: 2.5, nextReviewAt: 0 },
-      ])
-    ),
-  };
-  const sessionMid = buildDailySession(userMidTaper);
-  // remainingSlots = 40 - 30 = 10; totalDue = 30; taperRatio = 1 - (30 - 20)/(40 - 20) = 0.5 -> newWordBudget = round(10 * 0.5) = 5
-  // total session length = 30 due + 5 fresh = 35
-  const freshCountMid = sessionMid.length - 30;
+  assert(hasPendingReviews(userWithSmallBacklog), "A 10-word backlog is detected as pending review");
   assert(
-    freshCountMid === 5,
-    `Tapered quota of 5 new words (50% of 10) introduced when total due (30) is midway between 20 and 40`
+    buildDailySession(userWithSmallBacklog).length === 0,
+    "New-word practice yields nothing while any reviews are pending — it is never called with a backlog present in real use, but stays honestly empty if it were"
   );
+  assert(buildReviewSession(userWithSmallBacklog).length === 10, "The review session covers the full 10-word backlog");
 
-  // Simulate user data at review debt cap (40 due words)
-  const userCapped: UserData = {
+  const userWithLargeBacklog: UserData = {
     ...DEFAULT_USER_DATA,
-    practiceSessionSize: 40 as any,
-    learningProgress: Object.fromEntries(
-      a1Pool.slice(0, 40).map((q) => [
-        q.id,
-        { status: "learning", attempts: 1, correctCount: 1, wrongCount: 0, repetitions: 1, distinctCorrectDays: 1, intervalDays: 1, easeFactor: 2.5, nextReviewAt: 0 },
-      ])
-    ),
+    practiceSessionSize: 20,
+    learningProgress: Object.fromEntries(a1Pool.slice(0, 60).map((q) => [q.id, dueEntry])),
   };
-  const sessionCapped = buildDailySession(userCapped);
-  const freshCountCapped = sessionCapped.length - 40;
-  assert(freshCountCapped === 0, `0 new words introduced when total due (40) reaches REVIEW_DEBT_LIMIT`);
+  assert(hasPendingReviews(userWithLargeBacklog), "A 60-word backlog is detected as pending review");
+  assert(
+    buildDailySession(userWithLargeBacklog).length === 0,
+    "A large backlog still yields zero new words — there is no partial taper any more, only fully gated or fully clear"
+  );
+  assert(
+    buildReviewSession(userWithLargeBacklog).length === 20,
+    "The review session is capped at the learner's own session size (20), not the full 60-word backlog, so one sitting stays finishable"
+  );
 }
 
 // 53. Server Date Anomaly Detection (roadmap Birim 18.5):

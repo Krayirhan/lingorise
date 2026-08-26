@@ -17,6 +17,8 @@ interface Props {
   isMotionReduced: boolean;
   onToggleSpeech: () => void;
   audioError: boolean;
+  /** True for a word the learner has repeatedly missed — see domain/learning/mastery.ts's isLeech. */
+  isLeech?: boolean;
 }
 
 export function WordPrompt({
@@ -31,6 +33,7 @@ export function WordPrompt({
   isMotionReduced,
   onToggleSpeech,
   audioError,
+  isLeech = false,
 }: Props) {
   const wordPrompt = question.word || question.prompt || "";
   const posLabel = formatPartOfSpeech(question.partOfSpeech, "tr");
@@ -50,6 +53,12 @@ export function WordPrompt({
             <Text style={S.dirText}>{directionLabel}</Text>
           </View>
           {posLabel ? <View style={S.posBadge}><Text style={S.posText}>{posLabel}</Text></View> : null}
+          {isLeech && (
+            <View style={S.leechBadge} accessibilityLabel={copy.game?.leechBadge || "Bu kelime seni zorluyor"}>
+              <Ionicons name="fitness-outline" size={11} color={C.attentionText} />
+              <Text style={S.leechText}>{copy.game?.leechBadge || "Zorlanıyorsun"}</Text>
+            </View>
+          )}
         </View>
         {question.hint && (
           <Pressable
@@ -93,7 +102,14 @@ export function WordPrompt({
       {showHint && question.hint && (
         <View style={S.hintBox}>
           <Text style={S.hintBoxTxt}>{question.hint}</Text>
-          <Text style={S.hintPen}>({copy.game?.hintPenaltyNotice || "İpucu kullanıldığı için -2 XP"})</Text>
+          {/* A leech word's hint opens automatically — the app's own choice,
+              not the learner's, so it never carries the usual XP penalty
+              (see usePracticeSession's autoRevealHint). */}
+          <Text style={S.hintPen}>
+            {isLeech
+              ? copy.game?.leechHintNotice || "Zorlandığın bir kelime — ipucu otomatik açıldı, XP kaybı yok"
+              : `(${copy.game?.hintPenaltyNotice || "İpucu kullanıldığı için -2 XP"})`}
+          </Text>
         </View>
       )}
 
@@ -115,6 +131,8 @@ const S = StyleSheet.create({
   dirText: { color: C.attention, fontSize: 9, fontWeight: "800", letterSpacing: 0.7 },
   posBadge: { backgroundColor: C.primarySoft, paddingHorizontal: 6, paddingVertical: 2, borderRadius: radius.xs },
   posText: { color: C.primary, fontSize: 9, fontWeight: "800" },
+  leechBadge: { flexDirection: "row", alignItems: "center", gap: 3, backgroundColor: C.attentionSoft, paddingHorizontal: 6, paddingVertical: 2, borderRadius: radius.xs },
+  leechText: { color: C.attentionText, fontSize: 9, fontWeight: "800" },
   hintBtn: { flexDirection: "row", alignItems: "center", gap: 3, backgroundColor: C.canvas, paddingHorizontal: 6, paddingVertical: 2, borderRadius: radius.xs, borderWidth: 1, borderColor: C.line },
   hintTxt: { color: C.muted, fontSize: 9.5, fontWeight: "700" },
   hintTxtAct: { color: C.rewardText, fontWeight: "800" },

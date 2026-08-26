@@ -1,6 +1,6 @@
 import { Copy, Locale } from "../../i18n/en";
 import { LevelCode, MeaningMatchQuestion } from "../../types/content";
-import { GardenProgress, PracticeHistoryEntry } from "../../types/user";
+import { GardenProgress, LearningItemProgress, PracticeHistoryEntry } from "../../types/user";
 
 export interface LevelProgressItem {
   /** False while the level lacks enough words to be worth entering. */
@@ -36,6 +36,8 @@ export interface ProgressScreenProps {
   levelProgressList: LevelProgressItem[];
   topicBreakdown: TopicProgressItem[];
   solvedQuestionIds?: string[];
+  /** Drives the Word Notebook's real per-word mastery status (see WordNotebookModal). */
+  learningProgress?: Record<string, LearningItemProgress>;
   lastActiveDate?: string;
   practiceHistory?: PracticeHistoryEntry[];
   unlockedBadges?: string[];

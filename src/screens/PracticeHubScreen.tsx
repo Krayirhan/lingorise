@@ -15,7 +15,6 @@ import { Copy, Locale } from "../i18n/en";
 import { LevelCode } from "../types/content";
 import { HomeBottomNav } from "../features/home/components/HomeBottomNav";
 import { HomeTab } from "../features/home/home.types";
-import { REVIEW_DEBT_LIMIT } from "../state/useAppSession";
 
 const sprig = require("../../assets/sprig-mascot-idle-transparent.png");
 
@@ -31,10 +30,6 @@ interface Props {
   onTabPress: (tab: HomeTab) => void;
   practiceSessionSize: 5 | 10 | 20 | 30;
   onPracticeSessionSizeChange: (size: 5 | 10 | 20 | 30) => void;
-  /** How many of today's session are overdue reviews rather than new words. */
-  dueInSession: number;
-  /** The real, uncapped overdue count — used to detect the review-debt pause. */
-  totalDueCount: number;
 }
 
 export function PracticeHubScreen({
@@ -48,39 +43,26 @@ export function PracticeHubScreen({
   onStartReview,
   practiceSessionSize,
   onPracticeSessionSizeChange,
-  dueInSession,
-  totalDueCount,
 }: Props) {
   const [reverseMode, setReverseMode] = useState(false);
   const streakText = `${streak} ${copy.game?.hubStreakSuffix || "gün seri"}`;
 
-  // The card describes the session that will actually be built, instead of a
-  // fixed "2 min · +40 XP" that no longer matched anything.
-  const freshInSession = Math.max(0, practiceSessionSize - dueInSession);
+  // Review and new-word practice are fully separate, mandatory flows — as
+  // long as anything is due, it always comes first, full stop. There is no
+  // "mixed" or "tapered" state left to describe (roadmap
+  // 18-srs-flow-hardening.md "pekişme" redesign, 2026-08-26).
+  const hasMandatoryReview = dueReviewCount > 0;
   const estimatedMinutes = Math.max(1, Math.round(practiceSessionSize * 0.15));
-  // Past this many overdue words, buildDailySession() stops introducing new
-  // vocabulary (see REVIEW_DEBT_LIMIT). Without this the pause looked like a
-  // bug — the same words kept coming back with no explanation.
-  const isDebtCapped = totalDueCount >= REVIEW_DEBT_LIMIT && freshInSession === 0;
 
   const fill = (template: string, values: Record<string, string | number>) =>
     Object.entries(values).reduce((text, [key, value]) => text.replace(`{${key}}`, String(value)), template);
 
-  const sessionSummary = isDebtCapped
-    ? fill(copy.home?.practiceCardDebtCapped || "{count} kelime tekrar bekliyor. Önce bunları tazele, yeni kelimeler yarın seni bekliyor.", {
-        count: totalDueCount,
-      })
-    : dueInSession > 0 && freshInSession > 0
-      ? fill(copy.game?.hubSessionMixed || copy.home?.practiceCardSubtitle || "{reviews} tekrar ve {fresh} yeni kelime", {
-          reviews: dueInSession,
-          fresh: freshInSession,
-        })
-      : dueInSession > 0
-        ? fill(copy.home?.practiceCardReviewOnly || "{reviews} kelime tekrar bekliyor", { reviews: dueInSession })
-        : fill(copy.home?.practiceCardNewOnly || "{level} seviyesinden {fresh} yeni kelime", {
-            level,
-            fresh: freshInSession,
-          });
+  const sessionSummary = hasMandatoryReview
+    ? fill(copy.home?.practiceCardReviewOnly || "{reviews} kelime tekrar bekliyor", { reviews: dueReviewCount })
+    : fill(copy.home?.practiceCardNewOnly || "{level} seviyesinden {fresh} yeni kelime", {
+        level,
+        fresh: practiceSessionSize,
+      });
 
   return (
     <View style={S.shell}>
@@ -112,29 +94,33 @@ export function PracticeHubScreen({
           </View>
           <Text style={S.sessionSizeHint}>{fill(copy.game?.hubSessionLengthHint || "Her pratikte {count} kelime gelir.", { count: practiceSessionSize })}</Text>
 
-          {/* Directional Mode Switcher (EN -> TR / TR -> EN) */}
-          <View style={S.modeRow}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityState={{ selected: !reverseMode }}
-              style={[S.modeButton, !reverseMode && S.modeButtonActive]}
-              onPress={() => setReverseMode(false)}
-            >
-              <Text style={[S.modeButtonText, !reverseMode && S.modeButtonTextActive]}>
-                {copy.game?.hubModePickMeaning || "İngilizce → Türkçe"}
-              </Text>
-            </Pressable>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityState={{ selected: reverseMode }}
-              style={[S.modeButton, reverseMode && S.modeButtonActive]}
-              onPress={() => setReverseMode(true)}
-            >
-              <Text style={[S.modeButtonText, reverseMode && S.modeButtonTextActive]}>
-                {copy.game?.hubModePickWord || "Türkçe → İngilizce"}
-              </Text>
-            </Pressable>
-          </View>
+          {/* Directional mode only applies to new-word practice — while
+              reviews are mandatory, starting one ignores this, so it stays
+              hidden rather than offering a choice that does nothing. */}
+          {!hasMandatoryReview && (
+            <View style={S.modeRow}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityState={{ selected: !reverseMode }}
+                style={[S.modeButton, !reverseMode && S.modeButtonActive]}
+                onPress={() => setReverseMode(false)}
+              >
+                <Text style={[S.modeButtonText, !reverseMode && S.modeButtonTextActive]}>
+                  {copy.game?.hubModePickMeaning || "İngilizce → Türkçe"}
+                </Text>
+              </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityState={{ selected: reverseMode }}
+                style={[S.modeButton, reverseMode && S.modeButtonActive]}
+                onPress={() => setReverseMode(true)}
+              >
+                <Text style={[S.modeButtonText, reverseMode && S.modeButtonTextActive]}>
+                  {copy.game?.hubModePickWord || "Türkçe → İngilizce"}
+                </Text>
+              </Pressable>
+            </View>
+          )}
         </View>
 
           {/* User Status Mini-Stats Row */}
@@ -159,102 +145,77 @@ export function PracticeHubScreen({
             )}
           </View>
 
-          {/* Recommended Daily Practice Hero Card (Mor #6B4355 Zemin & Altın Sarı CTA) */}
+          {/* Hero: whichever flow is actually available right now. While any
+              review is due, it always wins — new words are a separate,
+              locked flow below (roadmap 18-srs-flow-hardening.md "pekişme"
+              redesign, 2026-08-26). */}
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={`${copy.game?.hubHeroTitle || "Günün pratiği"}, ${level}, ${sessionSummary}. ${copy.game?.hubHeroCta || "Pratiğe başla"}`}
-            style={({ pressed }) => [
-              S.heroCard,
-              pressed && S.cardPressed,
-            ]}
-            onPress={() => onStartDailyPractice(reverseMode)}
+            accessibilityLabel={
+              hasMandatoryReview
+                ? `${copy.game?.hubReviewHeroTitle || "Önce tekrarların"}, ${sessionSummary}. ${copy.game?.hubReviewCta || "Tekrara başla"}`
+                : `${copy.game?.hubHeroTitle || "Günün pratiği"}, ${level}, ${sessionSummary}. ${copy.game?.hubHeroCta || "Pratiğe başla"}`
+            }
+            style={({ pressed }) => [S.heroCard, pressed && S.cardPressed]}
+            onPress={() => (hasMandatoryReview ? onStartReview() : onStartDailyPractice(reverseMode))}
           >
             <View style={S.heroTop}>
               <View style={S.heroCopy}>
-                <View style={S.recommendedBadge}>
+                <View style={[S.recommendedBadge, hasMandatoryReview && S.requiredBadge]}>
                   <Text style={S.recommendedBadgeTxt}>
-                    {copy.game?.hubBadgeRecommended || "ÖNERİLEN"}
+                    {hasMandatoryReview
+                      ? copy.game?.hubBadgeRequired || "ÖNCE BU"
+                      : copy.game?.hubBadgeRecommended || "ÖNERİLEN"}
                   </Text>
                 </View>
                 <Text style={S.heroTitle}>
-                  {copy.game?.hubHeroTitle || "Günün pratiği"}
+                  {hasMandatoryReview
+                    ? copy.game?.hubReviewHeroTitle || "Önce tekrarların"
+                    : copy.game?.hubHeroTitle || "Günün pratiği"}
                 </Text>
                 <Text style={S.heroReason}>{sessionSummary}</Text>
-                <Text style={S.heroMeta}>
-                  {level} ·{" "}
-                  {fill(copy.home?.practiceMetaEstimate || "{count} kelime · yaklaşık {minutes} dk", {
-                    count: practiceSessionSize,
-                    minutes: estimatedMinutes,
-                  })}
-                </Text>
+                {!hasMandatoryReview && (
+                  <Text style={S.heroMeta}>
+                    {level} ·{" "}
+                    {fill(copy.home?.practiceMetaEstimate || "{count} kelime · yaklaşık {minutes} dk", {
+                      count: practiceSessionSize,
+                      minutes: estimatedMinutes,
+                    })}
+                  </Text>
+                )}
               </View>
 
               <Image source={sprig} style={S.heroMascot} resizeMode="contain" />
             </View>
 
-            {/* Primary Gold CTA */}
             <View style={S.heroCtaBtn}>
               <Text style={S.heroCtaBtnTxt}>
-                {copy.game?.hubHeroCta || "Pratiğe başla →"}
+                {hasMandatoryReview
+                  ? copy.game?.hubReviewCta || "Tekrara başla →"
+                  : copy.game?.hubHeroCta || "Pratiğe başla →"}
               </Text>
             </View>
           </Pressable>
 
-          {/* The header only earns its place when something follows it. */}
-          {dueReviewCount > 0 && (
-            <View style={S.sectionHdr}>
-              <Text style={S.sectionTitle}>
-                {copy.game?.hubSectionOther || "Diğer seçenekler"}
-              </Text>
+          {/* New-word practice waits behind the review gate. Shown, not
+              hidden — a locked door is more honest than a missing one. */}
+          {hasMandatoryReview && (
+            <View style={[S.optionCard, S.optionCardLocked]}>
+              <View style={S.optionRow}>
+                <View style={[S.optionIconCircle, S.iconCircleLocked]}>
+                  <Ionicons name="lock-closed" size={20} color={C.muted} />
+                </View>
+                <View style={S.optionCopy}>
+                  <Text style={S.optionTitle}>
+                    {copy.home?.practiceLockedTitle || "Yeni kelimeler"}
+                  </Text>
+                  <Text style={S.optionSubtitle}>
+                    {copy.home?.practiceLockedSubtitle || "Bugünkü tekrarları bitirince açılır"}
+                  </Text>
+                </View>
+              </View>
             </View>
           )}
-
-          {/* Show review only after the user has actually made a mistake. */}
-          {dueReviewCount > 0 && <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={`${copy.game?.hubReviewTitle || "Hatalarını tekrar et"}. ${dueReviewCount > 0 ? dueReviewCount + " " + (copy.game?.hubReviewDueSubtitle || "kelime bekliyor") : (copy.game?.hubReviewEmptyTitle || "Hata tekrarı yok")}`}
-            style={({ pressed }) => [
-              S.optionCard,
-              dueReviewCount === 0 && S.optionCardEmpty,
-              pressed && S.cardPressed,
-            ]}
-            onPress={onStartReview}
-          >
-            <View style={S.optionRow}>
-              <View
-                style={[
-                  S.optionIconCircle,
-                  dueReviewCount > 0 ? S.iconCircleAttention : S.iconCircleSuccess,
-                ]}
-              >
-                <Ionicons
-                  name={dueReviewCount > 0 ? "refresh-circle" : "checkmark-circle"}
-                  size={24}
-                  color={dueReviewCount > 0 ? C.attentionText : C.successText}
-                />
-              </View>
-
-              <View style={S.optionCopy}>
-                <Text style={S.optionTitle}>
-                  {copy.game?.hubReviewTitle || "Hatalarını tekrar et"}
-                </Text>
-                <Text style={S.optionSubtitle}>
-                  {dueReviewCount > 0
-                    ? `${dueReviewCount} ${copy.game?.hubReviewDueSubtitle || "kelime tekrar bekliyor. Unutmadan önce yeniden çalış."}`
-                    : copy.game?.hubReviewEmptySubtitle || "Şimdilik tüm kelimelerin güncel."}
-                </Text>
-              </View>
-            </View>
-
-            <View style={S.secondaryBtn}>
-              <Text style={S.secondaryBtnTxt}>
-                {dueReviewCount > 0
-                  ? copy.game?.hubReviewCta || "Tekrara başla"
-                  : copy.game?.hubReviewEmptyCta || "Yeni pratik seç"}
-              </Text>
-            </View>
-          </Pressable>}
-
         </ScrollView>
       </View>
   );
@@ -374,6 +335,9 @@ const S = StyleSheet.create({
     fontWeight: "800",
     letterSpacing: 0.6,
   },
+  requiredBadge: {
+    backgroundColor: "rgba(255, 193, 122, 0.24)",
+  },
   heroTitle: {
     color: "#FFFFFF",
     fontSize: 21,
@@ -416,9 +380,6 @@ const S = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: -0.2,
   },
-  sectionHdr: {
-    marginTop: 4,
-  },
   sessionSizeCard: { backgroundColor: C.surface, borderWidth: 1, borderColor: C.line, borderRadius: radius.card || 20, padding: 14, gap: 10 },
   sessionSizeTitle: { color: C.ink, fontSize: 14, fontWeight: "800" },
   sessionSizeRow: { flexDirection: "row", gap: 8 },
@@ -432,12 +393,6 @@ const S = StyleSheet.create({
   modeButtonActive: { backgroundColor: C.primarySoft, borderColor: C.primaryBorder },
   modeButtonText: { color: C.muted, fontWeight: "700", fontSize: 12.5 },
   modeButtonTextActive: { color: C.primary },
-  sectionTitle: {
-    color: C.ink,
-    fontSize: 18,
-    fontWeight: "700",
-    letterSpacing: -0.2,
-  },
   optionCard: {
     backgroundColor: C.surface,
     borderRadius: radius.card || 20,
@@ -446,9 +401,10 @@ const S = StyleSheet.create({
     borderColor: C.line,
     gap: 12,
   },
-  optionCardEmpty: {
+  optionCardLocked: {
     backgroundColor: C.surface,
     borderColor: C.lineSoft,
+    opacity: 0.7,
   },
   optionRow: {
     flexDirection: "row",
@@ -463,11 +419,8 @@ const S = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  iconCircleAttention: {
-    backgroundColor: C.attentionSoft,
-  },
-  iconCircleSuccess: {
-    backgroundColor: C.successSoft,
+  iconCircleLocked: {
+    backgroundColor: C.lineSoft,
   },
   optionCopy: {
     flex: 1,
@@ -483,20 +436,5 @@ const S = StyleSheet.create({
     fontSize: 12.5,
     lineHeight: 16,
     fontWeight: "400",
-  },
-  secondaryBtn: {
-    minHeight: 44,
-    backgroundColor: C.primarySoft,
-    borderWidth: 1,
-    borderColor: C.primaryBorder,
-    borderRadius: radius.miniCard || 16,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 16,
-  },
-  secondaryBtnTxt: {
-    color: C.primary,
-    fontSize: 14,
-    fontWeight: "700",
   },
 });

@@ -7,15 +7,25 @@ export type { AnswerQualityMeta };
 export function usePracticeSession(
   question: MeaningMatchQuestion,
   correctAnswer: string,
-  onCheckAnswer: (xpReward: number, quality: AnswerQualityMeta) => void
+  onCheckAnswer: (xpReward: number, quality: AnswerQualityMeta) => void,
+  /**
+   * True for a word the learner has repeatedly missed (a "leech" — see
+   * domain/learning/mastery.ts's isLeech). Its hint opens automatically
+   * instead of staying hidden behind an extra tap, since a word that's
+   * already proven hard doesn't need one more small barrier. This reveal is
+   * the app's own choice, not the learner's, so it never carries the usual
+   * hint XP penalty (see `hintPenaltyApplies` below).
+   */
+  autoRevealHint = false
 ) {
   const [shuffledOptions, setShuffledOptions] = useState<string[]>([]);
-  const [showHint, setShowHint] = useState(false);
+  const [showHint, setShowHint] = useState(autoRevealHint);
+  const [hintPenaltyApplies, setHintPenaltyApplies] = useState(false);
   const [isChecking, setIsChecking] = useState(false);
   const [remindSuccess, setRemindSuccess] = useState(false);
 
   const baseReward = question.xp || 10;
-  const xpReward = showHint ? Math.max(2, baseReward - 2) : baseReward;
+  const xpReward = hintPenaltyApplies ? Math.max(2, baseReward - 2) : baseReward;
 
   // roadmap Birim 3 §3.1 — an indirect quality signal (response time, hint
   // use, retry count) collected without asking the learner anything new.
@@ -31,12 +41,24 @@ export function usePracticeSession(
       [list[i], list[j]] = [list[j], list[i]];
     }
     setShuffledOptions(list);
-    setShowHint(false);
+    setShowHint(autoRevealHint);
+    setHintPenaltyApplies(false);
     setIsChecking(false);
     setRemindSuccess(false);
     questionShownAtRef.current = Date.now();
     attemptNumberRef.current = 1;
-  }, [question.id, correctAnswer, question.options, question.wrongOptions]);
+  }, [question.id, correctAnswer, question.options, question.wrongOptions, autoRevealHint]);
+
+  const toggleHint = useCallback(() => {
+    setShowHint((prev) => {
+      const next = !prev;
+      // Only a learner-initiated reveal costs XP — the automatic one for a
+      // leech word never does, and toggling it off and back on doesn't
+      // retroactively turn that same reveal into a penalized one.
+      if (next && !autoRevealHint) setHintPenaltyApplies(true);
+      return next;
+    });
+  }, [autoRevealHint]);
 
   const handleCheck = useCallback(
     (picked: string | null, submitted: boolean) => {
@@ -65,7 +87,7 @@ export function usePracticeSession(
   return {
     shuffledOptions,
     showHint,
-    setShowHint,
+    toggleHint,
     isChecking,
     remindSuccess,
     setRemindSuccess,

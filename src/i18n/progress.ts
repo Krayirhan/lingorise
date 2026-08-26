@@ -25,6 +25,11 @@ export const progressEn = {
   streakXpBonus: "Streak Bonus",
   wordNotebookTitle: "Word Notebook",
   searchWordPlaceholder: "Search English word or Turkish meaning...",
+  statusNew: "New",
+  statusLearning: "Learning",
+  statusReview: "In review",
+  statusMastered: "Mastered",
+  statusLeech: "Tricky",
   wordsLearnedSuffix: "words learned",
   exploreWordsBtn: "Explore",
 } as const;
@@ -56,6 +61,11 @@ export const progressTr = {
   streakXpBonus: "Seri Bonusu",
   wordNotebookTitle: "Kelime Defteri",
   searchWordPlaceholder: "Kelime veya Türkçe anlam ara...",
+  statusNew: "Yeni",
+  statusLearning: "Öğreniliyor",
+  statusReview: "Tekrar sırasında",
+  statusMastered: "Ustalaşıldı",
+  statusLeech: "Zorlanıyorsun",
   wordsLearnedSuffix: "kelime öğrenildi",
   exploreWordsBtn: "İncele",
 } as const;

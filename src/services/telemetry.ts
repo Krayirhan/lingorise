@@ -27,7 +27,9 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 export type TelemetryEvent =
   | { name: "session_started"; params: { daysSinceLastOpen: number | null } }
   | { name: "daily_rollover_applied"; params: { streakBefore: number; streakAfter: number; pendingReviewsAtOpen: number } }
-  | { name: "practice_session_started"; params: { sessionType: "mixed" | "review_only" | "new_only"; dueCount: number; freshCount: number; reverseMode: boolean } }
+  // "mixed" was retired when review and new-word practice became fully
+  // separate, mandatory flows — a session is always purely one or the other.
+  | { name: "practice_session_started"; params: { sessionType: "review_only" | "new_only"; dueCount: number; freshCount: number; reverseMode: boolean } }
   | {
       name: "question_answered";
       params: {
@@ -44,7 +46,6 @@ export type TelemetryEvent =
     }
   | { name: "word_mastery_changed"; params: { fromStatus: string; toStatus: string; questionId: string } }
   | { name: "garden_stage_changed"; params: { fromStage: string; toStage: string; masteredWords: number } }
-  | { name: "review_debt_capped"; params: { dueCount: number; sessionSize: number } }
   | { name: "level_promotion_shown"; params: { level: string; masteredPercent: number; nextLevelReady: boolean } }
   | { name: "level_promotion_advanced"; params: { fromLevel: string; toLevel: string } }
   | { name: "level_switch_warning_shown"; params: { currentLevel: string; targetLevel: string; currentMasteredPercent: number } }

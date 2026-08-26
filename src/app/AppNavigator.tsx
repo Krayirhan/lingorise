@@ -17,7 +17,7 @@ import { LevelCode } from "../types/content";
 import { LevelProgressItem, TopicProgressItem } from "../features/progress/progress.types";
 import { HomeTab } from "../features/home/home.types";
 import { BadgeUnlockCelebration } from "../features/practice/components/BadgeUnlockCelebration";
-import { countMasteredWords, summarizeMastery } from "../domain/learning/mastery";
+import { countMasteredWords, summarizeMastery, isLeech } from "../domain/learning/mastery";
 import { evaluatePromotion } from "../domain/learning/promotion";
 import { LevelPromotionModal } from "../features/home/components/LevelPromotionModal";
 import { LevelSwitcherModal } from "../features/home/components/LevelSwitcherModal";
@@ -111,6 +111,7 @@ export function AppNavigator({ userProgress, onAccountPress, deepLinkTarget, onD
         onBack={session.goToHome}
         soundEnabled={userData.soundEnabled}
         reduceMotion={userData.reduceMotion}
+        isLeech={isLeech(userData.learningProgress?.[currentQuestion.id])}
       />
       <BadgeUnlockCelebration
         badgeId={badgeUnlockQueue[0]}
@@ -191,6 +192,7 @@ export function AppNavigator({ userProgress, onAccountPress, deepLinkTarget, onD
         levelProgressList={levelProgressList}
         topicBreakdown={topicBreakdown}
         solvedQuestionIds={userData.solvedQuestionIds}
+        learningProgress={userData.learningProgress}
         lastActiveDate={userData.lastActiveDate}
         practiceHistory={userData.practiceHistory}
         unlockedBadges={userData.unlockedBadges}
@@ -214,8 +216,6 @@ export function AppNavigator({ userProgress, onAccountPress, deepLinkTarget, onD
         onPracticeSessionSizeChange={userProgress.setPracticeSessionSize}
         onStartDailyPractice={(reverseMode) => session.startPractice(undefined, reverseMode)}
         onStartReview={session.startReview}
-        dueInSession={Math.min(homeViewModel.reviewCount, userData.practiceSessionSize)}
-        totalDueCount={homeViewModel.reviewCount}
         onTabPress={handleTabPress}
       />
     );

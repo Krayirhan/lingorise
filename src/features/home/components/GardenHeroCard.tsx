@@ -24,6 +24,10 @@ interface Props {
   dailyXpEarned?: number;
   dailyXpTarget?: number;
   isDailyCompleted?: boolean;
+  /** Words due for spaced-repetition review right now. While this is above
+   * zero, the hero card always leads with review — new words are a separate,
+   * gated flow (roadmap 18-srs-flow-hardening.md, "pekişme" redesign). */
+  dueReviewCount?: number;
   onPress: () => void;
   onViewProgress?: () => void;
   onPracticeAgain?: () => void;
@@ -47,6 +51,7 @@ export function GardenHeroCard({
   dailyXpEarned = 0,
   dailyXpTarget = 0,
   isDailyCompleted = false,
+  dueReviewCount = 0,
   onPress,
   onViewProgress,
   onPracticeAgain,
@@ -56,6 +61,11 @@ export function GardenHeroCard({
   // Determine resolved state
   const isCompleted = practiceState === "completed" || isDailyCompleted;
   const isInProgress = practiceState === "in_progress" && !isCompleted;
+  // Reviews are a separate, mandatory obligation from new-word practice —
+  // as long as any are due, the hero always leads with them, regardless of
+  // where the new-word quest stands. `onPress` already resolves to a review
+  // session in this state (see useAppSession's startPractice gate).
+  const hasMandatoryReview = dueReviewCount > 0;
 
   // Dynamic progress bar color based on percentage
   const stagePercent = gardenProgress.stageProgressPercent;
@@ -64,11 +74,51 @@ export function GardenHeroCard({
   const progressFillColor = "#7CC47F";
 
   // Mascot speech text
-  const mascotPrompt = isCompleted
-    ? copy.home?.mascotPromptDone || "Bugün harika ilerledin! 👏"
-    : isInProgress
-      ? `${practiceCompletedCount}/${practiceTargetCount} Harika gidiyorsun! 🌱`
-      : copy.home?.mascotPromptReady || "Hazırsan başlayalım! 🌱";
+  const mascotPrompt = hasMandatoryReview
+    ? copy.home?.mascotPromptReview || "Unutmadan bunları tazeleyelim! 🔄"
+    : isCompleted
+      ? copy.home?.mascotPromptDone || "Bugün harika ilerledin! 👏"
+      : isInProgress
+        ? `${practiceCompletedCount}/${practiceTargetCount} Harika gidiyorsun! 🌱`
+        : copy.home?.mascotPromptReady || "Hazırsan başlayalım! 🌱";
+
+  if (hasMandatoryReview) {
+    return (
+      <View style={S.card}>
+        <View style={S.top}>
+          <View style={S.copy}>
+            <View style={[S.chip, S.chipReview]}>
+              <Text style={S.chipText}>{copy.home?.heroReviewBadge || "TEKRAR ZAMANI"}</Text>
+            </View>
+            <Text style={S.title}>{copy.home?.heroReviewTitle || "Önce tekrarlarını yap"}</Text>
+            <Text style={S.meta}>
+              {(copy.home?.heroReviewSubtitle || "{count} kelime, gerçekten kalıcı olduğundan emin olmanı bekliyor.").replace(
+                "{count}",
+                String(dueReviewCount)
+              )}
+            </Text>
+          </View>
+          <View style={S.mascotWrap}>
+            <View style={S.speechBubble}>
+              <Text style={S.speechText} numberOfLines={3} adjustsFontSizeToFit minimumFontScale={0.5} maxFontSizeMultiplier={1.3}>
+                {mascotPrompt}
+              </Text>
+            </View>
+            <Image source={sprig} style={S.mascot} resizeMode="contain" />
+          </View>
+        </View>
+
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`${copy.home?.heroReviewCta || "Tekrara başla"}, ${dueReviewCount}`}
+          style={({ pressed }) => [S.ctaBtn, pressed && S.pressed]}
+          onPress={onPress}
+        >
+          <Text style={S.ctaBtnTxt}>{copy.home?.heroReviewCta || "Tekrara başla →"}</Text>
+        </Pressable>
+      </View>
+    );
+  }
 
   return (
     <View style={S.card}>
@@ -268,6 +318,9 @@ const S = StyleSheet.create({
     fontSize: 11,
     fontWeight: "700",
     letterSpacing: 0.8,
+  },
+  chipReview: {
+    backgroundColor: "rgba(255, 193, 122, 0.24)",
   },
   completedTag: {
     flexDirection: "row",
