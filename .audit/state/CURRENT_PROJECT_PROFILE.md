@@ -7,7 +7,7 @@ This file is populated/updated by DISCOVER or BASELINE.
 ## Identity
 - Project: LingoRise
 - Repository: Krayirhan/lingorise (local checkout: D:\LingoRise)
-- Current revision: 29ce04e (main) — reaudited; CI/CD restored and confirmed genuinely green end-to-end (see RUN-003-REAUDIT)
+- Current revision: 55130bf (main) — reaudited; DATA-001/ACC-001 scope advanced, CI reconfirmed green (see RUN-004-REAUDIT)
 - Platform/product type: React Native / Expo mobile app (Android buildable; iOS config-only, no committed `ios/` project)
 - Release target: Public consumer app store release (Google Play primary) — pre-launch stage
 - Repository visibility: Public (was private through RUN-002-REAUDIT)

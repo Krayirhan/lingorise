@@ -3,14 +3,14 @@
 | ID | Severity | Domain | Status | First Seen | Last Verified | Title |
 |---|---|---|---|---|---|---|
 | CORE-001 | P1 | Core correctness | CLOSED | RUN-001-BASELINE | FIX-2026-08-25-01 | Streak resets on non-+1-day clock diff |
-| DATA-001 | P1 | Data integrity | PARTIAL | RUN-001-BASELINE | FIX-2026-08-25-01 | Cold-start race can clobber merged progress |
+| DATA-001 | P1 | Data integrity | PARTIAL | RUN-001-BASELINE | RUN-004-REAUDIT | Cold-start race can clobber merged progress. Fix present since FIX-2026-08-25-01; now also has unit test coverage (testSuite.ts #56, two-device cold-start merge simulation, commit 55130bf). Still PARTIAL — the original acceptance criterion (real two-device signed-in verification) has not been physically performed. |
 | CORE-002 | P2 | Core correctness / Testing | CLOSED | RUN-001-BASELINE | FIX-2026-08-25-02 | XP/difficulty formulas untested |
 | DATA-002 | P2 | Data integrity | CLOSED | RUN-001-BASELINE | FIX-2026-08-25-02 | Silent saveUserData failure |
 | REL-001 | P2 | Reliability | CLOSED | RUN-001-BASELINE | FIX-2026-08-25-02 | refresh() sync call lacks try/catch |
 | ARCH-003 | P2 | Architecture | CLOSED | RUN-001-BASELINE | FIX-2026-08-25-02 | Oversized multi-responsibility auth/account screens |
 | CORE-003 | P3 | Core correctness / Testing | CLOSED | RUN-001-BASELINE | FIX-2026-08-25-03 | archiveDailyQuests/bringForward untested |
 | ARCH-001 | P3 | Architecture | CLOSED | RUN-001-BASELINE | FIX-2026-08-25-03 | One dead duplicate file (i18n/formatters.ts, deleted) |
-| ACC-001 | P3 | Accessibility | PARTIAL | RUN-001-BASELINE | FIX-2026-08-25-07 | Real TalkBack + dynamic-type pass done (2/5 DoD items), 3 real bugs found & fixed; onboarding/promotion-modal/Scanner/reduceMotion still untested |
+| ACC-001 | P3 | Accessibility | PARTIAL | RUN-001-BASELINE | RUN-004-REAUDIT | Real TalkBack + dynamic-type pass done; onboarding (Welcome/Goal/Level/Ready + OnboardingScreen), LevelPromotionModal (focus trap + live region), and reduceMotion (incl. SkeletonLoader) scope now closed, verified against current source (commit 55130bf) — 4/5 DoD items. Remaining: a real Accessibility Scanner app run, and a physical TalkBack pass on Profile/Progress/Auth screens. |
 | DEPLOY-001 | P3 | Deployment | VERIFIED→CLOSED | RUN-001-BASELINE | RUN-003-REAUDIT | All 3 CI jobs (verify, android-build, e2e-smoke) genuinely green, re-confirmed on current HEAD: https://github.com/Krayirhan/lingorise/actions/runs/32900631213 (commit 29ce04e) |
 | ARCH-002 | P4 | Architecture | CLOSED | RUN-001-BASELINE | FIX-2026-08-25-06 | Two layering inversions |
 | ARCH-004 | P4 | Architecture | CLOSED (scope corrected) | RUN-001-BASELINE | FIX-2026-08-25-06 | Dead getDailyTaskCollection removed; firestore.rules dailyTasks rule kept (tested, harmless, not orphaned) |
