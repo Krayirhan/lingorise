@@ -51,7 +51,6 @@ export interface HomeViewModel {
   questHistory: QuestHistoryEntry[];
   greetingTitle: string;
   greetingSubtitle: string;
-  reviewCount: number;
   practiceRecommendation: string;
   skillProgress: SkillProgress[];
   recommendedWord: RecommendedWordData;
@@ -66,7 +65,6 @@ export interface HomeScreenProps {
   onLevelPress: () => void;
   onQuestPress: () => void;
   onPracticePress?: () => void;
-  onReviewPress: () => void;
   onWordPress?: (wordData: RecommendedWordData) => void;
   onTabPress: (tab: HomeTab) => void;
   onRefresh: () => Promise<void>;

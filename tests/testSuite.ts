@@ -23,12 +23,9 @@ import {
   DAILY_QUEST_REVIEW_ID,
 } from "../src/services/gamification";
 import { applyPracticeAnswer } from "../src/domain/practice/answer";
-import { buildDailySession, buildReviewSession, hasPendingReviews, pickNewWords } from "../src/state/useAppSession";
-import {
-  evaluatePromotion,
-  assessLevelChoice,
-  PROMOTION_THRESHOLD_PERCENT,
-} from "../src/domain/learning/promotion";
+import { buildDailySession, pickNewWords } from "../src/state/useAppSession";
+import { evaluatePromotion, assessLevelChoice } from "../src/domain/learning/promotion";
+import { buildLevelExam, isExamPassed, EXAM_PASS_COUNT, EXAM_QUESTION_COUNT } from "../src/domain/learning/levelExam";
 import { isLevelReady, getNextLevel } from "../src/content/questions";
 import { getTopicLabel } from "../src/features/home/topicLabel";
 import { toPickTheWordSession, canUsePickTheWord } from "../src/domain/practice/reverseMode";
@@ -562,38 +559,15 @@ assert(mergedProgress.shared.attempts === richLocal.attempts, "Merge keeps the r
 assert(mergedProgress.localOnly !== undefined, "Device-only practice survives the merge");
 assert(mergedProgress.remoteOnly !== undefined, "Cloud-only practice survives the merge");
 
-// 27. Review and new-word practice are fully separate, mandatory flows
-// (roadmap 18-srs-flow-hardening.md "pekişme" redesign, 2026-08-26): a
-// learner is never shown an already-met word inside "new word" practice, and
-// due reviews never silently disappear into a mixed session.
-console.log("\n27. Review vs. New-Word Session Separation:");
+// 27. Daily practice is always and only new words (roadmap
+// 18-srs-flow-hardening.md "sınav" redesign, 2026-08-26): a learner is never
+// shown a word they've already met a second time. Reinforcement/review was
+// retired entirely — level completion is decided by the exam (see Birim 52).
+console.log("\n27. Daily Practice Never Repeats a Word:");
 const a1Pool = getQuestionsByLevel("A1");
-const overdueWord = { ...recordLearningOutcome(undefined, true, "2026-08-01", 1), nextReviewAt: Date.now() - 1000 };
-
-const withDueReviews = {
-  ...DEFAULT_USER_DATA,
-  practiceSessionSize: 5 as const,
-  rewardedQuestionIds: [a1Pool[0].id, a1Pool[1].id],
-  solvedQuestionIds: [a1Pool[0].id, a1Pool[1].id],
-  learningProgress: { [a1Pool[0].id]: overdueWord, [a1Pool[1].id]: overdueWord },
-};
-
-assert(hasPendingReviews(withDueReviews), "Two overdue words are detected as pending reviews");
-assert(
-  buildDailySession(withDueReviews).length === 0,
-  "New-word practice is entirely gated off while any review is pending — not throttled, fully closed"
-);
-
-const reviewSession = buildReviewSession(withDueReviews);
-assert(reviewSession.length === 2, "The review session contains exactly the due words");
-assert(
-  reviewSession.every((q) => [a1Pool[0].id, a1Pool[1].id].includes(q.id)),
-  "The review session contains only due words, nothing new"
-);
 
 const noDueSession = buildDailySession({ ...DEFAULT_USER_DATA, practiceSessionSize: 5 });
-assert(noDueSession.length === 5, "With nothing due, new-word practice fills the full session");
-assert(!hasPendingReviews(DEFAULT_USER_DATA), "A fresh learner has no pending reviews");
+assert(noDueSession.length === 5, "A fresh learner's session fills up to the chosen size");
 
 // A word already mastered (rewarded) but with nothing currently due for it
 // (e.g. its next review is scheduled far in the future) must still never
@@ -639,34 +613,17 @@ assert(stampedQuestions.every((q) => !!q.unitId), "Every A1 question carries a u
 assert(stampedQuestions.every((q) => q.status === "published"), "Every A1 question carries a publish status");
 assert(stampedQuestions[0].unitId === "a1-u01", "Unit ids follow the level's own numbering");
 
-// 29. Promotion is earned by mastery, and never opens onto empty content
+// 29. Promotion is earned by passing the level exam, and never opens onto
+// empty content (roadmap 18-srs-flow-hardening.md "sınav" redesign).
 console.log("\n29. Level Promotion:");
 const a1Questions = getQuestionsByLevel("A1");
 
-const masteredWord = (seed: number) =>
-  recordLearningOutcome(
-    recordLearningOutcome(
-      recordLearningOutcome(undefined, true, "2026-08-24", seed),
-      true,
-      "2026-08-25",
-      seed + 1
-    ),
-    true,
-    "2026-08-26",
-    seed + 2
-  );
+const barelyStarted = evaluatePromotion("A1", [], []);
+assert(!barelyStarted.isEarned, "A level is not earned before its exam is passed");
+assert(!barelyStarted.shouldCelebrate, "No celebration is offered before the exam is passed");
 
-const barelyStarted = evaluatePromotion("A1", {}, []);
-assert(!barelyStarted.isEarned, "A level is not earned before any words are mastered");
-assert(!barelyStarted.shouldCelebrate, "No celebration is offered without mastery");
-assert(barelyStarted.remainingPercent === PROMOTION_THRESHOLD_PERCENT, "Remaining percentage counts down to the threshold");
-
-const mostlyMastered: Record<string, any> = {};
-a1Questions.slice(0, Math.ceil(a1Questions.length * 0.85)).forEach((q, index) => {
-  mostlyMastered[q.id] = masteredWord(index * 10);
-});
-const earned = evaluatePromotion("A1", mostlyMastered, []);
-assert(earned.isEarned, `A1 is earned at ${earned.masteredPercent}% mastery`);
+const earned = evaluatePromotion("A1", ["A1"], []);
+assert(earned.isEarned, "A1 is earned once its exam is passed");
 assert(earned.shouldCelebrate, "An uncelebrated earned level triggers the celebration");
 assert(earned.nextLevel === "A2", "The next level on the ladder is offered");
 assert(getNextLevel("B2") === "C1", "The ladder advances in CEFR order");
@@ -679,41 +636,32 @@ assert(isLevelReady("A2"), "isLevelReady accepts A2 now that it has 100+ words")
 assert(isLevelReady("A1"), "isLevelReady accepts a fully populated level");
 assert(!isLevelReady("B1"), "isLevelReady still refuses a level below the content minimum (B1)");
 
-const alreadyCelebrated = evaluatePromotion("A1", mostlyMastered, ["A1"]);
+const alreadyCelebrated = evaluatePromotion("A1", ["A1"], ["A1"]);
 assert(alreadyCelebrated.isEarned, "An earned level stays earned");
 assert(!alreadyCelebrated.shouldCelebrate, "The celebration is shown once, not on every launch");
 
 // 30. Level choice is guided, never blocked
 console.log("\n30. Soft Gate on Level Choice:");
-const earlyJump = assessLevelChoice("B1", "A1", {});
-assert(earlyJump.isAhead, "Jumping ahead without mastery is flagged as early");
-assert(earlyJump.currentMasteredPercent === 0, "The warning carries the learner's real progress");
+const earlyJump = assessLevelChoice("B1", "A1", []);
+assert(earlyJump.isAhead, "Jumping ahead before passing the current level's exam is flagged as early");
 
-const informedJump = assessLevelChoice("A2", "A1", mostlyMastered);
-assert(!informedJump.isAhead, "A learner who mastered their level is not warned");
+const informedJump = assessLevelChoice("A2", "A1", ["A1"]);
+assert(!informedJump.isAhead, "A learner who passed their level's exam is not warned");
 
-const stepBack = assessLevelChoice("A1", "A1", {});
+const stepBack = assessLevelChoice("A1", "A1", []);
 assert(!stepBack.isAhead, "Staying on the current level is never flagged");
 
-// 31. Review debt follows the learner across levels, but stays in the
-// review flow — it never leaks into the new-level's new-word session.
-console.log("\n31. Cross-Level Review Debt:");
+// 31. Switching levels never leaks a word from the old level into new-word
+// practice on the new one.
+console.log("\n31. Cross-Level New-Word Practice:");
 const a2Questions = getQuestionsByLevel("A2");
-const overdueA1 = { ...recordLearningOutcome(undefined, true, "2026-08-01", 1), nextReviewAt: Date.now() - 1000 };
 const crossLevelUser = {
   ...DEFAULT_USER_DATA,
   level: "A2" as const,
   practiceSessionSize: 5 as const,
   rewardedQuestionIds: [a1Questions[0].id],
   solvedQuestionIds: [a1Questions[0].id],
-  learningProgress: { [a1Questions[0].id]: overdueA1 },
 };
-
-const crossLevelReview = buildReviewSession(crossLevelUser);
-assert(
-  crossLevelReview.length === 1 && crossLevelReview[0].id === a1Questions[0].id,
-  "An overdue A1 word still surfaces for review after switching to A2"
-);
 
 const crossLevelNewSession = buildDailySession(crossLevelUser);
 assert(
@@ -722,7 +670,7 @@ assert(
 );
 assert(
   !crossLevelNewSession.some((q) => q.id === a1Questions[0].id),
-  "The overdue A1 word does not leak into A2's new-word session"
+  "A word rewarded on the old level does not leak into the new level's new-word session"
 );
 
 // 32. One number, one meaning — no raw keys, no divergent counts
@@ -956,14 +904,16 @@ console.log("\n39. Telemetry Event Recording (roadmap Birim 5):");
   try {
     track("session_started", { daysSinceLastOpen: 1 });
     track("daily_rollover_applied", { streakBefore: 3, streakAfter: 4, pendingReviewsAtOpen: 2 });
-    track("practice_session_started", { sessionType: "new_only", dueCount: 0, freshCount: 17, reverseMode: false });
+    track("practice_session_started", { freshCount: 17, reverseMode: false });
     track("question_answered", { questionId: "a1-mm-01", isCorrect: true, isFirstEncounter: true, wasDue: false, usedHint: false, level: "A1", responseTimeMs: 2100, inferredQuality: 5 });
     track("word_mastery_changed", { fromStatus: "review", toStatus: "mastered", questionId: "a1-mm-01" });
     track("garden_stage_changed", { fromStage: "sprout", toStage: "leaf", masteredWords: 25 });
-    track("level_promotion_shown", { level: "A1", masteredPercent: 82, nextLevelReady: true });
+    track("level_promotion_shown", { level: "A1", nextLevelReady: true });
     track("level_promotion_advanced", { fromLevel: "A1", toLevel: "A2" });
-    track("level_switch_warning_shown", { currentLevel: "A1", targetLevel: "B1", currentMasteredPercent: 34 });
+    track("level_switch_warning_shown", { currentLevel: "A1", targetLevel: "B1" });
     track("level_switch_confirmed_ahead", { currentLevel: "A1", targetLevel: "B1" });
+    track("level_exam_started", { level: "A1", questionCount: 60 });
+    track("level_exam_completed", { level: "A1", correctCount: 52, totalCount: 60, passed: true });
     track("daily_quest_completed", { questId: "quest_daily_practice", xpEarned: 30 });
     track("session_abandoned", { questionsAnswered: 7, questionsTotal: 20 });
     track("practice_session_completed", { questionsAnswered: 20, questionsTotal: 20, correctCount: 18, sessionMode: "PRACTICE" });
@@ -1438,41 +1388,36 @@ console.log("\n51. Difficulty-Based New Word Ordering (roadmap Birim 18.3):");
   );
 }
 
-// 52. Mandatory Review Gate (roadmap 18-srs-flow-hardening.md "pekişme"
-// redesign, 2026-08-26 — replaces the retired review-debt taper): no matter
-// how large the review backlog, new words stay fully gated off, and the
-// review session always covers the whole backlog rather than a capped slice.
-console.log("\n52. Mandatory Review Gate:");
+// 52. Level Completion Exam (roadmap 18-srs-flow-hardening.md "sınav"
+// redesign, 2026-08-26 — replaces per-word spaced-repetition mastery as the
+// promotion gate entirely): 60 questions from across the whole level, evenly
+// split by difficulty, 50+ correct to pass.
+console.log("\n52. Level Completion Exam:");
 {
-  const a1Pool = getQuestionsByLevel("A1");
-  const dueEntry = { status: "learning" as const, attempts: 1, correctCount: 1, wrongCount: 0, repetitions: 1, distinctCorrectDays: 1, intervalDays: 1, easeFactor: 2.5, nextReviewAt: 0 };
+  assert(EXAM_QUESTION_COUNT === 60, "EXAM_QUESTION_COUNT is set to 60");
+  assert(EXAM_PASS_COUNT === 50, "EXAM_PASS_COUNT is set to 50");
 
-  const userWithSmallBacklog: UserData = {
-    ...DEFAULT_USER_DATA,
-    practiceSessionSize: 20,
-    learningProgress: Object.fromEntries(a1Pool.slice(0, 10).map((q) => [q.id, dueEntry])),
-  };
-  assert(hasPendingReviews(userWithSmallBacklog), "A 10-word backlog is detected as pending review");
-  assert(
-    buildDailySession(userWithSmallBacklog).length === 0,
-    "New-word practice yields nothing while any reviews are pending — it is never called with a backlog present in real use, but stays honestly empty if it were"
-  );
-  assert(buildReviewSession(userWithSmallBacklog).length === 10, "The review session covers the full 10-word backlog");
+  const exam = buildLevelExam("A1");
+  assert(exam.length === EXAM_QUESTION_COUNT, `A1 (320 words) seats a full ${EXAM_QUESTION_COUNT}-question exam`);
+  const uniqueIds = new Set(exam.map((q) => q.id));
+  assert(uniqueIds.size === exam.length, "Every exam question is distinct — no repeats padding out the count");
+  assert(exam.every((q) => q.level === "A1"), "Every exam question is drawn from the level being tested");
 
-  const userWithLargeBacklog: UserData = {
-    ...DEFAULT_USER_DATA,
-    practiceSessionSize: 20,
-    learningProgress: Object.fromEntries(a1Pool.slice(0, 60).map((q) => [q.id, dueEntry])),
-  };
-  assert(hasPendingReviews(userWithLargeBacklog), "A 60-word backlog is detected as pending review");
-  assert(
-    buildDailySession(userWithLargeBacklog).length === 0,
-    "A large backlog still yields zero new words — there is no partial taper any more, only fully gated or fully clear"
-  );
-  assert(
-    buildReviewSession(userWithLargeBacklog).length === 20,
-    "The review session is capped at the learner's own session size (20), not the full 60-word backlog, so one sitting stays finishable"
-  );
+  // A1's own content only spans difficulty 1-2 (see Birim 54 — a level's
+  // difficulty band follows the level itself, not a fixed 1-5 spread), so
+  // "more than one band" here means more than one distinct value actually
+  // present, not literally reaching the hard band on every level.
+  const distinctDifficulties = new Set(exam.map((q) => q.difficulty || 1));
+  assert(distinctDifficulties.size > 1, "The exam draws from more than one difficulty value, not a single flat band");
+
+  // A level with too little content (well under 50 words) can't seat a real exam.
+  const thinExam = buildLevelExam("B1");
+  assert(thinExam.length < EXAM_PASS_COUNT, "A level far short of exam-worthy content returns fewer than the pass threshold, never a padded fake exam");
+
+  assert(isExamPassed(50), "50 correct out of 60 passes");
+  assert(isExamPassed(60), "A perfect score passes");
+  assert(!isExamPassed(49), "49 correct falls just short of passing");
+  assert(!isExamPassed(0), "Zero correct does not pass");
 }
 
 // 53. Server Date Anomaly Detection (roadmap Birim 18.5):

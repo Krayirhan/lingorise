@@ -1,14 +1,13 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { C, radius } from "../../../theme/colors";
+import { radius } from "../../../theme/colors";
 import { Copy } from "../../../i18n/en";
 import { HomeTab } from "../home.types";
 
 interface Props {
   copy: Copy;
   activeTab?: HomeTab;
-  dueReviewCount: number;
   onTabPress: (tab: HomeTab) => void;
 }
 
@@ -27,7 +26,6 @@ const TABS: {
 export function HomeBottomNav({
   copy,
   activeTab = "garden",
-  dueReviewCount,
   onTabPress,
 }: Props) {
   const insets = useSafeAreaInsets();
@@ -41,16 +39,12 @@ export function HomeBottomNav({
       {TABS.map((tab) => {
         const isSel = activeTab === tab.id;
         const label = copy.home?.[tab.labelKey] || tab.id;
-        const hasDueReviews = tab.id === "progress" && dueReviewCount > 0;
-        const accessibilityLabel = hasDueReviews
-          ? `${label}, ${dueReviewCount} ${copy.home?.reviewBadgeSuffix || "tekrar"} bekliyor`
-          : label;
 
         return (
           <Pressable
             key={tab.id}
             accessibilityRole="tab"
-            accessibilityLabel={accessibilityLabel}
+            accessibilityLabel={label}
             accessibilityState={{ selected: isSel }}
             style={S.item}
             onPress={() => onTabPress(tab.id)}
@@ -62,7 +56,6 @@ export function HomeBottomNav({
                   size={22}
                   color={isSel ? "#6B4355" : "#8D8883"}
                 />
-                {hasDueReviews && <View style={S.dot} />}
               </View>
               <Text style={isSel ? S.lblActive : S.lbl}>{label}</Text>
             </View>
@@ -125,17 +118,6 @@ const S = StyleSheet.create({
     color: "#8D8883",
     fontSize: 11,
     fontWeight: "600",
-  },
-  dot: {
-    position: "absolute",
-    top: -2,
-    right: -4,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: C.attention,
-    borderWidth: 1.5,
-    borderColor: "#FFFFFF",
   },
 });
 

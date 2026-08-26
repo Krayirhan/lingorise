@@ -37,7 +37,6 @@ export function LevelPromotionModal({ copy, level, promotion, visible, onAdvance
     shownForLevelRef.current = level;
     track("level_promotion_shown", {
       level,
-      masteredPercent: promotion.masteredPercent,
       nextLevelReady: promotion.isNextLevelReady,
     });
   }, [visible, promotion, level]);
@@ -76,9 +75,8 @@ export function LevelPromotionModal({ copy, level, promotion, visible, onAdvance
             {fill(copy.home?.promotionTitle || "{level} seviyesini tamamladın", { level })}
           </Text>
           <Text style={S.body}>
-            {fill(copy.home?.promotionSubtitle || "{level} kelimelerinin %{percent}'ini artık güvenle hatırlıyorsun.", {
+            {fill(copy.home?.promotionSubtitleExam || "{level} tamamlama sınavını geçtin — bu seviyeyi artık gerçekten biliyorsun.", {
               level,
-              percent: promotion.masteredPercent,
             })}
           </Text>
 

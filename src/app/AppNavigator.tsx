@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { HomeScreen } from "../screens/HomeScreen";
 import { OnboardingScreen } from "../screens/OnboardingScreen";
 import { PracticeScreen } from "../screens/PracticeScreen";
@@ -17,8 +17,10 @@ import { LevelCode } from "../types/content";
 import { LevelProgressItem, TopicProgressItem } from "../features/progress/progress.types";
 import { HomeTab } from "../features/home/home.types";
 import { BadgeUnlockCelebration } from "../features/practice/components/BadgeUnlockCelebration";
-import { countMasteredWords, summarizeMastery, isLeech } from "../domain/learning/mastery";
+import { countMasteredWords, summarizeMastery } from "../domain/learning/mastery";
 import { evaluatePromotion } from "../domain/learning/promotion";
+import { isExamAvailable, isExamPassed } from "../domain/learning/levelExam";
+import { track } from "../services/telemetry";
 import { LevelPromotionModal } from "../features/home/components/LevelPromotionModal";
 import { LevelSwitcherModal } from "../features/home/components/LevelSwitcherModal";
 import { useToast } from "../context/ToastContext";
@@ -31,7 +33,7 @@ interface Props {
 }
 
 export function AppNavigator({ userProgress, onAccountPress, deepLinkTarget, onDeepLinkConsumed }: Props) {
-  const { userData, recordAnswer, bookmarkQuestion, setLocale, setLevel, markLevelCelebrated, markGardenExplainerSeen, completeOnboarding, badgeUnlockQueue, dismissBadgeUnlock, saveFailureNotice, clearSaveFailureNotice } = userProgress;
+  const { userData, recordAnswer, bookmarkQuestion, setLocale, setLevel, markLevelCelebrated, markGardenExplainerSeen, completeOnboarding, markLevelExamPassed, badgeUnlockQueue, dismissBadgeUnlock, saveFailureNotice, clearSaveFailureNotice } = userProgress;
   const session = useAppSession(userData, userProgress.setActiveSession);
   const [levelSwitcherOpen, setLevelSwitcherOpen] = useState(false);
   const { showToast } = useToast();
@@ -47,9 +49,38 @@ export function AppNavigator({ userProgress, onAccountPress, deepLinkTarget, onD
 
   const promotion = evaluatePromotion(
     userData.level,
-    userData.learningProgress || {},
+    userData.passedLevelExams || [],
     userData.celebratedLevels || []
   );
+
+  // Records a level-completion exam's result exactly once per attempt. The
+  // exam is the sole way a level is marked complete now (roadmap
+  // 18-srs-flow-hardening.md "sınav" redesign) — no per-word mastery
+  // percentage feeds this any more.
+  const examResultRecordedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (session.sessionMode !== "EXAM" || !session.isSessionCompleted) return;
+    const examKey = session.sessionQuestions.map((q) => q.id).join(",");
+    if (!examKey || examResultRecordedRef.current === examKey) return;
+    examResultRecordedRef.current = examKey;
+
+    const correctCount = session.sessionAnswers.filter((a) => a.isCorrect).length;
+    const passed = isExamPassed(correctCount);
+    track("level_exam_completed", {
+      level: userData.level,
+      correctCount,
+      totalCount: session.sessionQuestions.length,
+      passed,
+    });
+    if (passed) markLevelExamPassed(userData.level);
+  }, [
+    session.sessionMode,
+    session.isSessionCompleted,
+    session.sessionQuestions,
+    session.sessionAnswers,
+    userData.level,
+    markLevelExamPassed,
+  ]);
 
   useEffect(() => {
     if (!deepLinkTarget) return;
@@ -111,7 +142,6 @@ export function AppNavigator({ userProgress, onAccountPress, deepLinkTarget, onD
         onBack={session.goToHome}
         soundEnabled={userData.soundEnabled}
         reduceMotion={userData.reduceMotion}
-        isLeech={isLeech(userData.learningProgress?.[currentQuestion.id])}
       />
       <BadgeUnlockCelebration
         badgeId={badgeUnlockQueue[0]}
@@ -186,7 +216,6 @@ export function AppNavigator({ userProgress, onAccountPress, deepLinkTarget, onD
         level={userData.level}
         gardenProgress={homeViewModel.gardenProgress}
         totalSolved={countMasteredWords(userData.learningProgress || {})}
-        dueReviewCount={homeViewModel.reviewCount}
         seenWordCount={userData.solvedQuestionIds.filter((id) => levelQuestionIds.includes(id)).length}
         levelWordCount={levelQuestionIds.length}
         levelProgressList={levelProgressList}
@@ -211,11 +240,12 @@ export function AppNavigator({ userProgress, onAccountPress, deepLinkTarget, onD
         level={userData.level}
         xp={userData.xp}
         streak={userData.streak}
-        dueReviewCount={homeViewModel.reviewCount}
         practiceSessionSize={userData.practiceSessionSize}
         onPracticeSessionSizeChange={userProgress.setPracticeSessionSize}
         onStartDailyPractice={(reverseMode) => session.startPractice(undefined, reverseMode)}
-        onStartReview={session.startReview}
+        isExamAvailable={isExamAvailable(userData.level)}
+        isExamPassed={(userData.passedLevelExams || []).includes(userData.level)}
+        onStartExam={() => session.startExam(userData.level)}
         onTabPress={handleTabPress}
       />
     );
@@ -259,7 +289,6 @@ export function AppNavigator({ userProgress, onAccountPress, deepLinkTarget, onD
         onLevelPress={() => setLevelSwitcherOpen(true)}
         onQuestPress={() => session.startPractice()}
         onPracticePress={session.goToPracticeHome}
-        onReviewPress={session.startReview}
         onWordPress={(wordData) => {
           const matchQ = allQuestions.find(
             (q) =>
@@ -286,7 +315,6 @@ export function AppNavigator({ userProgress, onAccountPress, deepLinkTarget, onD
         topBarProps={topBarProps}
         copy={copy}
         activeTab={activeTab}
-        dueReviewCount={homeViewModel.reviewCount}
         onTabPress={handleTabPress}
       >
         {content}
@@ -297,6 +325,7 @@ export function AppNavigator({ userProgress, onAccountPress, deepLinkTarget, onD
         visible={levelSwitcherOpen}
         currentLevel={userData.level}
         learningProgress={userData.learningProgress || {}}
+        passedLevelExams={userData.passedLevelExams || []}
         onSelect={setLevel}
         onClose={() => setLevelSwitcherOpen(false)}
         reduceMotion={userData.reduceMotion}

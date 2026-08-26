@@ -11,6 +11,9 @@ interface Props {
   correctCount: number;
   mistakesCount: number;
   onReturnHome: () => void;
+  /** Set for a level-completion exam (domain/learning/levelExam.ts) — swaps
+   * the generic practice summary for a pass/fail result. */
+  examResult?: { passed: boolean; passCount: number };
 }
 
 export function SessionSummaryCard({
@@ -20,20 +23,38 @@ export function SessionSummaryCard({
   correctCount,
   mistakesCount,
   onReturnHome,
+  examResult,
 }: Props) {
   const accuracyPercent =
     totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 100;
 
+  const title = examResult
+    ? examResult.passed
+      ? copy.game?.examPassedTitle || "Sınavı Geçtin! 🎉"
+      : copy.game?.examFailedTitle || "Bu Sefer Olmadı"
+    : copy.game?.sessionSummaryTitle || "Pratik Tamamlandı!";
+
+  const subtitle = examResult
+    ? examResult.passed
+      ? copy.game?.examPassedSubtitle || "Bu seviyeyi artık gerçekten biliyorsun."
+      : (copy.game?.examFailedSubtitle || "En az {pass} doğru gerekiyor. İstediğin zaman tekrar deneyebilirsin.").replace(
+          "{pass}",
+          String(examResult.passCount)
+        )
+    : copy.game?.sessionSummarySubtitle || "Tebrikler! Günlük pratiğini başarıyla tamamladın.";
+
   return (
     <View style={S.card}>
       <View style={S.trophyCircle}>
-        <Ionicons name="trophy" size={32} color={C.rewardText} />
+        <Ionicons
+          name={examResult && !examResult.passed ? "refresh-circle" : "trophy"}
+          size={32}
+          color={C.rewardText}
+        />
       </View>
 
-      <Text style={S.title}>{copy.game?.sessionSummaryTitle || "Pratik Tamamlandı!"}</Text>
-      <Text style={S.sub}>
-        {copy.game?.sessionSummarySubtitle || "Tebrikler! Günlük pratiğini başarıyla tamamladın."}
-      </Text>
+      <Text style={S.title}>{title}</Text>
+      <Text style={S.sub}>{subtitle}</Text>
 
       <View style={S.statsRow}>
         <View style={S.statBox}>
@@ -51,15 +72,6 @@ export function SessionSummaryCard({
           <Text style={S.statLbl}>{copy.game?.learnedWordsLabel || "Doğru"}</Text>
         </View>
       </View>
-
-      {mistakesCount > 0 && (
-        <View style={S.mistakeNote}>
-          <Ionicons name="refresh-circle" size={16} color={C.attentionText} />
-          <Text style={S.mistakeNoteTxt}>
-            {mistakesCount} kelime pekiştirmen için tekrar listene eklendi.
-          </Text>
-        </View>
-      )}
 
       <View style={S.btnWrap}>
         <PrimaryButton

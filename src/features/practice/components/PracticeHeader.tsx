@@ -7,11 +7,11 @@ interface Props {
   copy: Copy;
   index: number;
   totalQuestions: number;
-  isReviewMode: boolean;
+  isExamMode: boolean;
   onBack: () => void;
 }
 
-export function PracticeHeader({ copy, index, totalQuestions, isReviewMode, onBack }: Props) {
+export function PracticeHeader({ copy, index, totalQuestions, isExamMode, onBack }: Props) {
   const isSingle = totalQuestions <= 1;
   const progressPercent = Math.min(Math.max(Math.round((totalQuestions > 0 ? (index + 1) / totalQuestions : 1) * 100), 0), 100);
 
@@ -34,10 +34,10 @@ export function PracticeHeader({ copy, index, totalQuestions, isReviewMode, onBa
       </View>
 
       <View style={S.indWrap}>
-        {isReviewMode ? (
+        {isExamMode ? (
           <View style={S.revBadge}>
-            <Ionicons name="refresh" size={11} color={C.attentionText} style={S.icon} />
-            <Text style={S.revText}>{copy.game?.reviewModeBadge || "Hata Tekrarı"}</Text>
+            <Ionicons name="school-outline" size={11} color={C.attentionText} style={S.icon} />
+            <Text style={S.revText}>{copy.game?.examModeBadge || "Sınav"}</Text>
           </View>
         ) : isSingle ? (
           <View style={S.qBadge}>

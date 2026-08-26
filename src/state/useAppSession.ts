@@ -1,33 +1,13 @@
 import { useState, useCallback, useEffect } from "react";
 import { MeaningMatchQuestion } from "../types/content";
 import { getCurrentLevelUnitQuestions, getQuestionById, getQuestionsByLevel } from "../content/questions";
-import { getDueReviewItems } from "../domain/review/spacedRepetition";
 import { toPickTheWordSession, canUsePickTheWord } from "../domain/practice/reverseMode";
 import { randomizeDistractors } from "../domain/practice/distractors";
+import { buildLevelExam } from "../domain/learning/levelExam";
 import { ActiveSessionState, UserData } from "../types/user";
+import { LevelCode } from "../types/content";
 import { now } from "../utils/clock";
 import { track } from "../services/telemetry";
-
-/** Due words, soonest-scheduled first, resolved to real questions. */
-function collectDueQuestions(userData: UserData, limit: number): MeaningMatchQuestion[] {
-  return getDueReviewItems(userData.learningProgress || {})
-    .slice(0, limit)
-    .map((item) => getQuestionById(item.questionId))
-    .filter((q): q is MeaningMatchQuestion => q !== undefined);
-}
-
-/**
- * Whether the learner has spaced-repetition reviews due right now. As long as
- * this is true, normal ("new word") practice is gated behind review — a
- * learner should never be shown a word they've already met a second time
- * inside what's supposed to be new-word practice, and a due word should never
- * resurface silently mixed into that flow with no indication of why it's
- * back. Review is its own mandatory, separate flow instead (see
- * `startPractice`/`startReview` below, and `PracticeHubScreen`).
- */
-export function hasPendingReviews(userData: UserData): boolean {
-  return getDueReviewItems(userData.learningProgress || {}).length > 0;
-}
 
 /**
  * Picks new words ordered by increasing difficulty (1-5), with randomized order
@@ -48,41 +28,23 @@ export function pickNewWords(freshWords: MeaningMatchQuestion[], count: number):
 }
 
 /**
- * Normal ("new word") practice, and ONLY new words — a word the learner has
- * already met is never mixed back in here, by construction. Reviews are a
- * fully separate mandatory flow (`buildReviewSessionCore`). The empty-while-
- * pending guard below is enforced here, in the one place both `startPractice`
- * and any other caller funnel through, rather than trusted to every call
- * site — a caller that forgets to check `hasPendingReviews` first still gets
- * a safely empty session instead of silently leaking due words back in.
+ * Daily practice, always and only new words. A word the learner has already
+ * met correctly is never shown here again, by construction — there is no
+ * review queue mixing anything back in. Level completion is decided
+ * separately and explicitly, by the level exam (domain/learning/levelExam.ts),
+ * not by resurfacing individual words for reinforcement.
  */
 function buildDailySessionCore(userData: UserData): MeaningMatchQuestion[] {
-  if (hasPendingReviews(userData)) return [];
-
   const sessionSize = userData.practiceSessionSize || 20;
   const unitQuestions = getCurrentLevelUnitQuestions(userData.level, userData.solvedQuestionIds);
   const freshWords = unitQuestions.filter((q) => !userData.rewardedQuestionIds.includes(q.id));
 
-  const newPortion = pickNewWords(freshWords, sessionSize);
-  if (newPortion.length > 0) return newPortion;
-
-  // Nothing unseen left in the current unit and nothing due yet either.
-  // Rather than leaving the button dead, offer the words closest to their
-  // next review as bonus practice. These pay no XP — they are not due — so
-  // practising ahead cannot be farmed.
-  return getDueReviewItemsSoonest(userData, sessionSize);
-}
-
-/** The mandatory review session: every word due right now, oldest-due first. */
-function buildReviewSessionCore(userData: UserData): MeaningMatchQuestion[] {
-  return collectDueQuestions(userData, userData.practiceSessionSize || 20);
+  return pickNewWords(freshWords, sessionSize);
 }
 
 /**
  * Draws each question's decoys fresh from its own level's pool (roadmap
  * Birim 10.1) rather than the fixed set baked in at content-authoring time.
- * A due review pulled in from a level the learner has since moved past still
- * gets decoys from ITS level, not the learner's current one.
  */
 function withFreshDistractors(questions: MeaningMatchQuestion[]): MeaningMatchQuestion[] {
   return questions.map((q) => randomizeDistractors(q, getQuestionsByLevel(q.level)));
@@ -92,22 +54,8 @@ export function buildDailySession(userData: UserData): MeaningMatchQuestion[] {
   return withFreshDistractors(buildDailySessionCore(userData));
 }
 
-export function buildReviewSession(userData: UserData): MeaningMatchQuestion[] {
-  return withFreshDistractors(buildReviewSessionCore(userData));
-}
-
-/** Known words ordered by how soon they come around again. */
-function getDueReviewItemsSoonest(userData: UserData, limit: number): MeaningMatchQuestion[] {
-  return Object.entries(userData.learningProgress || {})
-    .filter(([, item]) => item.attempts > 0)
-    .sort((a, b) => a[1].nextReviewAt - b[1].nextReviewAt)
-    .slice(0, limit)
-    .map(([id]) => getQuestionById(id))
-    .filter((q): q is MeaningMatchQuestion => q !== undefined);
-}
-
 export type ScreenType = "onboarding" | "home" | "practiceHome" | "practice" | "progress" | "profile";
-export type SessionMode = "PRACTICE" | "REVIEW";
+export type SessionMode = "PRACTICE" | "EXAM";
 
 export interface SessionAnswerRecord {
   questionId: string;
@@ -168,66 +116,42 @@ export function useAppSession(userData: UserData, setActiveSession?: (session: A
 
   const startPractice = useCallback(
     (customQuestions?: MeaningMatchQuestion[], reverseMode?: boolean) => {
-      // A specific word (word notebook, search, "practice this word") was
-      // chosen deliberately, so it bypasses the review gate below — the
-      // learner asked for exactly this word, review or not.
+      let qList: MeaningMatchQuestion[] = [];
       if (customQuestions && customQuestions.length > 0) {
-        let qList = withFreshDistractors(customQuestions);
-        if (reverseMode && canUsePickTheWord(qList.length)) qList = toPickTheWordSession(qList);
-        beginSession(qList, "PRACTICE");
-        return;
+        qList = withFreshDistractors(customQuestions);
+      } else {
+        qList = buildDailySession(userData);
       }
-
-      // Mandatory: due reviews must be cleared before new words are
-      // introduced. Every entry point into "normal practice" (home hero,
-      // practice hub) calls this same function with no custom questions, so
-      // enforcing the gate here — once — means no screen can accidentally
-      // skip it. A learner is never shown a word a second time inside what's
-      // supposed to be new-word practice.
-      if (hasPendingReviews(userData)) {
-        const dueList = buildReviewSessionCore(userData);
-        const qList = withFreshDistractors(dueList);
-        track("practice_session_started", {
-          sessionType: "review_only",
-          dueCount: dueList.length,
-          freshCount: 0,
-          reverseMode: false,
-        });
-        beginSession(qList, "REVIEW");
-        return;
-      }
-
-      let qList = buildDailySession(userData);
       if (qList.length === 0) return;
-      track("practice_session_started", {
-        sessionType: "new_only",
-        dueCount: 0,
-        freshCount: qList.length,
-        reverseMode: Boolean(reverseMode),
-      });
+
+      if (!customQuestions) {
+        track("practice_session_started", {
+          freshCount: qList.length,
+          reverseMode: Boolean(reverseMode),
+        });
+      }
       if (reverseMode && canUsePickTheWord(qList.length)) qList = toPickTheWordSession(qList);
       beginSession(qList, "PRACTICE");
     },
     [userData, beginSession]
   );
 
-  const startReview = useCallback(() => {
-    // No blanket fallback to the whole catalogue — serving un-due words was
-    // what quietly defeated the spacing. If nothing is due, hand the learner
-    // the ordinary new-word session instead of a dead tap.
-    const dueList = buildReviewSessionCore(userData);
-    const qList = dueList.length > 0 ? withFreshDistractors(dueList) : buildDailySession(userData);
-    if (qList.length === 0) return;
-
-    track("practice_session_started", {
-      sessionType: dueList.length > 0 ? "review_only" : "new_only",
-      dueCount: dueList.length,
-      freshCount: qList.length - dueList.length,
-      reverseMode: false,
-    });
-
-    beginSession(qList, dueList.length > 0 ? "REVIEW" : "PRACTICE");
-  }, [userData, beginSession]);
+  /**
+   * The level completion exam: 60 questions drawn from the whole level
+   * (not just words the learner has already met), easy/medium/hard evenly
+   * mixed. Scoring 50+ correct marks the level complete — this replaces
+   * per-word spaced-repetition mastery as the promotion gate entirely (see
+   * domain/learning/promotion.ts and domain/learning/levelExam.ts).
+   */
+  const startExam = useCallback(
+    (level: LevelCode) => {
+      const qList = withFreshDistractors(buildLevelExam(level));
+      if (qList.length === 0) return;
+      track("level_exam_started", { level, questionCount: qList.length });
+      beginSession(qList, "EXAM");
+    },
+    [beginSession]
+  );
 
   const recordSessionStep = useCallback((isCorrect: boolean, xpEarned: number) => {
     const currentQ = sessionQuestions[currentIndex];
@@ -289,7 +213,7 @@ export function useAppSession(userData: UserData, setActiveSession?: (session: A
     recordSessionStep,
     nextQuestion,
     startPractice,
-    startReview,
+    startExam,
     goToHome,
     goToPracticeHome,
     goToProgress,

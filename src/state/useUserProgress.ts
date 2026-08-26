@@ -194,6 +194,15 @@ export function useUserProgress() {
     updateAndPersist((prev) => ({ ...prev, onboardingCompleted: true }));
   }, [updateAndPersist]);
 
+  /** Records a passed level-completion exam (domain/learning/levelExam.ts) — idempotent, so it's safe to call more than once for the same level. */
+  const markLevelExamPassed = useCallback((level: LevelCode) => {
+    updateAndPersist((prev) =>
+      prev.passedLevelExams.includes(level)
+        ? prev
+        : { ...prev, passedLevelExams: [...prev.passedLevelExams, level] }
+    );
+  }, [updateAndPersist]);
+
   const recordAnswer = useCallback(
     (
       question: MeaningMatchQuestion,
@@ -425,6 +434,7 @@ export function useUserProgress() {
     userData,
     refresh,
     completeOnboarding,
+    markLevelExamPassed,
     recordAnswer,
     bookmarkQuestion,
     setLocale,

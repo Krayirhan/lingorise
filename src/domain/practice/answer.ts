@@ -5,7 +5,7 @@ import { evaluateBadges, updateDailyQuests } from "../gamification/badges";
 import { recordLearningOutcome } from "../learning/mastery";
 import { now as clockNow, todayISO } from "../../utils/clock";
 
-export type PracticeSessionMode = "PRACTICE" | "REVIEW";
+export type PracticeSessionMode = "PRACTICE" | "EXAM";
 
 /** Flat payout for clearing a due review, capped to once per word per day. */
 const REVIEW_XP_REWARD = 5;

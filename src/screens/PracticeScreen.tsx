@@ -17,6 +17,7 @@ import { PracticeMascot } from "../features/practice/components/PracticeMascot";
 import { PrimaryButton } from "../components/PrimaryButton";
 import { SessionSummaryCard } from "../features/practice/components/SessionSummaryCard";
 import { track } from "../services/telemetry";
+import { EXAM_PASS_COUNT, isExamPassed } from "../domain/learning/levelExam";
 
 interface Props {
   copy: Copy;
@@ -36,8 +37,6 @@ interface Props {
   onBack: () => void;
   soundEnabled?: boolean;
   reduceMotion?: boolean;
-  /** True for a word the learner has repeatedly missed — see domain/learning/mastery.ts's isLeech. */
-  isLeech?: boolean;
 }
 
 export function PracticeScreen({
@@ -58,7 +57,6 @@ export function PracticeScreen({
   onBack,
   soundEnabled = true,
   reduceMotion = false,
-  isLeech = false,
 }: Props) {
   const correctAnswer = question.meaning || question.answer || "";
   const wordPrompt = question.word || question.prompt || "";
@@ -66,7 +64,7 @@ export function PracticeScreen({
   const isLastQuestion = index + 1 >= totalQuestions;
 
   const speech = useSpeech(wordPrompt, question.pronunciation, soundEnabled, reduceMotion);
-  const session = usePracticeSession(question, correctAnswer, onCheck, isLeech);
+  const session = usePracticeSession(question, correctAnswer, onCheck);
   const feedback = usePracticeFeedback(submitted, isCorrect, reduceMotion);
 
   const handleRequestExit = () => {
@@ -138,6 +136,7 @@ export function PracticeScreen({
     const totalXp = sessionAnswers.reduce((acc, a) => acc + a.xpEarned, 0);
     const correctCount = sessionAnswers.filter((a) => a.isCorrect).length;
     const mistakesCount = sessionAnswers.filter((a) => !a.isCorrect).length;
+    const isExam = sessionMode === "EXAM";
 
     return (
       <SafeAreaView style={S.safe} edges={["top", "bottom"]}>
@@ -151,6 +150,7 @@ export function PracticeScreen({
               correctCount={correctCount}
               mistakesCount={mistakesCount}
               onReturnHome={onBack}
+              examResult={isExam ? { passed: isExamPassed(correctCount), passCount: EXAM_PASS_COUNT } : undefined}
             />
           </ScrollView>
         </View>
@@ -166,7 +166,7 @@ export function PracticeScreen({
           copy={copy}
           index={index}
           totalQuestions={totalQuestions}
-          isReviewMode={sessionMode === "REVIEW"}
+          isExamMode={sessionMode === "EXAM"}
           onBack={handleRequestExit}
         />
 
@@ -178,7 +178,6 @@ export function PracticeScreen({
             isCompactScreen={false}
             showHint={session.showHint}
             onToggleHint={session.toggleHint}
-            isLeech={isLeech}
             isSpeaking={speech.isSpeaking}
             audioPulse={speech.audioPulse}
             isMotionReduced={feedback.isMotionReduced}

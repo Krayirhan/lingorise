@@ -11,7 +11,6 @@ export interface GlobalAppLayoutProps {
   topBarProps: GlobalTopBarProps;
   copy: Copy;
   activeTab: HomeTab;
-  dueReviewCount: number;
   onTabPress: (tab: HomeTab) => void;
   children: ReactNode;
 }
@@ -20,7 +19,6 @@ export function GlobalAppLayout({
   topBarProps,
   copy,
   activeTab,
-  dueReviewCount,
   onTabPress,
   children,
 }: GlobalAppLayoutProps) {
@@ -38,7 +36,6 @@ export function GlobalAppLayout({
         <GlobalBottomNav
           copy={copy}
           activeTab={activeTab}
-          dueReviewCount={dueReviewCount}
           onTabPress={onTabPress}
         />
       </View>

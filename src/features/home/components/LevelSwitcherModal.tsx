@@ -8,7 +8,7 @@ import { LearningItemProgress } from "../../../types/user";
 import { levels } from "../../../content/levels";
 import { getQuestionsByLevel, isLevelReady } from "../../../content/questions";
 import { summarizeMastery } from "../../../domain/learning/mastery";
-import { assessLevelChoice, PROMOTION_THRESHOLD_PERCENT } from "../../../domain/learning/promotion";
+import { assessLevelChoice } from "../../../domain/learning/promotion";
 import { track } from "../../../services/telemetry";
 
 interface Props {
@@ -16,6 +16,8 @@ interface Props {
   visible: boolean;
   currentLevel: LevelCode;
   learningProgress: Record<string, LearningItemProgress>;
+  /** Levels whose completion exam has been passed — see domain/learning/levelExam.ts. */
+  passedLevelExams: LevelCode[];
   onSelect: (level: LevelCode) => void;
   onClose: () => void;
   reduceMotion?: boolean;
@@ -38,6 +40,7 @@ export function LevelSwitcherModal({
   visible,
   currentLevel,
   learningProgress,
+  passedLevelExams,
   onSelect,
   onClose,
   reduceMotion,
@@ -47,7 +50,7 @@ export function LevelSwitcherModal({
   if (!visible) return null;
 
   const pendingAssessment = pendingLevel
-    ? assessLevelChoice(pendingLevel, currentLevel, learningProgress)
+    ? assessLevelChoice(pendingLevel, currentLevel, passedLevelExams)
     : null;
 
   const handlePick = (level: LevelCode) => {
@@ -55,13 +58,9 @@ export function LevelSwitcherModal({
       onClose();
       return;
     }
-    const assessment = assessLevelChoice(level, currentLevel, learningProgress);
+    const assessment = assessLevelChoice(level, currentLevel, passedLevelExams);
     if (assessment.isAhead) {
-      track("level_switch_warning_shown", {
-        currentLevel,
-        targetLevel: level,
-        currentMasteredPercent: assessment.currentMasteredPercent,
-      });
+      track("level_switch_warning_shown", { currentLevel, targetLevel: level });
       setPendingLevel(level);
       return;
     }
@@ -104,10 +103,9 @@ export function LevelSwitcherModal({
               <Text style={S.warnText}>
                 {fill(
                   copy.home?.levelSwitchAheadWarning ||
-                    "{current} seviyesinin %{percent}'ini pekiştirdin. {target} şu an zor gelebilir — yine de deneyebilirsin.",
+                    "{current} tamamlama sınavını henüz geçmedin. {target} şu an zor gelebilir — yine de deneyebilirsin.",
                   {
                     current: currentLevel,
-                    percent: pendingAssessment.currentMasteredPercent,
                     target: pendingLevel,
                   }
                 )}
@@ -142,7 +140,7 @@ export function LevelSwitcherModal({
                 getQuestionsByLevel(entry.code).map((q) => q.id)
               );
               const isCurrent = entry.code === currentLevel;
-              const isEarned = mastery.masteredPercent >= PROMOTION_THRESHOLD_PERCENT;
+              const isEarned = passedLevelExams.includes(entry.code);
 
               return (
                 <Pressable

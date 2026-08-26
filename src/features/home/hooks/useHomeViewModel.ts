@@ -5,7 +5,6 @@ import { HomeViewModel, SkillProgress } from "../home.types";
 import { calculateGardenProgress } from "../../../domain/gamification/xp";
 import { getQuestionsByLevel, getLevelUnitInfo } from "../../../content/questions";
 import { getRecommendedWord } from "../../../services/contentService";
-import { getDueReviewItems } from "../../../domain/review/spacedRepetition";
 import { countMasteredWords, summarizeMastery } from "../../../domain/learning/mastery";
 import { todayISO } from "../../../utils/clock";
 
@@ -67,14 +66,11 @@ export function useHomeViewModel(userData: UserData, copy: Copy, locale: Locale)
     const recommended = getRecommendedWord(userData.level, userData.solvedQuestionIds);
     const dailyQuests = userData.dailyQuests || [];
     const isDailyCompleted = dailyQuests.length > 0 && dailyQuests.every((q) => q.completed);
-    const dueReviewCount = getDueReviewItems(userData.learningProgress || {}).length;
-    const practiceRecommendation = dueReviewCount > 0
-      ? `${dueReviewCount} kelime tekrar zamanını bekliyor.`
-      : !isDailyCompleted
-        ? "Günlük hedefini tamamlamak için öneriliyor."
-        : solvedInLevel < levelQuestions.length
-          ? `${userData.level} seviyendeki yeni kelimelerden seçildi.`
-          : "Serini korumak için kısa bir tekrar öneriliyor.";
+    const practiceRecommendation = !isDailyCompleted
+      ? "Günlük hedefini tamamlamak için öneriliyor."
+      : solvedInLevel < levelQuestions.length
+        ? `${userData.level} seviyendeki yeni kelimelerden seçildi.`
+        : "Bugünlük yeni kelimen kalmadı — yarın devam edelim.";
 
     const practiceQuest = dailyQuests.find((q) => q.id === "quest_daily_practice");
     const sessionSize = userData.practiceSessionSize || 20;
@@ -140,7 +136,6 @@ export function useHomeViewModel(userData: UserData, copy: Copy, locale: Locale)
       questHistory: userData.questHistory || [],
       greetingTitle,
       greetingSubtitle,
-      reviewCount: dueReviewCount,
       practiceRecommendation,
       skillProgress,
       recommendedWord: recommended,

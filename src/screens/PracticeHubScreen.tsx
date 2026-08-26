@@ -24,12 +24,15 @@ interface Props {
   level: LevelCode;
   xp: number;
   streak: number;
-  dueReviewCount: number;
   onStartDailyPractice: (reverseMode: boolean) => void;
-  onStartReview: () => void;
   onTabPress: (tab: HomeTab) => void;
   practiceSessionSize: 5 | 10 | 20 | 30;
   onPracticeSessionSizeChange: (size: 5 | 10 | 20 | 30) => void;
+  /** Whether the level has enough content to seat a 60-question exam. */
+  isExamAvailable: boolean;
+  /** Whether the current level's completion exam has already been passed. */
+  isExamPassed: boolean;
+  onStartExam: () => void;
 }
 
 export function PracticeHubScreen({
@@ -38,31 +41,28 @@ export function PracticeHubScreen({
   level,
   xp,
   streak,
-  dueReviewCount,
   onStartDailyPractice,
-  onStartReview,
   practiceSessionSize,
   onPracticeSessionSizeChange,
+  isExamAvailable,
+  isExamPassed,
+  onStartExam,
 }: Props) {
   const [reverseMode, setReverseMode] = useState(false);
   const streakText = `${streak} ${copy.game?.hubStreakSuffix || "gün seri"}`;
-
-  // Review and new-word practice are fully separate, mandatory flows — as
-  // long as anything is due, it always comes first, full stop. There is no
-  // "mixed" or "tapered" state left to describe (roadmap
-  // 18-srs-flow-hardening.md "pekişme" redesign, 2026-08-26).
-  const hasMandatoryReview = dueReviewCount > 0;
   const estimatedMinutes = Math.max(1, Math.round(practiceSessionSize * 0.15));
 
   const fill = (template: string, values: Record<string, string | number>) =>
     Object.entries(values).reduce((text, [key, value]) => text.replace(`{${key}}`, String(value)), template);
 
-  const sessionSummary = hasMandatoryReview
-    ? fill(copy.home?.practiceCardReviewOnly || "{reviews} kelime tekrar bekliyor", { reviews: dueReviewCount })
-    : fill(copy.home?.practiceCardNewOnly || "{level} seviyesinden {fresh} yeni kelime", {
-        level,
-        fresh: practiceSessionSize,
-      });
+  // Daily practice is always and only new words now — a word already met is
+  // never shown here again (roadmap 18-srs-flow-hardening.md "sınav"
+  // redesign, 2026-08-26). Finishing a level is decided separately, by the
+  // completion exam below, not by resurfacing individual words over days.
+  const sessionSummary = fill(copy.home?.practiceCardNewOnly || "{level} seviyesinden {fresh} yeni kelime", {
+    level,
+    fresh: practiceSessionSize,
+  });
 
   return (
     <View style={S.shell}>
@@ -94,33 +94,29 @@ export function PracticeHubScreen({
           </View>
           <Text style={S.sessionSizeHint}>{fill(copy.game?.hubSessionLengthHint || "Her pratikte {count} kelime gelir.", { count: practiceSessionSize })}</Text>
 
-          {/* Directional mode only applies to new-word practice — while
-              reviews are mandatory, starting one ignores this, so it stays
-              hidden rather than offering a choice that does nothing. */}
-          {!hasMandatoryReview && (
-            <View style={S.modeRow}>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityState={{ selected: !reverseMode }}
-                style={[S.modeButton, !reverseMode && S.modeButtonActive]}
-                onPress={() => setReverseMode(false)}
-              >
-                <Text style={[S.modeButtonText, !reverseMode && S.modeButtonTextActive]}>
-                  {copy.game?.hubModePickMeaning || "İngilizce → Türkçe"}
-                </Text>
-              </Pressable>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityState={{ selected: reverseMode }}
-                style={[S.modeButton, reverseMode && S.modeButtonActive]}
-                onPress={() => setReverseMode(true)}
-              >
-                <Text style={[S.modeButtonText, reverseMode && S.modeButtonTextActive]}>
-                  {copy.game?.hubModePickWord || "Türkçe → İngilizce"}
-                </Text>
-              </Pressable>
-            </View>
-          )}
+          {/* Directional Mode Switcher (EN -> TR / TR -> EN) */}
+          <View style={S.modeRow}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityState={{ selected: !reverseMode }}
+              style={[S.modeButton, !reverseMode && S.modeButtonActive]}
+              onPress={() => setReverseMode(false)}
+            >
+              <Text style={[S.modeButtonText, !reverseMode && S.modeButtonTextActive]}>
+                {copy.game?.hubModePickMeaning || "İngilizce → Türkçe"}
+              </Text>
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityState={{ selected: reverseMode }}
+              style={[S.modeButton, reverseMode && S.modeButtonActive]}
+              onPress={() => setReverseMode(true)}
+            >
+              <Text style={[S.modeButtonText, reverseMode && S.modeButtonTextActive]}>
+                {copy.game?.hubModePickWord || "Türkçe → İngilizce"}
+              </Text>
+            </Pressable>
+          </View>
         </View>
 
           {/* User Status Mini-Stats Row */}
@@ -137,85 +133,102 @@ export function PracticeHubScreen({
               <Ionicons name="flame" size={13} color={C.attention} />
               <Text style={S.statPillTxt}>{streakText}</Text>
             </View>
-            {dueReviewCount > 0 && (
-              <View style={[S.statPill, S.statPillAttention]}>
-                <Ionicons name="refresh" size={12} color={C.attentionText} />
-                <Text style={S.statPillAttentionTxt}>{dueReviewCount}</Text>
-              </View>
-            )}
           </View>
 
-          {/* Hero: whichever flow is actually available right now. While any
-              review is due, it always wins — new words are a separate,
-              locked flow below (roadmap 18-srs-flow-hardening.md "pekişme"
-              redesign, 2026-08-26). */}
+          {/* Recommended Daily Practice Hero Card */}
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={
-              hasMandatoryReview
-                ? `${copy.game?.hubReviewHeroTitle || "Önce tekrarların"}, ${sessionSummary}. ${copy.game?.hubReviewCta || "Tekrara başla"}`
-                : `${copy.game?.hubHeroTitle || "Günün pratiği"}, ${level}, ${sessionSummary}. ${copy.game?.hubHeroCta || "Pratiğe başla"}`
-            }
-            style={({ pressed }) => [S.heroCard, pressed && S.cardPressed]}
-            onPress={() => (hasMandatoryReview ? onStartReview() : onStartDailyPractice(reverseMode))}
+            accessibilityLabel={`${copy.game?.hubHeroTitle || "Günün pratiği"}, ${level}, ${sessionSummary}. ${copy.game?.hubHeroCta || "Pratiğe başla"}`}
+            style={({ pressed }) => [
+              S.heroCard,
+              pressed && S.cardPressed,
+            ]}
+            onPress={() => onStartDailyPractice(reverseMode)}
           >
             <View style={S.heroTop}>
               <View style={S.heroCopy}>
-                <View style={[S.recommendedBadge, hasMandatoryReview && S.requiredBadge]}>
+                <View style={S.recommendedBadge}>
                   <Text style={S.recommendedBadgeTxt}>
-                    {hasMandatoryReview
-                      ? copy.game?.hubBadgeRequired || "ÖNCE BU"
-                      : copy.game?.hubBadgeRecommended || "ÖNERİLEN"}
+                    {copy.game?.hubBadgeRecommended || "ÖNERİLEN"}
                   </Text>
                 </View>
                 <Text style={S.heroTitle}>
-                  {hasMandatoryReview
-                    ? copy.game?.hubReviewHeroTitle || "Önce tekrarların"
-                    : copy.game?.hubHeroTitle || "Günün pratiği"}
+                  {copy.game?.hubHeroTitle || "Günün pratiği"}
                 </Text>
                 <Text style={S.heroReason}>{sessionSummary}</Text>
-                {!hasMandatoryReview && (
-                  <Text style={S.heroMeta}>
-                    {level} ·{" "}
-                    {fill(copy.home?.practiceMetaEstimate || "{count} kelime · yaklaşık {minutes} dk", {
-                      count: practiceSessionSize,
-                      minutes: estimatedMinutes,
-                    })}
-                  </Text>
-                )}
+                <Text style={S.heroMeta}>
+                  {level} ·{" "}
+                  {fill(copy.home?.practiceMetaEstimate || "{count} kelime · yaklaşık {minutes} dk", {
+                    count: practiceSessionSize,
+                    minutes: estimatedMinutes,
+                  })}
+                </Text>
               </View>
 
               <Image source={sprig} style={S.heroMascot} resizeMode="contain" />
             </View>
 
+            {/* Primary Gold CTA */}
             <View style={S.heroCtaBtn}>
               <Text style={S.heroCtaBtnTxt}>
-                {hasMandatoryReview
-                  ? copy.game?.hubReviewCta || "Tekrara başla →"
-                  : copy.game?.hubHeroCta || "Pratiğe başla →"}
+                {copy.game?.hubHeroCta || "Pratiğe başla →"}
               </Text>
             </View>
           </Pressable>
 
-          {/* New-word practice waits behind the review gate. Shown, not
-              hidden — a locked door is more honest than a missing one. */}
-          {hasMandatoryReview && (
-            <View style={[S.optionCard, S.optionCardLocked]}>
+          {/* Level completion is a single deliberate exam, not something that
+              accumulates from resurfaced words over days (roadmap
+              18-srs-flow-hardening.md "sınav" redesign). */}
+          {isExamAvailable && (
+            <View style={S.sectionHdr}>
+              <Text style={S.sectionTitle}>
+                {copy.game?.hubSectionOther || "Diğer seçenekler"}
+              </Text>
+            </View>
+          )}
+
+          {isExamAvailable && (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={
+                isExamPassed
+                  ? `${level} ${copy.game?.examCardPassedTitle || "tamamlama sınavı geçildi"}`
+                  : `${level} ${copy.game?.examCardTitle || "tamamlama sınavı"}`
+              }
+              style={({ pressed }) => [S.optionCard, pressed && S.cardPressed]}
+              onPress={onStartExam}
+            >
               <View style={S.optionRow}>
-                <View style={[S.optionIconCircle, S.iconCircleLocked]}>
-                  <Ionicons name="lock-closed" size={20} color={C.muted} />
+                <View style={[S.optionIconCircle, isExamPassed ? S.iconCircleSuccess : S.iconCircleAttention]}>
+                  <Ionicons
+                    name={isExamPassed ? "checkmark-circle" : "school"}
+                    size={24}
+                    color={isExamPassed ? C.successText : C.attentionText}
+                  />
                 </View>
+
                 <View style={S.optionCopy}>
                   <Text style={S.optionTitle}>
-                    {copy.home?.practiceLockedTitle || "Yeni kelimeler"}
+                    {fill(copy.game?.examCardTitle || "{level} tamamlama sınavı", { level })}
                   </Text>
                   <Text style={S.optionSubtitle}>
-                    {copy.home?.practiceLockedSubtitle || "Bugünkü tekrarları bitirince açılır"}
+                    {isExamPassed
+                      ? copy.game?.examCardPassedSubtitle || "Geçtin — istersen tekrar deneyebilirsin."
+                      : copy.game?.examCardSubtitle || "60 soru, seviyenin her yerinden. 50 doğru = seviye tamamlandı."}
                   </Text>
                 </View>
               </View>
-            </View>
+
+              <View style={S.secondaryBtn}>
+                <Text style={S.secondaryBtnTxt}>
+                  {isExamPassed
+                    ? copy.game?.examCardRetakeCta || "Tekrar dene"
+                    : copy.game?.examCardCta || "Sınava gir"}
+                </Text>
+              </View>
+            </Pressable>
           )}
+
         </ScrollView>
       </View>
   );
@@ -288,14 +301,6 @@ const S = StyleSheet.create({
     fontSize: 12,
     fontWeight: "700",
   },
-  statPillAttention: {
-    backgroundColor: C.attentionSoft,
-  },
-  statPillAttentionTxt: {
-    color: C.attentionText,
-    fontSize: 12,
-    fontWeight: "800",
-  },
   heroCard: {
     backgroundColor: C.primary,
     borderRadius: radius.card || 20,
@@ -334,9 +339,6 @@ const S = StyleSheet.create({
     fontSize: 10,
     fontWeight: "800",
     letterSpacing: 0.6,
-  },
-  requiredBadge: {
-    backgroundColor: "rgba(255, 193, 122, 0.24)",
   },
   heroTitle: {
     color: "#FFFFFF",
@@ -380,6 +382,15 @@ const S = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: -0.2,
   },
+  sectionHdr: {
+    marginTop: 4,
+  },
+  sectionTitle: {
+    color: C.ink,
+    fontSize: 18,
+    fontWeight: "700",
+    letterSpacing: -0.2,
+  },
   sessionSizeCard: { backgroundColor: C.surface, borderWidth: 1, borderColor: C.line, borderRadius: radius.card || 20, padding: 14, gap: 10 },
   sessionSizeTitle: { color: C.ink, fontSize: 14, fontWeight: "800" },
   sessionSizeRow: { flexDirection: "row", gap: 8 },
@@ -401,11 +412,6 @@ const S = StyleSheet.create({
     borderColor: C.line,
     gap: 12,
   },
-  optionCardLocked: {
-    backgroundColor: C.surface,
-    borderColor: C.lineSoft,
-    opacity: 0.7,
-  },
   optionRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -419,8 +425,11 @@ const S = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  iconCircleLocked: {
-    backgroundColor: C.lineSoft,
+  iconCircleAttention: {
+    backgroundColor: C.attentionSoft,
+  },
+  iconCircleSuccess: {
+    backgroundColor: C.successSoft,
   },
   optionCopy: {
     flex: 1,
@@ -436,5 +445,20 @@ const S = StyleSheet.create({
     fontSize: 12.5,
     lineHeight: 16,
     fontWeight: "400",
+  },
+  secondaryBtn: {
+    minHeight: 44,
+    backgroundColor: C.primarySoft,
+    borderWidth: 1,
+    borderColor: C.primaryBorder,
+    borderRadius: radius.miniCard || 16,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 16,
+  },
+  secondaryBtnTxt: {
+    color: C.primary,
+    fontSize: 14,
+    fontWeight: "700",
   },
 });

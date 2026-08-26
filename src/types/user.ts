@@ -62,7 +62,7 @@ export interface ActiveSessionState {
   questionIds: string[];
   currentIndex: number;
   answers: { questionId: string; isCorrect: boolean; xpEarned: number }[];
-  sessionMode: "PRACTICE" | "REVIEW";
+  sessionMode: "PRACTICE" | "EXAM";
   startedAt: number;
 }
 
@@ -125,6 +125,13 @@ export interface UserData {
   learningProgress: Record<string, LearningItemProgress>;
   /** Levels whose completion has already been celebrated, so it happens once. */
   celebratedLevels: string[];
+  /**
+   * Levels the learner has passed the completion exam for (60 questions
+   * drawn from the whole level, 50+ correct to pass — see
+   * domain/learning/levelExam.ts). This, not per-word mastery, is what
+   * "finishing" a level means and what gates promotion to the next one.
+   */
+  passedLevelExams: LevelCode[];
   practiceHistory: PracticeHistoryEntry[];
   questHistory: QuestHistoryEntry[];
   activeSession?: ActiveSessionState | null;

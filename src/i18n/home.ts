@@ -71,6 +71,7 @@ export const homeEn = {
   promotionEyebrow: "LEVEL COMPLETE",
   promotionTitle: "You've completed {level}",
   promotionSubtitle: "You now reliably recall {percent}% of {level} vocabulary.",
+  promotionSubtitleExam: "You passed the {level} completion exam — you genuinely know this level now.",
   promotionNextCta: "Continue with {level} →",
   promotionStayCta: "Stay on {level}",
   promotionSoonTitle: "{level} is still growing",
@@ -83,7 +84,7 @@ export const homeEn = {
   levelSwitchSoon: "Coming soon",
   levelSwitchWordCount: "{count} words",
   levelSwitchAheadWarning:
-    "You've mastered {percent}% of {current}. {target} may feel early — you can still try it.",
+    "You haven't passed the {current} completion exam yet. {target} may feel early — you can still try it.",
   levelSwitchConfirm: "Switch to {level}",
   levelSwitchCancel: "Cancel",
   questHistoryTitle: "Quest History",
@@ -205,6 +206,7 @@ export const homeTr = {
   promotionEyebrow: "SEVİYE TAMAMLANDI",
   promotionTitle: "{level} seviyesini tamamladın",
   promotionSubtitle: "{level} kelimelerinin %{percent}'ini artık güvenle hatırlıyorsun.",
+  promotionSubtitleExam: "{level} tamamlama sınavını geçtin — bu seviyeyi artık gerçekten biliyorsun.",
   promotionNextCta: "{level} ile devam et →",
   promotionStayCta: "{level} seviyesinde kal",
   promotionSoonTitle: "{level} henüz hazırlanıyor",
@@ -217,7 +219,7 @@ export const homeTr = {
   levelSwitchSoon: "Yakında",
   levelSwitchWordCount: "{count} kelime",
   levelSwitchAheadWarning:
-    "{current} seviyesinin %{percent}'ini pekiştirdin. {target} şu an zor gelebilir — yine de deneyebilirsin.",
+    "{current} tamamlama sınavını henüz geçmedin. {target} şu an zor gelebilir — yine de deneyebilirsin.",
   levelSwitchConfirm: "{level} seviyesine geç",
   levelSwitchCancel: "Vazgeç",
   questHistoryTitle: "Görev Geçmişi",

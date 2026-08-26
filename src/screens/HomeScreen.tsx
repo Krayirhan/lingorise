@@ -3,7 +3,6 @@ import { Pressable, ScrollView, Text, View } from "react-native";
 import { HomeScreenProps, RecommendedWordData } from "../features/home/home.types";
 import { homeStyles as S } from "../features/home/home.styles";
 import { GardenHeroCard } from "../features/home/components/GardenHeroCard";
-import { ReviewCard } from "../features/home/components/ReviewCard";
 import { DailyQuestCard } from "../features/home/components/DailyQuestCard";
 import { RecommendedWordCard } from "../features/home/components/RecommendedWordCard";
 import { GardenProgressCard } from "../features/home/components/GardenProgressCard";
@@ -15,7 +14,6 @@ export function HomeScreen({
   locale,
   viewModel,
   onQuestPress,
-  onReviewPress,
   onWordPress,
   onTabPress,
   reduceMotion,
@@ -55,7 +53,6 @@ export function HomeScreen({
           dailyXpEarned={viewModel.dailyXpEarned}
           dailyXpTarget={viewModel.dailyXpTarget}
           isDailyCompleted={viewModel.isDailyCompleted}
-          dueReviewCount={viewModel.reviewCount}
           onPress={onQuestPress}
           onViewProgress={() => onTabPress("progress")}
           onPracticeAgain={onQuestPress}
@@ -88,14 +85,6 @@ export function HomeScreen({
           copy={copy}
           dailyQuests={viewModel.dailyQuests}
           onHistoryPress={() => setHistoryVisible(true)}
-        />
-
-        {/* Review Card (Appears only when due mistakes exist) */}
-        <ReviewCard
-          copy={copy}
-          locale={locale}
-          dueReviewCount={viewModel.reviewCount}
-          onPress={onReviewPress}
         />
 
         {/* Recommended Word of the Day -> Opens Word Detail Modal */}

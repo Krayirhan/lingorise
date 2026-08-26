@@ -18,7 +18,6 @@ export function ProgressScreen({
   level,
   gardenProgress,
   totalSolved,
-  dueReviewCount,
   seenWordCount,
   levelWordCount,
   levelProgressList,
@@ -68,10 +67,8 @@ export function ProgressScreen({
           </View>
           <View style={S.analyticsDivider} />
           <View style={S.analyticsItem}>
-            {/* The real scheduled queue, so this matches the home screen and
-                the tab badge instead of counting every mistake ever made. */}
-            <Text style={S.analyticsValue}>{dueReviewCount}</Text>
-            <Text style={S.analyticsLabel}>{copy.progress?.dueNowLabel || "Tekrar bekliyor"}</Text>
+            <Text style={S.analyticsValue}>{seenWordCount}</Text>
+            <Text style={S.analyticsLabel}>{copy.progress?.wordsSeenLabel || "Görülen kelime"}</Text>
           </View>
         </View>
 

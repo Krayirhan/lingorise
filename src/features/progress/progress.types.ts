@@ -27,8 +27,6 @@ export interface ProgressScreenProps {
   level: LevelCode;
   gardenProgress: GardenProgress;
   totalSolved: number;
-  /** Words genuinely due right now — the same number every other screen shows. */
-  dueReviewCount: number;
   /** Words the learner has met at least once, for the notebook. */
   seenWordCount: number;
   /** Pool the notebook is measured against — the learner's own level. */
