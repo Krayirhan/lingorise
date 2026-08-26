@@ -7,9 +7,11 @@ This file is populated/updated by DISCOVER or BASELINE.
 ## Identity
 - Project: LingoRise
 - Repository: Krayirhan/lingorise (local checkout: D:\LingoRise)
-- Current revision: 3436a1b (main) — reaudited; CI/CD removed (see RUN-002-REAUDIT)
+- Current revision: 29ce04e (main) — reaudited; CI/CD restored and confirmed genuinely green end-to-end (see RUN-003-REAUDIT)
 - Platform/product type: React Native / Expo mobile app (Android buildable; iOS config-only, no committed `ios/` project)
 - Release target: Public consumer app store release (Google Play primary) — pre-launch stage
+- Repository visibility: Public (was private through RUN-002-REAUDIT)
+- CI/CD: `.github/workflows/ci.yml` — 3 jobs (`verify`, `android-build`, `e2e-smoke`), confirmed green on current revision: https://github.com/Krayirhan/lingorise/actions/runs/32900631213. No branch-protection rule on `main` (CI is visible, not enforced) — tracked as DEPLOY-002.
 
 ## Technical classification
 - Languages: TypeScript (strict mode)
@@ -22,5 +24,6 @@ This file is populated/updated by DISCOVER or BASELINE.
 
 ## Risk class
 - Aggregate: R3 — Connected authenticated product (low end of R3; local-first architecture keeps most R2 simplicity)
-- Last reviewed: 2026-08-25
-- Source run: RUN-002-REAUDIT (rubric unchanged from RUN-001-BASELINE)
+- Last reviewed: 2026-08-26
+- Source run: RUN-003-REAUDIT (rubric unchanged from RUN-001-BASELINE, v1.0 locked)
+- Overall score: 82.5/100 (RUN-001: 71.3 → RUN-002: 78.5 → RUN-003: 82.5)

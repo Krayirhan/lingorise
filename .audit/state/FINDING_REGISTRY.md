@@ -11,7 +11,7 @@
 | CORE-003 | P3 | Core correctness / Testing | CLOSED | RUN-001-BASELINE | FIX-2026-08-25-03 | archiveDailyQuests/bringForward untested |
 | ARCH-001 | P3 | Architecture | CLOSED | RUN-001-BASELINE | FIX-2026-08-25-03 | One dead duplicate file (i18n/formatters.ts, deleted) |
 | ACC-001 | P3 | Accessibility | PARTIAL | RUN-001-BASELINE | FIX-2026-08-25-07 | Real TalkBack + dynamic-type pass done (2/5 DoD items), 3 real bugs found & fixed; onboarding/promotion-modal/Scanner/reduceMotion still untested |
-| DEPLOY-001 | P3 | Deployment | VERIFIED→CLOSED | RUN-001-BASELINE | FIX-2026-08-25-09 | All 3 CI jobs (verify, android-build, e2e-smoke) genuinely green: https://github.com/Krayirhan/lingorise/actions/runs/32899393092 (commit 1b616e0) |
+| DEPLOY-001 | P3 | Deployment | VERIFIED→CLOSED | RUN-001-BASELINE | RUN-003-REAUDIT | All 3 CI jobs (verify, android-build, e2e-smoke) genuinely green, re-confirmed on current HEAD: https://github.com/Krayirhan/lingorise/actions/runs/32900631213 (commit 29ce04e) |
 | ARCH-002 | P4 | Architecture | CLOSED | RUN-001-BASELINE | FIX-2026-08-25-06 | Two layering inversions |
 | ARCH-004 | P4 | Architecture | CLOSED (scope corrected) | RUN-001-BASELINE | FIX-2026-08-25-06 | Dead getDailyTaskCollection removed; firestore.rules dailyTasks rule kept (tested, harmless, not orphaned) |
 | SEC-002 | P4 | Security | CLOSED | RUN-001-BASELINE | FIX-2026-08-25-06 | Real Firebase IDs in .env.example |
@@ -19,3 +19,5 @@
 | ACC-002 | P4 | Accessibility | CLOSED | FIX-2026-08-25-07 | FIX-2026-08-25-07 | Hint button malformed accessibility label (", İpucu") |
 | ACC-003 | P3 | Accessibility | CLOSED | FIX-2026-08-25-07 | FIX-2026-08-25-07 | Audio/pronunciation button had zero accessible name |
 | ACC-004 | P3 | Accessibility | CLOSED | FIX-2026-08-25-07 | FIX-2026-08-25-07 | Mascot speech bubble breaks word mid-character at 2.0x font scale |
+| DEPLOY-002 | P4 | Deployment | OPEN | RUN-003-REAUDIT | RUN-003-REAUDIT | `main` has no branch-protection rule — CI is visible, not enforced |
+| SEC-003 | P4 | Security | OPEN | RUN-003-REAUDIT | RUN-003-REAUDIT | GitHub secret scanning/push protection disabled on now-public repo |
