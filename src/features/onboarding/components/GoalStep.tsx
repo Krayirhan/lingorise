@@ -68,12 +68,13 @@ export function GoalStep({ copy, selectedGoal = 5, onSelectGoal, onNext, onSkip 
           return (
             <Pressable
               key={g.minutes}
-              accessibilityRole="button"
+              accessibilityRole="radio"
+              accessibilityState={{ selected: isSelected }}
               accessibilityLabel={`${g.title}, ${g.desc}`}
               style={[S.goal, isSelected && S.goalSelected]}
               onPress={() => handlePick(g.minutes)}
             >
-              <View style={[S.iconCircle, isSelected && S.iconCircleSelected]}>
+              <View style={[S.iconCircle, isSelected && S.iconCircleSelected]} accessible={false} importantForAccessibility="no">
                 <Ionicons
                   name={g.icon}
                   size={24}
@@ -87,7 +88,7 @@ export function GoalStep({ copy, selectedGoal = 5, onSelectGoal, onNext, onSkip 
                 <Text style={S.goalText}>{g.desc}</Text>
               </View>
               {isSelected && (
-                <Ionicons name="checkmark-circle" size={22} color={C.primary} />
+                <Ionicons name="checkmark-circle" size={22} color={C.primary} accessible={false} importantForAccessibility="no" />
               )}
             </Pressable>
           );
@@ -102,6 +103,7 @@ export function GoalStep({ copy, selectedGoal = 5, onSelectGoal, onNext, onSkip 
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={copy.onboarding?.skip || "Şimdilik geç"}
+          hitSlop={{ top: 8, bottom: 8, left: 12, right: 12 }}
           onPress={onSkip}
         >
           <Text style={S.skip}>{copy.onboarding?.skip || "Şimdilik geç"}</Text>

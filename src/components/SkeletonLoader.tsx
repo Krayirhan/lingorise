@@ -1,5 +1,5 @@
-import React, { useEffect, useRef } from "react";
-import { Animated, DimensionValue, Platform, StyleSheet, View } from "react-native";
+import React, { useEffect, useRef, useState } from "react";
+import { AccessibilityInfo, Animated, DimensionValue, Platform, StyleSheet, View } from "react-native";
 import { C, radius } from "../theme/colors";
 
 interface SkeletonProps {
@@ -7,6 +7,7 @@ interface SkeletonProps {
   height?: DimensionValue;
   borderRadius?: number;
   style?: object;
+  reduceMotion?: boolean;
 }
 
 export function SkeletonLoader({
@@ -14,10 +15,29 @@ export function SkeletonLoader({
   height = 20,
   borderRadius = radius.sm || 8,
   style,
+  reduceMotion,
 }: SkeletonProps) {
-  const pulseAnim = useRef(new Animated.Value(0.35)).current;
+  const [systemReduceMotion, setSystemReduceMotion] = useState(false);
+  const isMotionReduced = reduceMotion ?? systemReduceMotion;
+  const pulseAnim = useRef(new Animated.Value(0.5)).current;
 
   useEffect(() => {
+    AccessibilityInfo.isReduceMotionEnabled()
+      .then((enabled) => setSystemReduceMotion(enabled))
+      .catch(() => {});
+
+    const sub = AccessibilityInfo.addEventListener("reduceMotionChanged", (enabled) => {
+      setSystemReduceMotion(enabled);
+    });
+    return () => sub?.remove?.();
+  }, []);
+
+  useEffect(() => {
+    if (isMotionReduced) {
+      pulseAnim.setValue(0.5);
+      return;
+    }
+
     const pulse = Animated.loop(
       Animated.sequence([
         Animated.timing(pulseAnim, {
@@ -34,7 +54,7 @@ export function SkeletonLoader({
     );
     pulse.start();
     return () => pulse.stop();
-  }, [pulseAnim]);
+  }, [pulseAnim, isMotionReduced]);
 
   return (
     <Animated.View

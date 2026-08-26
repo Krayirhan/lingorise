@@ -55,6 +55,10 @@ export function OnboardingScreen({
     }
   }, [step, onStep, onBack]);
 
+  const stepText = (current: number) => `${current} / ${TOTAL_STEPS}`;
+  const stepA11y = (current: number) => `${copy.onboarding?.stepLabel || "Adım"} ${current} / ${TOTAL_STEPS}`;
+  const backLabel = copy.auth?.backBtn || "Geri";
+
   if (step === 0) {
     return (
       <SafeAreaView style={S.safe} edges={["top", "bottom"]}>
@@ -62,7 +66,7 @@ export function OnboardingScreen({
         <View style={S.page}>
           <View style={S.header}>
             <Brand />
-            <Text style={S.step}>1 / {TOTAL_STEPS}</Text>
+            <Text style={S.step} accessibilityLabel={stepA11y(1)}>{stepText(1)}</Text>
           </View>
           <WelcomeStep
             copy={copy}
@@ -80,10 +84,15 @@ export function OnboardingScreen({
         <StatusBar barStyle="dark-content" />
         <View style={S.page}>
           <View style={S.header}>
-            <Pressable onPress={() => onStep(0)}>
-              <Text style={S.back}>‹ Geri</Text>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={backLabel}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              onPress={() => onStep(0)}
+            >
+              <Text style={S.back}>‹ {backLabel}</Text>
             </Pressable>
-            <Text style={S.step}>2 / {TOTAL_STEPS}</Text>
+            <Text style={S.step} accessibilityLabel={stepA11y(2)}>{stepText(2)}</Text>
           </View>
           <GoalStep
             copy={copy}
@@ -105,10 +114,15 @@ export function OnboardingScreen({
         <StatusBar barStyle="dark-content" />
         <ScrollView contentContainerStyle={S.scroll} showsVerticalScrollIndicator={false}>
           <View style={S.header}>
-            <Pressable onPress={() => onStep(1)}>
-              <Text style={S.back}>‹ Geri</Text>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={backLabel}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              onPress={() => onStep(1)}
+            >
+              <Text style={S.back}>‹ {backLabel}</Text>
             </Pressable>
-            <Text style={S.step}>3 / {TOTAL_STEPS}</Text>
+            <Text style={S.step} accessibilityLabel={stepA11y(3)}>{stepText(3)}</Text>
           </View>
 
           <LevelStep
@@ -127,10 +141,15 @@ export function OnboardingScreen({
       <StatusBar barStyle="dark-content" />
       <View style={S.page}>
         <View style={S.header}>
-          <Pressable onPress={() => onStep(2)}>
-            <Text style={S.back}>‹ Geri</Text>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={backLabel}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            onPress={() => onStep(2)}
+          >
+            <Text style={S.back}>‹ {backLabel}</Text>
           </Pressable>
-          <Text style={S.step}>4 / {TOTAL_STEPS}</Text>
+          <Text style={S.step} accessibilityLabel={stepA11y(4)}>{stepText(4)}</Text>
         </View>
 
         <ReadyStep

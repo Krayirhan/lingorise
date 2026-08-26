@@ -21,10 +21,13 @@ appId: com.lingorise.app
 - tapOn: "Seviyemi seç"
 - tapOn: "A1"
 # Selecting a level card only marks it selected (LevelStep.tsx) — it does not
-# auto-advance. A separate "<level> seviyesinde başla" button must be tapped
-# to actually leave this step. The script previously skipped this and tried
-# to tap ReadyStep's button directly, which was never on screen yet.
-- tapOn: ".*seviyesinde başla.*"
+# auto-advance. A separate advance button must be tapped to actually leave
+# this step. Its label changed from "<level> seviyesinde başla" to
+# "<level> · Hemen Başla" (LevelStep.tsx, accessibility pass) — updated
+# accordingly. Anchored on "A1 ·" (the level this flow always selects) rather
+# than the bare "Hemen Başla" tail, since that tail alone would repeat the
+# exact same headline-collision bug already fixed below for ReadyStep.
+- tapOn: ".*A1 ·.*"
 # ReadyStep's real guest-start label is "Hemen Başla (Misafir Olarak) →"
 # (src/i18n/onboarding.ts onboardingTr.startAsGuest) — the script previously
 # looked for "Bahçeme Başla", which does not exist anywhere in the app copy.

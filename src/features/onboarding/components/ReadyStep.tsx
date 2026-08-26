@@ -19,8 +19,8 @@ export function ReadyStep({ copy, notificationsEnabled = true, onStartGuest, onC
 
   return (
     <View style={S.container}>
-      <View style={S.gardenArt}>
-        <Image source={mascot} style={S.mascot} resizeMode="contain" />
+      <View style={S.gardenArt} accessible={false} importantForAccessibility="no">
+        <Image source={mascot} style={S.mascot} resizeMode="contain" accessible={false} importantForAccessibility="no" />
       </View>
 
       <Text style={S.eyebrow}>
@@ -36,7 +36,7 @@ export function ReadyStep({ copy, notificationsEnabled = true, onStartGuest, onC
 
       {/* Reminder Toggle Card */}
       <View style={S.reminderCard}>
-        <View style={S.iconBox}>
+        <View style={S.iconBox} accessible={false} importantForAccessibility="no">
           <Ionicons name="notifications-outline" size={22} color={C.primary} />
         </View>
         <View style={S.reminderCopy}>
@@ -53,6 +53,8 @@ export function ReadyStep({ copy, notificationsEnabled = true, onStartGuest, onC
           onValueChange={setReminders}
           trackColor={{ false: C.line, true: C.primary }}
           thumbColor={C.white}
+          accessibilityRole="switch"
+          accessibilityState={{ checked: reminders }}
           accessibilityLabel={copy.onboarding?.remindersTitle || "Bahçeni yeşil tutmak ister misin?"}
         />
       </View>

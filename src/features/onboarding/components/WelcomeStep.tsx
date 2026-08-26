@@ -14,15 +14,20 @@ interface Props {
 export function WelcomeStep({ copy, onNext, onSkip }: Props) {
   return (
     <View style={S.container}>
-      <View style={S.gardenArt}>
-        <Image source={mascot} style={S.mascot} resizeMode="contain" />
+      <View style={S.gardenArt} accessible={false} importantForAccessibility="no">
+        <Image source={mascot} style={S.mascot} resizeMode="contain" accessible={false} importantForAccessibility="no" />
       </View>
       <Text style={S.eyebrow}>{copy.onboarding.welcomeKicker}</Text>
       <Text style={S.hero}>{copy.onboarding.welcomeTitle}</Text>
       <Text style={S.subtitle}>{copy.onboarding.welcomeBody}</Text>
       <View style={S.bottom}>
         <PrimaryButton label={copy.onboarding.start} onPress={onNext} />
-        <Pressable onPress={onSkip}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={copy.onboarding.skip}
+          hitSlop={{ top: 8, bottom: 8, left: 12, right: 12 }}
+          onPress={onSkip}
+        >
           <Text style={S.skip}>{copy.onboarding.skip}</Text>
         </Pressable>
       </View>

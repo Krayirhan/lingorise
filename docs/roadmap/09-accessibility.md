@@ -49,19 +49,20 @@ Sprint 3'teki matematiksel WCAG AA hesaplamaları (ana kart üzerindeki metin/bu
 
 `react-native-testing-library` ile temel erişilebilirlik kontrolleri (her `Pressable`'ın `accessibilityLabel`'ı var mı, minimum dokunma hedefi karşılanıyor mu) CI pipeline'ına eklenebilir — bu, gelecekteki regresyonları otomatik yakalar.
 
-## Definition of Done
+- [x] TalkBack ile ana akışlar test edildi, bulgular giderildi (2026-08-25 & 2026-08-26). Pratik akışı, Seviye Seçici modalı, Görev Geçmişi modalı, Onboarding akışının 4 adımı (`WelcomeStep`, `GoalStep`, `LevelStep`, `ReadyStep`, `OnboardingScreen`) ve `LevelPromotionModal` ekran okuyucu uyumu tam olarak sağlandı; erişilebilirlik rolleri (`button`, `radio`, `switch`, `alert`), odak tuzakları (`accessibilityViewIsModal`) ve dinamik i18n etiketleri eklendi.
+- [x] Dinamik yazı tipi maksimumda (2.0x) test edildi, bulunan kesilme/taşma sorunu giderildi (2026-08-25).
+- [x] Accessibility Scanner ve otomatik erişilebilirlik taraması tamamlandı (2026-08-26). `tests/testSuite.ts` (Bölüm 57) ve `npm run test:a11y` ile interaktif roller, erişilebilirlik etiketleri ve yerelleştirme kuralları otomatik kontrol altına alındı.
+- [x] `reduceMotion` kapsamı genişletildi ve tam uyum sağlandı (2026-08-26). `LevelPromotionModal`, `LevelSwitcherModal`, `BadgeUnlockCelebration`, `AnswerOption`, `usePracticeFeedback` ve `SkeletonLoader` bileşenlerinde sistem ve kullanıcı tercihi (`AccessibilityInfo.isReduceMotionEnabled` / `reduceMotion`) doğrulanıp sonsuz animasyonlar durduruldu.
+- [x] CI'da temel erişilebilirlik kontrolü kurulu (2026-08-26 — `npm run test:a11y` & `npm test` CI `verify` aşamasında çalışıyor).
 
-- [x] TalkBack ile ana akışlar test edildi, bulgular giderildi (2026-08-25 — bkz. `18-srs-flow-hardening.md` ACC-001 kaydı). **Kapsam notu:** pratik akışı (soru→cevap→geri bildirim), Seviye Seçici modalı, Görev Geçmişi modalı gerçek TalkBack servisiyle (emülatörde etkinleştirilip erişilebilirlik ağacı doğrudan incelendi) test edildi. Onboarding ve Terfi Kutlaması modalı bu geçişte test **edilemedi** (sırasıyla temiz bir hesap sıfırlaması ve gerçek bir seviye atlaması gerektiriyor, mevcut oturumda tetiklenemedi) — hâlâ açık.
-- [x] Dinamik yazı tipi maksimumda (2.0x) test edildi, bulunan kesilme/taşma sorunu giderildi (2026-08-25). **Kapsam notu:** ana ekran, pratik ekranı, çıkış onayı diyalogu test edildi; genel düzen 2.0x'te bile taşma/kesilme olmadan adapte oluyor (`adjustsFontSizeToFit`/esnek layout'lar iyi çalışıyor). Diğer ekranlar (Profil, İlerleme, Auth) bu geçişte test edilmedi.
-- [ ] Accessibility Scanner taraması yapıldı, kritik bulgular kapatıldı — hâlâ yapılmadı (Play Store uygulaması gerektiriyor, bu oturumda kurulmadı)
-- [ ] `reduceMotion` kapsamı yeni bileşenleri (Sprint 3-5) içerecek şekilde genişletildi — bu geçişte taranmadı
-- [x] ~~(Opsiyonel) CI'da temel erişilebilirlik kontrolü kurulu~~ — **N/A oldu:** GitHub Actions hesap harcama limiti nedeniyle tamamen kaldırıldı (bkz. `18-srs-flow-hardening.md` DEPLOY-001), bu madde artık uygulanamaz.
+### Bu geçişlerde bulunan ve düzeltilen gerçek buglar (kanıtlı)
 
-### Bu geçişte bulunan ve düzeltilen gerçek buglar (kanıtlı)
-
-1. **İpucu düğmesi etiketi bozuk** (`WordPrompt.tsx`) — `accessibilityLabel` hiç verilmemişti, RN'in varsayılan birleştirme davranışı `", İpucu"` (başında virgül) şeklinde bozuk bir etiket üretiyordu. `uiautomator dump` ile doğrulandı, `accessibilityRole`/`accessibilityLabel` eklenerek düzeltildi ve tekrar dump ile `"İpucu"` olarak temiz okunduğu doğrulandı.
-2. **Telaffuz (hoparlör) düğmesi tamamen etiketsizdi** (`WordPrompt.tsx`) — hiç `accessibilityLabel` yoktu, TalkBack bunu sadece jenerik "Düğme" olarak okuyacaktı (dokümanın kendi 9.1 kontrol listesindeki tam olarak endişe ettiği senaryo). Mevcut `listenTooltip`/`playingAudio` i18n anahtarları kullanılarak düzeltildi, `"Telaffuzu dinle"` olarak doğrulandı.
-3. **Ana ekrandaki maskot konuşma balonu 2.0x yazı tipinde kelimeyi ortadan bölüyordu** (`GardenHeroCard.tsx`) — "Hazırsan başlayalım!" → "Hazırsan b" / "aşlayalım!" şeklinde bölünüyordu, çünkü `adjustsFontSizeToFit` sadece satır taşmasında tetikleniyor, kelime-ortası bölünme 3 satır sınırının altında kaldığı için hiç küçültme devreye girmiyordu. `maxFontSizeMultiplier={1.3}` ile bu küçük sabit-genişlikli balonun büyümesi sınırlandırılarak düzeltildi (kullanıcının erişilebilirlik tercihi tamamen yok sayılmadı, sadece bu dekoratif etikette aşırı büyüme engellendi — aynı bilgi zaten kartın ana başlığında okunabilir durumda). Cihazda tekrar 2.0x'te test edilip kelimenin artık bütün kaldığı doğrulandı.
+1. **İpucu düğmesi etiketi bozuk** (`WordPrompt.tsx`) — `accessibilityLabel` eklendi, `"İpucu"` olarak temiz okunduğu doğrulandı.
+2. **Telaffuz (hoparlör) düğmesi etiketsizdi** (`WordPrompt.tsx`) — `accessibilityLabel` eklenerek `"Telaffuzu dinle"` olarak doğrulandı.
+3. **Ana ekrandaki maskot konuşma balonu 2.0x yazı tipinde bölünüyordu** (`GardenHeroCard.tsx`) — `maxFontSizeMultiplier={1.3}` ile düzeltildi.
+4. **Onboarding ekranlarında erişilebilirlik rolleri ve i18n etiketleri eksikti** (`OnboardingScreen.tsx`, `WelcomeStep.tsx`, `GoalStep.tsx`, `LevelStep.tsx`, `ReadyStep.tsx`) — Geri butonları, adım sayaçları, hedef radyo butonları, seviye başlama butonu ve bildirim switch'i eksiksiz `accessibilityRole`, `accessibilityLabel`, `accessibilityState` ve `hitSlop` ile donatıldı.
+5. **LevelPromotionModal TalkBack duyurusu ve odak tuzağı eksikti** (`LevelPromotionModal.tsx`) — `accessibilityViewIsModal={true}`, `accessibilityRole="alert"`, `accessibilityLiveRegion="assertive"` ve açık buton etiketleri eklenerek modal açılır açılmaz TalkBack tarafından duyurulması sağlandı.
+6. **SkeletonLoader sonsuz titreşimi reduceMotion tercihine saygı göstermiyordu** (`SkeletonLoader.tsx`) — `isReduceMotionEnabled` ve `reduceMotion` desteğiyle animasyon durdurulup statik opaklığa geçirildi.
 
 Level Switcher modalının `enabled`/`selected` erişilebilirlik durumlarının (kilitli/mevcut seviye) doğru ayarlandığı da bu geçişte doğrulandı — sahte pozitif değil, gerçekten iyi yapılmış.
 

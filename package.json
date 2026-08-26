@@ -11,6 +11,7 @@
     "typecheck": "tsc --noEmit",
     "seed:firestore": "ts-node -O \"{\\\"module\\\":\\\"commonjs\\\"}\" scripts/seedFirestore.ts",
     "test": "ts-node -O \"{\\\"module\\\":\\\"commonjs\\\"}\" tests/testSuite.ts",
+    "test:a11y": "ts-node -O \"{\\\"module\\\":\\\"commonjs\\\"}\" tests/testSuite.ts",
     "test:rules": "firebase emulators:exec --only firestore \"ts-node -O \\\"{\\\\\\\"module\\\\\\\":\\\\\\\"commonjs\\\\\\\"}\\\" tests/firestoreRules.test.ts\"",
     "deploy:firestore": "firebase deploy --only firestore:rules,firestore:indexes",
     "test:e2e:smoke": "maestro test .maestro/smoke.yaml",

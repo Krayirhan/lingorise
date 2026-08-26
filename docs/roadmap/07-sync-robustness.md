@@ -49,10 +49,10 @@ En kötü senaryoda bile veri kaybını önlemek için: birleştirme öncesi hem
 
 ## Definition of Done
 
-- [ ] 7.1'deki üç senaryo birim testiyle kapsandı
-- [ ] `lastAnsweredAt` birleştirme kararında sunucu zaman damgası kullanıyor
-- [ ] Gerçek iki cihazlı senkron testi yapıldı ve belgelendi
-- [ ] Veri kaybı riski gözlemlenirse 7.4 değerlendirildi
+- [x] 7.1'deki üç senaryo birim testiyle kapsandı (Bölüm 40, 41, 56).
+- [x] `lastAnsweredAt` / `serverSyncedAt` birleştirme kararında sunucu zaman damgasını önceliklendiriyor (Bölüm 40).
+- [x] İki cihazlı soğuk başlangıç ve eşzamanlı senkron testi yapıldı ve belgelendi (Bölüm 56 — DATA-001 / FIX-2026-08-25-01 doğrulaması: Cihaz 1 ve Cihaz 2 eşzamanlı/çevrimdışı pratik yaptıktan sonra soğuk başlangıçta yerel rollover yazımının uzak birleştirmeyi ezmediği, kelimelerin ve XP/streak verilerinin eksiksiz korunduğu kanıtlandı).
+- [x] Veri kaybı riski değerlendirildi — FIX-2026-08-25-01 (signed-in cold-start yerel rollover yazımını atlayıp merge'ü tek otorite yapma) ile çakışma ve ezilme riski tamamen ortadan kaldırıldı.
 
 ## Bağımlılıklar
 

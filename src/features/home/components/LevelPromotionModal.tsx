@@ -53,10 +53,21 @@ export function LevelPromotionModal({ copy, level, promotion, visible, onAdvance
   };
 
   return (
-    <Modal visible transparent animationType={reduceMotion ? "none" : "fade"} onRequestClose={onDismiss}>
+    <Modal
+      visible
+      transparent
+      animationType={reduceMotion ? "none" : "fade"}
+      onRequestClose={onDismiss}
+      accessibilityViewIsModal={true}
+    >
       <View style={S.overlay}>
-        <View style={S.card}>
-          <View style={S.crest}>
+        <View
+          style={S.card}
+          accessible={true}
+          accessibilityRole="alert"
+          accessibilityLiveRegion="assertive"
+        >
+          <View style={S.crest} accessible={false} importantForAccessibility="no">
             <Ionicons name="ribbon" size={30} color={C.reward} />
           </View>
 
@@ -91,6 +102,7 @@ export function LevelPromotionModal({ copy, level, promotion, visible, onAdvance
               <>
                 <Pressable
                   accessibilityRole="button"
+                  accessibilityLabel={fill(copy.home?.promotionNextCta || "{level} ile devam et →", { level: nextLevel })}
                   style={({ pressed }) => [S.primaryBtn, pressed && S.pressed]}
                   onPress={() => handleAdvance(nextLevel)}
                 >
@@ -100,6 +112,7 @@ export function LevelPromotionModal({ copy, level, promotion, visible, onAdvance
                 </Pressable>
                 <Pressable
                   accessibilityRole="button"
+                  accessibilityLabel={fill(copy.home?.promotionStayCta || "{level} seviyesinde kal", { level })}
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                   style={({ pressed }) => [S.ghostBtn, pressed && S.pressed]}
                   onPress={onDismiss}
@@ -112,6 +125,7 @@ export function LevelPromotionModal({ copy, level, promotion, visible, onAdvance
             ) : (
               <Pressable
                 accessibilityRole="button"
+                accessibilityLabel={copy.home?.promotionSoonCta || "Anladım"}
                 style={({ pressed }) => [S.primaryBtn, pressed && S.pressed]}
                 onPress={onDismiss}
               >
