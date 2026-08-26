@@ -4,10 +4,8 @@ import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-nati
 import { C, radius, spacing } from "../../../theme/colors";
 import { Copy } from "../../../i18n/en";
 import { LevelCode } from "../../../types/content";
-import { LearningItemProgress } from "../../../types/user";
 import { levels } from "../../../content/levels";
 import { getQuestionsByLevel, isLevelReady } from "../../../content/questions";
-import { summarizeMastery } from "../../../domain/learning/mastery";
 import { assessLevelChoice } from "../../../domain/learning/promotion";
 import { track } from "../../../services/telemetry";
 
@@ -15,7 +13,8 @@ interface Props {
   copy: Copy;
   visible: boolean;
   currentLevel: LevelCode;
-  learningProgress: Record<string, LearningItemProgress>;
+  /** Words answered correctly at least once, across all levels. */
+  solvedQuestionIds: string[];
   /** Levels whose completion exam has been passed — see domain/learning/levelExam.ts. */
   passedLevelExams: LevelCode[];
   onSelect: (level: LevelCode) => void;
@@ -39,7 +38,7 @@ export function LevelSwitcherModal({
   copy,
   visible,
   currentLevel,
-  learningProgress,
+  solvedQuestionIds,
   passedLevelExams,
   onSelect,
   onClose,
@@ -85,7 +84,7 @@ export function LevelSwitcherModal({
               <Text style={S.title}>{copy.home?.levelSwitchTitle || "Seviyeni seç"}</Text>
               <Text style={S.subtitle}>
                 {copy.home?.levelSwitchSubtitle ||
-                  "İstediğin seviyeyi çalışabilirsin. Rozetin ise pekiştirdikçe kazanılır."}
+                  "İstediğin seviyeyi çalışabilirsin. Rozet ise tamamlama sınavını geçince kazanılır."}
               </Text>
             </View>
             <Pressable
@@ -133,12 +132,10 @@ export function LevelSwitcherModal({
 
           <ScrollView style={S.list} contentContainerStyle={S.listContent} showsVerticalScrollIndicator={false}>
             {levels.map((entry) => {
-              const total = getQuestionsByLevel(entry.code).length;
+              const levelQuestionIds = getQuestionsByLevel(entry.code).map((q) => q.id);
+              const total = levelQuestionIds.length;
               const ready = isLevelReady(entry.code);
-              const mastery = summarizeMastery(
-                learningProgress || {},
-                getQuestionsByLevel(entry.code).map((q) => q.id)
-              );
+              const seen = solvedQuestionIds.filter((id) => levelQuestionIds.includes(id)).length;
               const isCurrent = entry.code === currentLevel;
               const isEarned = passedLevelExams.includes(entry.code);
 
@@ -165,7 +162,7 @@ export function LevelSwitcherModal({
                     <Text style={S.rowTitle}>{entry.title}</Text>
                     <Text style={S.rowMeta}>
                       {ready
-                        ? `${fill(copy.home?.levelSwitchWordCount || "{count} kelime", { count: total })} · %${mastery.masteredPercent}`
+                        ? `${seen} / ${total} ${copy.home?.levelSwitchWordCountSuffix || "kelime öğrenildi"}`
                         : copy.home?.levelSwitchSoon || "Yakında"}
                     </Text>
                   </View>

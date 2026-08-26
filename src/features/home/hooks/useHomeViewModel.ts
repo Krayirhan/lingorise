@@ -5,44 +5,29 @@ import { HomeViewModel, SkillProgress } from "../home.types";
 import { calculateGardenProgress } from "../../../domain/gamification/xp";
 import { getQuestionsByLevel, getLevelUnitInfo } from "../../../content/questions";
 import { getRecommendedWord } from "../../../services/contentService";
-import { countMasteredWords, summarizeMastery } from "../../../domain/learning/mastery";
 import { todayISO } from "../../../utils/clock";
 
 export function useHomeViewModel(userData: UserData, copy: Copy, locale: Locale): HomeViewModel {
   return useMemo(() => {
     const levelQuestions = getQuestionsByLevel(userData.level);
-    // The garden grows with words genuinely recalled, across every level.
-    const masteredWords = countMasteredWords(userData.learningProgress || {});
-    const gardenProgress = calculateGardenProgress(masteredWords);
+    const levelQuestionIds = new Set(levelQuestions.map((question) => question.id));
+    const rewardedIds = userData.rewardedQuestionIds || [];
 
-    // Progress is measured by what the learner can still recall, not by how
-    // many words they once tapped correctly.
-    const mastery = summarizeMastery(
-      userData.learningProgress || {},
-      levelQuestions.map((question) => question.id)
-    );
-    const vocabPercent = mastery.masteredPercent;
-    const solvedInLevel = mastery.mastered + mastery.inProgress;
+    // A word counts once it's genuinely learned (answered correctly) — full
+    // stop. There is no separate "mastered vs. still learning" sub-status any
+    // more (roadmap 18-srs-flow-hardening.md "sınav" redesign, 2026-08-26):
+    // level completion is decided by the exam, not by resurfaced words.
+    const learnedWordsGlobal = rewardedIds.length;
+    const gardenProgress = calculateGardenProgress(learnedWordsGlobal);
+    const solvedInLevel = rewardedIds.filter((id) => levelQuestionIds.has(id)).length;
+    const vocabPercent = levelQuestions.length > 0 ? Math.round((solvedInLevel / levelQuestions.length) * 100) : 0;
 
     const stageName = locale === "tr" ? gardenProgress.stageNameTr : gardenProgress.stageNameEn;
 
-    // Words still being learned are real work, so they are named explicitly
-    // rather than being silently folded into the headline percentage.
-    const fillCounts = (template: string) =>
-      template
-        .replace("{mastered}", String(mastery.mastered))
-        .replace("{learning}", String(mastery.inProgress));
-
-    let vocabMeta: string;
-    if (mastery.mastered === 0 && mastery.inProgress === 0) {
-      vocabMeta = `${userData.level} · ${copy.home?.vocabularyEmptyCta || "İlk kelimeni öğren →"}`;
-    } else if (mastery.mastered === 0) {
-      vocabMeta = fillCounts(copy.home?.vocabularyLearningOnly || "{learning} kelime öğreniliyor");
-    } else if (mastery.inProgress === 0) {
-      vocabMeta = fillCounts(copy.home?.vocabularyMasteredOnly || "{mastered} kelime pekişti");
-    } else {
-      vocabMeta = fillCounts(copy.home?.vocabularyMixed || "{mastered} pekişti · {learning} öğreniliyor");
-    }
+    const vocabMeta =
+      solvedInLevel === 0
+        ? `${userData.level} · ${copy.home?.vocabularyEmptyCta || "İlk kelimeni öğren →"}`
+        : (copy.home?.vocabularyLearnedCount || "{count} kelime öğrenildi").replace("{count}", String(solvedInLevel));
 
     const skillProgress: SkillProgress[] = [
       {
@@ -132,7 +117,7 @@ export function useHomeViewModel(userData: UserData, copy: Copy, locale: Locale)
       unitCount: unitInfo.unitCount,
       unitLearned: unitInfo.learnedInUnit,
       unitTotal: unitInfo.questions.length,
-      masteredWords,
+      masteredWords: learnedWordsGlobal,
       questHistory: userData.questHistory || [],
       greetingTitle,
       greetingSubtitle,

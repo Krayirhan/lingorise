@@ -13,7 +13,7 @@ const BADGES: Record<string, { titleTr: string; titleEn: string; icon: keyof typ
   // meant this celebration silently never fired for the badge (this lookup
   // always missed, `badge` stayed undefined, and the effect below returns
   // early). Fixed to match the id badges.ts actually produces.
-  badge_master_review: { titleTr: "Usta Tekrarcı", titleEn: "Master Reviewer", icon: "ribbon" },
+  badge_master_review: { titleTr: "Kararlı Öğrenci", titleEn: "Committed Learner", icon: "ribbon" },
 };
 
 /** badge_level_a1_complete → "A1"; every level shares one dynamic entry

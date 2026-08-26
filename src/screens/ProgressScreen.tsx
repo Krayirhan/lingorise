@@ -23,7 +23,6 @@ export function ProgressScreen({
   levelProgressList,
   topicBreakdown,
   solvedQuestionIds = [],
-  learningProgress,
   lastActiveDate = "",
   practiceHistory = [],
   unlockedBadges = [],
@@ -95,7 +94,7 @@ export function ProgressScreen({
             <View style={S.statDivider} />
             <View style={S.stat}>
               <Text style={S.statVal}>{totalSolved}</Text>
-              <Text style={S.statLbl}>{copy.progress?.solvedQuestions || "Pekişen Kelime"}</Text>
+              <Text style={S.statLbl}>{copy.progress?.solvedQuestions || "Öğrenilen Kelime"}</Text>
             </View>
           </View>
         </View>
@@ -133,7 +132,7 @@ export function ProgressScreen({
       <WordNotebookModal
         copy={copy}
         visible={notebookVisible}
-        learningProgress={learningProgress}
+        solvedQuestionIds={solvedQuestionIds}
         onClose={() => setNotebookVisible(false)}
         onPracticeWord={onPracticeWord}
         reduceMotion={reduceMotion}

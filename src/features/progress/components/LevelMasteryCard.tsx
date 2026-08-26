@@ -1,3 +1,4 @@
+import { Ionicons } from "@expo/vector-icons";
 import { StyleSheet, Text, View } from "react-native";
 import { C, radius } from "../../../theme/colors";
 import { Copy } from "../../../i18n/en";
@@ -23,31 +24,28 @@ export function LevelMasteryCard({ copy, levelProgressList }: Props) {
           <View key={item.level} style={[S.levelRow, isComingSoon && S.levelRowSoon]}>
             <View style={S.tagWrap}>
               <View style={S.tag}><Text style={S.tagTxt}>{item.level}</Text></View>
-              {isComingSoon && <Text style={S.soonTxt}>{copy.progress?.levelComingSoon || "Yakında"}</Text>}
+              {isComingSoon ? (
+                <Text style={S.soonTxt}>{copy.progress?.levelComingSoon || "Yakında"}</Text>
+              ) : item.examPassed ? (
+                <View style={S.examBadge}>
+                  <Ionicons name="checkmark-circle" size={11} color={C.successText} />
+                  <Text style={S.examBadgeTxt}>{copy.progress?.examPassedTag || "Sınav geçildi"}</Text>
+                </View>
+              ) : null}
             </View>
 
             {!isComingSoon && (
               <>
                 {/* Coverage: moves the instant you practice — this is the
-                    number a finished session should show up as. */}
+                    number a finished session should show up as. Level
+                    completion itself is decided separately, by the exam
+                    (badge above), not by this coverage number. */}
                 <View style={S.metricRow}>
                   <Text style={S.metricLabel}>{copy.progress?.wordsSeenLabel || "Görülen"}</Text>
                   <Text style={S.metricValue}>{item.seen} / {item.total}</Text>
                 </View>
                 <View style={S.track}>
                   <View style={[S.fill, S.fillSeen, { width: `${seenPercent}%` }]} />
-                </View>
-
-                {/* Mastery: only counts recall confirmed on a separate day, so
-                    it deliberately lags behind — that lag is what makes it mean
-                    something. Shown as its own metric, not a footnote on the
-                    number above. */}
-                <View style={[S.metricRow, S.metricRowSecond]}>
-                  <Text style={S.metricLabel}>{copy.progress?.wordsMasteredLabel || "Pekişen"}</Text>
-                  <Text style={S.metricValueMuted}>{item.mastered} / {item.total} · %{item.percent}</Text>
-                </View>
-                <View style={S.track}>
-                  <View style={[S.fill, { width: `${item.percent}%` }]} />
                 </View>
               </>
             )}
@@ -67,11 +65,11 @@ const S = StyleSheet.create({
   tagWrap: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 1 },
   tag: { backgroundColor: C.primarySoft, paddingHorizontal: 7, paddingVertical: 1.5, borderRadius: radius.xs },
   tagTxt: { color: C.primary, fontSize: 10, fontWeight: "800" },
+  examBadge: { flexDirection: "row", alignItems: "center", gap: 3, backgroundColor: C.successSoft, paddingHorizontal: 7, paddingVertical: 1.5, borderRadius: radius.xs },
+  examBadgeTxt: { color: C.successText, fontSize: 10, fontWeight: "800" },
   metricRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  metricRowSecond: { marginTop: 4 },
   metricLabel: { color: C.muted, fontSize: 10.5, fontWeight: "700", letterSpacing: 0.3 },
   metricValue: { color: C.ink, fontSize: 12.5, fontWeight: "800" },
-  metricValueMuted: { color: C.muted, fontSize: 11.5, fontWeight: "700" },
   track: { height: 6, backgroundColor: C.line, borderRadius: 3, overflow: "hidden" },
   fill: { height: 6, backgroundColor: C.primary, borderRadius: 3 },
   fillSeen: { backgroundColor: C.primaryBorder },

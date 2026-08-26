@@ -11,7 +11,7 @@ import { auth } from "../services/firebase";
 import { fetchUserData, syncLearningItemProgress, syncUserData, syncUserProgress } from "../services/firestore";
 import { cancelDailyReminder, scheduleDailyReminder } from "../services/notificationService";
 import { track } from "../services/telemetry";
-import { deriveStatus, countMasteredWords, isLeech } from "../domain/learning/mastery";
+import { deriveStatus, isLeech } from "../domain/learning/mastery";
 import { calculateGardenProgress } from "../domain/gamification/xp";
 import { detectUnitJustCompleted } from "../content/questions";
 import { inferQuality, AnswerQualityMeta } from "../domain/review/qualitySignal";
@@ -261,13 +261,18 @@ export function useUserProgress() {
           }
         }
 
-        const fromStage = calculateGardenProgress(countMasteredWords(prev.learningProgress || {})).stage;
-        const toStage = calculateGardenProgress(countMasteredWords(next.learningProgress || {})).stage;
+        // The garden grows with words genuinely learned (answered correctly
+        // at least once), matching the exact metric useHomeViewModel.ts
+        // renders — not a repetition-based mastery count, which would no
+        // longer track real progress once daily practice never repeats a
+        // word (roadmap 18-srs-flow-hardening.md "sınav" redesign).
+        const fromStage = calculateGardenProgress((prev.rewardedQuestionIds || []).length).stage;
+        const toStage = calculateGardenProgress((next.rewardedQuestionIds || []).length).stage;
         if (fromStage !== toStage) {
           track("garden_stage_changed", {
             fromStage,
             toStage,
-            masteredWords: countMasteredWords(next.learningProgress || {}),
+            masteredWords: (next.rewardedQuestionIds || []).length,
           });
         }
 

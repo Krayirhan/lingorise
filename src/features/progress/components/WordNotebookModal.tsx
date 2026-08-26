@@ -12,37 +12,28 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { allQuestions } from "../../../content/questions";
 import { LevelCode, MeaningMatchQuestion } from "../../../types/content";
-import { LearningItemProgress, LearningStatus } from "../../../types/user";
 import { speechService } from "../../../services/speechService";
 import { Copy } from "../../../i18n/en";
 import { C, radius, spacing } from "../../../theme/colors";
-import { deriveStatus, isLeech } from "../../../domain/learning/mastery";
 
 interface Props {
   copy: Copy;
   visible: boolean;
-  /** Drives each row's real mastery status — a word is never just "solved
-   * or not" here. Optional only so existing test/story call sites without
-   * real progress data still render (falls back to "new" for every word). */
-  learningProgress?: Record<string, LearningItemProgress>;
+  /** A word is either learned (answered correctly at least once) or not —
+   * there is no separate in-between "mastery" status any more (roadmap
+   * 18-srs-flow-hardening.md "sınav" redesign, 2026-08-26). */
+  solvedQuestionIds?: string[];
   onClose: () => void;
   onPracticeWord?: (question: MeaningMatchQuestion) => void;
   reduceMotion?: boolean;
 }
-
-const STATUS_STYLE: Record<LearningStatus, { bg: string; fg: string }> = {
-  new: { bg: C.lineSoft, fg: C.muted },
-  learning: { bg: C.primarySoft, fg: C.primary },
-  review: { bg: C.attentionSoft, fg: C.attentionText },
-  mastered: { bg: C.successSoft, fg: C.successText },
-};
 
 const LEVELS: (LevelCode | "ALL")[] = ["ALL", "A1", "A2", "B1", "B2", "C1", "C2"];
 
 export function WordNotebookModal({
   copy,
   visible,
-  learningProgress,
+  solvedQuestionIds,
   onClose,
   onPracticeWord,
   reduceMotion,
@@ -136,17 +127,7 @@ export function WordNotebookModal({
             contentContainerStyle={S.listContent}
             showsVerticalScrollIndicator={false}
             renderItem={({ item }) => {
-              const progressItem = learningProgress?.[item.id];
-              const status: LearningStatus = progressItem ? deriveStatus(progressItem) : "new";
-              const leech = isLeech(progressItem);
-              const statusLabel =
-                status === "mastered"
-                  ? copy.progress?.statusMastered || "Ustalaşıldı"
-                  : status === "review"
-                    ? copy.progress?.statusReview || "Tekrar sırasında"
-                    : status === "learning"
-                      ? copy.progress?.statusLearning || "Öğreniliyor"
-                      : copy.progress?.statusNew || "Yeni";
+              const isLearned = (solvedQuestionIds || []).includes(item.id);
               const word = item.word || item.prompt;
               const meaning = item.meaning || item.answer;
 
@@ -175,21 +156,14 @@ export function WordNotebookModal({
                     </View>
                   </View>
 
-                  {/* Real mastery status, not just solved/unsolved — this is
-                      the one place a learner can see WHY a word keeps coming
-                      back in review, instead of it just silently reappearing
-                      (roadmap 18-srs-flow-hardening.md "pekişme" redesign). */}
-                  <View style={S.statusRow}>
-                    <View style={[S.statusPill, { backgroundColor: STATUS_STYLE[status].bg }]}>
-                      <Text style={[S.statusPillTxt, { color: STATUS_STYLE[status].fg }]}>{statusLabel}</Text>
-                    </View>
-                    {leech && (
-                      <View style={S.leechPill}>
-                        <Ionicons name="fitness-outline" size={11} color={C.attentionText} />
-                        <Text style={S.leechPillTxt}>{copy.progress?.statusLeech || "Zorlanıyorsun"}</Text>
+                  {isLearned && (
+                    <View style={S.statusRow}>
+                      <View style={S.statusPill}>
+                        <Ionicons name="checkmark-circle" size={12} color={C.successText} />
+                        <Text style={S.statusPillTxt}>{copy.progress?.statusLearned || "Öğrenildi"}</Text>
                       </View>
-                    )}
-                  </View>
+                    </View>
+                  )}
 
                   <View style={S.meaningRow}>
                     <Text style={S.meaningTxt}>“{meaning}”</Text>
@@ -389,25 +363,16 @@ const S = StyleSheet.create({
     marginTop: 6,
   },
   statusPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: C.successSoft,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: radius.xs,
   },
   statusPillTxt: {
-    fontSize: 10.5,
-    fontWeight: "800",
-  },
-  leechPill: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 3,
-    backgroundColor: C.attentionSoft,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: radius.xs,
-  },
-  leechPillTxt: {
-    color: C.attentionText,
+    color: C.successText,
     fontSize: 10.5,
     fontWeight: "800",
   },

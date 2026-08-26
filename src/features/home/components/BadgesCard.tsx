@@ -53,9 +53,9 @@ export function BadgesCard({ copy, unlockedBadges, title }: Props) {
     {
       id: "badge_master_review",
       icon: "ribbon",
-      name: "Usta Tekrarcı",
+      name: "Kararlı Öğrenci",
       conditionKey: "badgeConditionMasterReview",
-      defaultCondition: "25 kelimeyi pekiştir",
+      defaultCondition: "2 seviye sınavını geç",
     },
   ];
 

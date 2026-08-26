@@ -17,7 +17,6 @@ import { LevelCode } from "../types/content";
 import { LevelProgressItem, TopicProgressItem } from "../features/progress/progress.types";
 import { HomeTab } from "../features/home/home.types";
 import { BadgeUnlockCelebration } from "../features/practice/components/BadgeUnlockCelebration";
-import { countMasteredWords, summarizeMastery } from "../domain/learning/mastery";
 import { evaluatePromotion } from "../domain/learning/promotion";
 import { isExamAvailable, isExamPassed } from "../domain/learning/levelExam";
 import { track } from "../services/telemetry";
@@ -179,15 +178,13 @@ export function AppNavigator({ userProgress, onAccountPress, deepLinkTarget, onD
     const levelProgressList: LevelProgressItem[] = levels.map((lvl) => {
       const qs = getQuestionsByLevel(lvl);
       const qIds = qs.map((question) => question.id);
-      const summary = summarizeMastery(userData.learningProgress || {}, qIds);
       return {
         level: lvl,
         total: qs.length,
         // Answered correctly at least once — the number that actually moves
         // the moment you practice, so a finished session is never invisible.
         seen: userData.solvedQuestionIds.filter((id) => qIds.includes(id)).length,
-        mastered: summary.mastered,
-        percent: summary.masteredPercent,
+        examPassed: (userData.passedLevelExams || []).includes(lvl),
         isReady: isLevelReady(lvl),
       };
     });
@@ -215,13 +212,12 @@ export function AppNavigator({ userProgress, onAccountPress, deepLinkTarget, onD
         streak={userData.streak}
         level={userData.level}
         gardenProgress={homeViewModel.gardenProgress}
-        totalSolved={countMasteredWords(userData.learningProgress || {})}
+        totalSolved={(userData.rewardedQuestionIds || []).length}
         seenWordCount={userData.solvedQuestionIds.filter((id) => levelQuestionIds.includes(id)).length}
         levelWordCount={levelQuestionIds.length}
         levelProgressList={levelProgressList}
         topicBreakdown={topicBreakdown}
         solvedQuestionIds={userData.solvedQuestionIds}
-        learningProgress={userData.learningProgress}
         lastActiveDate={userData.lastActiveDate}
         practiceHistory={userData.practiceHistory}
         unlockedBadges={userData.unlockedBadges}
@@ -324,7 +320,7 @@ export function AppNavigator({ userProgress, onAccountPress, deepLinkTarget, onD
         copy={copy}
         visible={levelSwitcherOpen}
         currentLevel={userData.level}
-        learningProgress={userData.learningProgress || {}}
+        solvedQuestionIds={userData.solvedQuestionIds}
         passedLevelExams={userData.passedLevelExams || []}
         onSelect={setLevel}
         onClose={() => setLevelSwitcherOpen(false)}

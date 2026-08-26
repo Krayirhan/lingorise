@@ -1,5 +1,4 @@
 import { UserData, DailyQuest, QuestHistoryEntry } from "../../types/user";
-import { countMasteredWords } from "../learning/mastery";
 
 export const DAILY_QUEST_PRACTICE_ID = "quest_daily_practice";
 export const DAILY_QUEST_REVIEW_ID = "quest_daily_review";
@@ -72,13 +71,12 @@ export function evaluateBadges(userData: UserData): string[] {
     currentBadges.add("badge_streak_3");
   }
 
-  // A high-threshold badge must mean something durable, not just "answered
-  // right twice in a row this sitting" — that was `repetitions >= 2`
-  // (the domain's own REVIEW_THRESHOLD, one step short of `mastered`), which
-  // let a single good session flip this badge without any word actually
-  // surviving a second day. Roadmap Birim 11.2 flags this exact pattern as
-  // badge inflation; mastered is the bar this badge's name implies.
-  if (countMasteredWords(userData.learningProgress || {}) >= 25) {
+  // Repurposed from a repetition-based "mastered 25 words" threshold, which
+  // depended entirely on the retired spaced-repetition review queue and had
+  // no real mechanism left to fulfill once daily practice stopped resurfacing
+  // words (roadmap 18-srs-flow-hardening.md "sınav" redesign, 2026-08-26).
+  // The badge id is kept as-is so anyone who already earned it keeps it.
+  if ((userData.passedLevelExams || []).length >= 2) {
     currentBadges.add("badge_master_review");
   }
 

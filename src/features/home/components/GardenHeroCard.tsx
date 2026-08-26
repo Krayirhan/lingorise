@@ -166,7 +166,7 @@ export function GardenHeroCard({
               <Ionicons name="information-circle-outline" size={14} color="#C5B2BD" />
               <Text style={S.explainerTxt}>
                 {copy.home?.gardenExplainerTip ||
-                  "Bahçen tüm seviyelerdeki pekişmiş kelimelerinle büyür — bir seviyeyi bitirmek onu tek başına ilerletmez."}
+                  "Bahçen HER seviyede öğrendiğin kelimelerle büyür — bir seviyeyi bitirmek onu tek başına ilerletmez."}
               </Text>
               <Pressable
                 accessibilityRole="button"
