@@ -28,6 +28,9 @@ export function AvatarPicker({
             key={av.id}
             onPress={() => onAvatarChange && onAvatarChange(av.id)}
             style={[S.avatarBtn, avatarId === av.id && S.avatarBtnActive]}
+            accessibilityRole="radio"
+            accessibilityLabel={`${av.label} avatarı`}
+            accessibilityState={{ selected: avatarId === av.id }}
           >
             <Ionicons name={av.icon} size={18} color={avatarId === av.id ? C.white : C.primary} />
           </Pressable>

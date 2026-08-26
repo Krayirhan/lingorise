@@ -153,6 +153,7 @@ export function AccountManagementCard({
           <View style={S.copy}>
             <View style={S.nameRow}>
               <EditableAccountName
+                copy={copy}
                 name={displayName}
                 nameStyle={S.title}
                 editing={editingName}
@@ -195,6 +196,7 @@ export function AccountManagementCard({
         <View style={S.copy}>
           <View style={S.nameRow}>
             <EditableAccountName
+              copy={copy}
               name={user.displayName || displayName}
               nameStyle={S.userName}
               editing={editingName}

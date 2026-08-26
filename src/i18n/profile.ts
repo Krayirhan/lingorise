@@ -39,6 +39,9 @@ export const profileEn = {
   soundEffectsSub: "Audio feedback for answers",
   reduceMotionTitle: "Reduce Motion",
   reduceMotionSub: "Turn off extra animations",
+  editNameLabel: "Edit name, current name: {name}",
+  saveNameLabel: "Save",
+  nameFieldLabel: "Name",
 } as const;
 
 export const profileTr = {
@@ -82,5 +85,8 @@ export const profileTr = {
   soundEffectsSub: "Doğru ve yanlış cevap sesleri",
   reduceMotionTitle: "Hareketi Azalt",
   reduceMotionSub: "Gereksiz animasyonları kapat",
+  editNameLabel: "İsmi düzenle, mevcut isim: {name}",
+  saveNameLabel: "Kaydet",
+  nameFieldLabel: "İsim",
 } as const;
 
