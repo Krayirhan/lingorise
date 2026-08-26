@@ -138,6 +138,13 @@ export function GardenHeroCard({
       {/* Dynamic XP Progress Bar - ONLY shown when NOT completed */}
       {!isCompleted && (
         <View style={S.progressSection}>
+          {/* This is a DIFFERENT tracker than "Bölümde X/Y" above — that one
+              is this level's current unit; this one is every word learned
+              across ALL levels, permanently. Both use the same 30-word
+              denominator on purpose (roadmap 18-srs-flow-hardening.md) so
+              they read as related, not as two conflicting counters — but an
+              explicit label is still what actually tells them apart. */}
+          <Text style={S.stageLabel}>{copy.home?.gardenStageLabel || "BAHÇE EVRESİ"}</Text>
           <View style={S.growthTrack}>
             <View
               style={[
@@ -339,6 +346,13 @@ const S = StyleSheet.create({
   },
   progressSection: {
     gap: 5,
+  },
+  stageLabel: {
+    color: "#C5B2BD",
+    fontSize: 9.5,
+    fontWeight: "800",
+    letterSpacing: 0.8,
+    marginBottom: 1,
   },
   growthTrack: {
     height: 8,

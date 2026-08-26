@@ -1,4 +1,5 @@
 import { GardenProgress, GardenStage } from "../../types/user";
+import { CONTENT_UNIT_SIZE } from "../../content/questions";
 
 interface StageBand {
   stage: GardenStage;
@@ -16,12 +17,20 @@ interface StageBand {
  * 200 XP a day the old 2000-XP ceiling was reached in about ten days, while
  * A1 alone holds 320 words. Mastery grows at the speed of real learning, so
  * the garden now grows for months instead of a fortnight.
+ *
+ * Every threshold is an exact multiple of CONTENT_UNIT_SIZE (the same 30-word
+ * chunk daily practice is measured in — "Bölümde X/30 kelime" on the home
+ * card) so the garden's stage boundaries and a level's unit boundaries always
+ * land on the same numbers, escalating 1, 2, 3, 4, 5 units per stage. Before
+ * this the two trackers used unrelated denominators (25 vs. 30) that looked
+ * like a bug rather than two deliberately different — but coherent — things:
+ * one level's current unit vs. every word ever learned across all levels.
  */
 const STAGE_BANDS: StageBand[] = [
-  { stage: "sprout", nameTr: "Tohum & Filiz", nameEn: "Seed & Sprout", gardenLevel: 1, from: 0, to: 25 },
-  { stage: "leaf", nameTr: "Yeşil Yaprak", nameEn: "Green Leaf", gardenLevel: 2, from: 25, to: 75 },
-  { stage: "bud", nameTr: "Taze Tomurcuk", nameEn: "Fresh Bud", gardenLevel: 3, from: 75, to: 150 },
-  { stage: "flower", nameTr: "Açan Çiçek", nameEn: "Blooming Flower", gardenLevel: 4, from: 150, to: 275 },
+  { stage: "sprout", nameTr: "Tohum & Filiz", nameEn: "Seed & Sprout", gardenLevel: 1, from: 0, to: CONTENT_UNIT_SIZE * 1 },
+  { stage: "leaf", nameTr: "Yeşil Yaprak", nameEn: "Green Leaf", gardenLevel: 2, from: CONTENT_UNIT_SIZE * 1, to: CONTENT_UNIT_SIZE * 3 },
+  { stage: "bud", nameTr: "Taze Tomurcuk", nameEn: "Fresh Bud", gardenLevel: 3, from: CONTENT_UNIT_SIZE * 3, to: CONTENT_UNIT_SIZE * 6 },
+  { stage: "flower", nameTr: "Açan Çiçek", nameEn: "Blooming Flower", gardenLevel: 4, from: CONTENT_UNIT_SIZE * 6, to: CONTENT_UNIT_SIZE * 10 },
 ];
 
 const FINAL_STAGE: Omit<StageBand, "from" | "to"> = {
@@ -31,9 +40,9 @@ const FINAL_STAGE: Omit<StageBand, "from" | "to"> = {
   gardenLevel: 5,
 };
 
-const FINAL_STAGE_START = 275;
+const FINAL_STAGE_START = CONTENT_UNIT_SIZE * 10;
 /** The mature tree keeps growing in steps rather than stopping at a ceiling. */
-const FINAL_STAGE_STEP = 175;
+const FINAL_STAGE_STEP = CONTENT_UNIT_SIZE * 5;
 
 export function calculateGardenProgress(masteredWords: number): GardenProgress {
   const mastered = Math.max(0, masteredWords);

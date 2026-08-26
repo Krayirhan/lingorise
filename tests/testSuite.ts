@@ -119,7 +119,11 @@ assert(longTerm.nextReviewAt > 0, "A mastered word stays scheduled instead of be
 console.log("\n3. Garden & Gamification Progress:");
 const g1 = calculateGardenProgress(10);
 assert(g1.stage === "sprout", "10 mastered words is the 'sprout' stage");
-assert(g1.stageProgressPercent === 40, "Stage progress is the real share, with no artificial floor");
+// Stage bands are exact multiples of CONTENT_UNIT_SIZE (30) so the garden's
+// stage boundaries line up with a level's own unit boundaries (roadmap
+// 18-srs-flow-hardening.md — "Bölümde X/30" and the garden card no longer
+// use unrelated denominators). Sprout spans 0-30, so 10/30 ≈ 33%.
+assert(g1.stageProgressPercent === 33, "Stage progress is the real share, with no artificial floor");
 
 const gZero = calculateGardenProgress(0);
 assert(gZero.stageProgressPercent === 0, "A brand-new garden honestly shows 0%");
