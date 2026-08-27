@@ -4,6 +4,10 @@ description: LingoRise görevlerinde en az gerekli AI aracı seçimi için kısa
 disable-model-invocation: true
 ---
 
+## Sıra
+
+Non-trivial görevlerde önce `project-scope-gate` ile REQUIRED/CONDITIONAL alanları belirle. Scope dışı alan için aşağıdaki araçları çağırma.
+
 ## Araç seçimi
 
 - Expo / React Native / EAS: Expo.

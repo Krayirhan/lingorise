@@ -47,6 +47,8 @@ Bağımsız agent sonuçlarını tek raporda birleştir. Aynı problemi iki agen
 
 Style/nitpick problemlerini blocker yapma. Kanıtsız varsayımları gerçek bug olarak sunma. Dosya değiştirme, commit/push yapma.
 
+Task'ın açıkça gerektirmediği abstraction, dependency, infrastructure, ilgisiz refactor veya speculative security/performance işi eklenmişse bunu "Over-engineering" bulgusu olarak işaretle (severity: kanıta göre, genelde LOW/MEDIUM).
+
 ### Severity
 
 - Bir test eksikliğini sırf test yok diye otomatik CRITICAL yapma.

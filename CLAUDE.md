@@ -37,6 +37,13 @@ npm run build:android:preview / :production   # eas build
 - Var olan public davranışı değiştirmek gerekiyorsa bunu açıkça belirt.
 - Silme veya büyük refactor öncesinde kullanım yerlerini doğrula (grep/references).
 
+## Scope & Necessity
+- Non-trivial değişiklikten önce gerçek project/task scope'unu belirle.
+- Yalnız evidence ile gerekçelendirilebilen işi yap; "best practice" tek başına gerekçe değildir.
+- Gereksiz abstraction, dependency, infrastructure, security mechanism, optimization, refactor veya test ekleme.
+- Önce en dar evidence yolunu kullan, ihtiyaç oluşursa genişlet.
+- Non-trivial implementation öncesinde `project-scope-gate` skill'ini uygula.
+
 ## Verification
 Kod değişikliğinden sonra minimum:
 ```bash
