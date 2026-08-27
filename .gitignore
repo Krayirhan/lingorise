@@ -27,3 +27,15 @@ screen_final_bottom.png
 screen_final_top.png
 screen_top_v2.png
 screenshot_action_ready.png
+
+# Claude Code local runtime
+**/.claude/scheduled_tasks.lock
+**/.claude/scheduled_tasks.json
+**/.claude/routines/.state/
+**/.claude/worktrees/
+**/.claude/checkpoints/
+**/.claude/mailbox/
+**/.claude/agent-registry.json
+**/.claude/agent-memory-local
+**/.claude/first-run
+**/.claude/assistant-daemon-state.json
