@@ -17,9 +17,6 @@
       "PowerShell(git push -f *)"
     ]
   },
-  "worktree": {
-    "baseRef": "head"
-  },
   "hooks": {
     "PreToolUse": [
       {
@@ -33,5 +30,21 @@
         ]
       }
     ]
+  },
+  "worktree": {
+    "baseRef": "head"
+  },
+  "enabledPlugins": {
+    "expo@claude-plugins-official": true,
+    "firebase@firebase": true,
+    "figma@claude-plugins-official": true
+  },
+  "extraKnownMarketplaces": {
+    "firebase": {
+      "source": {
+        "source": "github",
+        "repo": "firebase/firebase-tools"
+      }
+    }
   }
 }

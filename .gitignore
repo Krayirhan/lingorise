@@ -28,6 +28,9 @@ screen_final_top.png
 screen_top_v2.png
 screenshot_action_ready.png
 
+# Local MCP runtime configuration
+.mcp.json
+
 # Claude Code local runtime
 **/.claude/scheduled_tasks.lock
 **/.claude/scheduled_tasks.json

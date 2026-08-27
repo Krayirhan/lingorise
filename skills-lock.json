@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "skills": {
+    "migrate-to-strict-api": {
+      "source": "react-native-community/skills",
+      "sourceType": "github",
+      "skillPath": "migrate-to-strict-api/SKILL.md",
+      "computedHash": "2c25b784e4b7671520f00bde67186a371132fc72ce5cb9c62aa9df7f53e80e46"
+    },
+    "upgrade-react-native": {
+      "source": "react-native-community/skills",
+      "sourceType": "github",
+      "skillPath": "upgrade-react-native/SKILL.md",
+      "computedHash": "a0e63e94e1c7ddf21e8824c1abb5114c926d818ca92fc03196215c53a8ce56ce"
+    }
+  }
+}
