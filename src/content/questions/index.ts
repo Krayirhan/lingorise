@@ -26,8 +26,27 @@ export function setRuntimeQuestions(questions: MeaningMatchQuestion[]): void {
   // Remote content overrides the matching bundled item. Keeping other bundled
   // levels available preserves overdue review sessions while only the active
   // level has been downloaded and cached for this launch.
+  //
+  // Teaching-enrichment fields (example sentences, hints, context notes, ...)
+  // are backfilled from the bundled item when the remote one lacks them —
+  // the published Firestore catalogue has lagged behind bundled content
+  // enrichment before, and a thin remote row should never blank out a
+  // hand-written example sentence that already ships in the app.
   const remoteById = new Map(questions.map((question) => [question.id, question]));
-  const merged = allQuestions.map((question) => remoteById.get(question.id) || question);
+  const merged = allQuestions.map((question) => {
+    const remote = remoteById.get(question.id);
+    if (!remote) return question;
+    return {
+      ...remote,
+      exampleSentence: remote.exampleSentence || question.exampleSentence,
+      exampleTranslation: remote.exampleTranslation || question.exampleTranslation,
+      contextNote: remote.contextNote || question.contextNote,
+      hint: remote.hint || question.hint,
+      phonetic: remote.phonetic || question.phonetic,
+      pronunciation: remote.pronunciation || question.pronunciation,
+      partOfSpeech: remote.partOfSpeech || question.partOfSpeech,
+    };
+  });
   const remoteOnly = questions.filter((question) => !allQuestions.some((fallback) => fallback.id === question.id));
   activeQuestions = [...merged, ...remoteOnly];
 }
