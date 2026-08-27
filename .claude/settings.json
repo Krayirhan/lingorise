@@ -16,5 +16,8 @@
       "PowerShell(git push --force *)",
       "PowerShell(git push -f *)"
     ]
+  },
+  "worktree": {
+    "baseRef": "head"
   }
 }
