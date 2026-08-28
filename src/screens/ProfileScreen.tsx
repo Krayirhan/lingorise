@@ -1,7 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
-import { BackHandler, Platform, Pressable, SafeAreaView, ScrollView, StatusBar, StyleSheet, Switch, Text, View } from "react-native";
+import { BackHandler, Image, Platform, Pressable, SafeAreaView, ScrollView, StatusBar, StyleSheet, Switch, Text, View } from "react-native";
 import { C, radius, spacing } from "../theme/colors";
+
+const mascot = require("../../assets/sprig-mascot.png");
 import { ProfileScreenProps } from "../features/profile/profile.types";
 import { ProfileStatsCard } from "../features/profile/components/ProfileStatsCard";
 import { LanguageSettingsCard } from "../features/profile/components/LanguageSettingsCard";
@@ -38,8 +40,15 @@ export function ProfileScreen({
       <ScrollView contentContainerStyle={S.content} showsVerticalScrollIndicator={false}>
         {/* Page Title */}
         <View style={S.titleRow}>
-          <Text style={S.pageEyebrow}>{copy.profile?.pageEyebrow || "HESAP & AYARLAR"}</Text>
-          <Text style={S.pageTitle}>{copy.profile?.headerTitle || "Profil"}</Text>
+          <View style={S.titleCopy}>
+            <Text style={S.pageEyebrow}>{copy.profile?.pageEyebrow || "HESAP & AYARLAR"}</Text>
+            <Text style={S.pageTitle}>{copy.profile?.headerTitle || "Profil"}</Text>
+          </View>
+          {/* Same brand mascot as onboarding, scaled down as a quiet
+              brand-continuity signature (CD-003) — not a new dashboard section. */}
+          <View style={S.titleMascotWrap} accessible={false} importantForAccessibility="no">
+            <Image source={mascot} style={S.titleMascot} resizeMode="contain" accessible={false} importantForAccessibility="no" />
+          </View>
         </View>
 
         {/* Account & Cloud Sync Management Card */}
@@ -112,7 +121,18 @@ export function ProfileScreen({
 
 const S = StyleSheet.create({
   root: { flex: 1, maxWidth: 580, width: "100%", alignSelf: "center" },
-  titleRow: { gap: 2, marginTop: 4, marginBottom: 4 },
+  titleRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 4, marginBottom: 4 },
+  titleCopy: { gap: 2 },
+  titleMascotWrap: {
+    width: 56,
+    height: 56,
+    borderRadius: 18,
+    backgroundColor: "#F8F1E4",
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
+  },
+  titleMascot: { width: 50, height: 50 },
   pageEyebrow: { color: C.primary, fontSize: 11.5, fontWeight: "800", letterSpacing: 1.2 },
   pageTitle: { color: C.ink, fontSize: 26, fontWeight: "700", letterSpacing: -0.3 },
   content: { paddingHorizontal: 20, paddingTop: 14, gap: 16, paddingBottom: 28 },

@@ -52,6 +52,12 @@ export function GoalStep({ copy, selectedGoal = 5, onSelectGoal, onNext, onSkip 
 
   return (
     <View style={S.container}>
+      {/* Same brand mascot as step 1/4, scaled down so it doesn't compete
+          with the goal list below (CD-003 continuity). */}
+      <View style={S.gardenArt} accessible={false} importantForAccessibility="no">
+        <Image source={mascot} style={S.mascot} resizeMode="contain" accessible={false} importantForAccessibility="no" />
+      </View>
+
       <Text style={S.eyebrow}>
         {copy.onboarding?.goalsKicker || "SANA ÖZEL"}
       </Text>
@@ -115,12 +121,23 @@ export function GoalStep({ copy, selectedGoal = 5, onSelectGoal, onNext, onSkip 
 
 const S = StyleSheet.create({
   container: { flex: 1 },
+  gardenArt: {
+    alignSelf: "center",
+    width: 84,
+    height: 84,
+    borderRadius: 26,
+    backgroundColor: "#F8F1E4",
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
+  },
+  mascot: { width: 78, height: 78 },
   eyebrow: {
     color: C.primary,
     fontSize: 11,
     fontWeight: "800",
     letterSpacing: 1.5,
-    marginTop: 12,
+    marginTop: 10,
   },
   hero: {
     color: C.ink,

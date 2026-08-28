@@ -1,10 +1,12 @@
-import { StyleSheet, Text, View } from "react-native";
+import { Image, StyleSheet, Text, View } from "react-native";
 import { LevelCard } from "../../../components/LevelCard";
 import { PrimaryButton } from "../../../components/PrimaryButton";
 import { levels } from "../../../content/levels";
 import { Copy } from "../../../i18n/en";
 import { C } from "../../../theme/colors";
 import { LevelCode } from "../../../types/content";
+
+const mascot = require("../../../../assets/sprig-mascot.png");
 
 interface Props {
   copy: Copy;
@@ -20,6 +22,12 @@ export function LevelStep({ copy, level, onLevel, onComplete }: Props) {
 
   return (
     <View style={S.container}>
+      {/* Same brand mascot as step 1/4, scaled down so it doesn't compete
+          with the level list below (CD-003 continuity). */}
+      <View style={S.gardenArt} accessible={false} importantForAccessibility="no">
+        <Image source={mascot} style={S.mascot} resizeMode="contain" accessible={false} importantForAccessibility="no" />
+      </View>
+
       <Text style={S.eyebrow}>{copy.onboarding?.journey || "İNGİLİZCE YOLCULUĞUN"}</Text>
       <Text style={S.hero}>{copy.onboarding?.levelTitle || "Başlangıç noktanı bul."}</Text>
       <Text style={S.subtitle}>{copy.onboarding?.levelBody || "Sana uygun seviyeyi seç. İstediğin zaman değiştirebilirsin."}</Text>
@@ -48,6 +56,17 @@ export function LevelStep({ copy, level, onLevel, onComplete }: Props) {
 
 const S = StyleSheet.create({
   container: { flex: 1, gap: 12 },
+  gardenArt: {
+    alignSelf: "center",
+    width: 84,
+    height: 84,
+    borderRadius: 26,
+    backgroundColor: "#F8F1E4",
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
+  },
+  mascot: { width: 78, height: 78 },
   eyebrow: { color: C.primary, fontSize: 11, fontWeight: "800", letterSpacing: 1.5 },
   hero: { color: C.ink, fontSize: 30, lineHeight: 36, fontWeight: "800", marginTop: 4 },
   subtitle: { color: C.muted, fontSize: 15, lineHeight: 22 },
