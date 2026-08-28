@@ -20,6 +20,7 @@ Non-trivial görevlerde önce `project-scope-gate` ile REQUIRED/CONDITIONAL alan
 - Büyük refactor, cross-file symbol veya reference navigation: Serena. Basit yerel dosya araması için zorunlu değildir.
 - Mimari, dependency, community veya god-node analizi: Graphify. Precise symbol/reference sorularında Serena'yı tercih et.
 - Component isolation veya design-system işleri: Storybook.
+- Consumer/design appeal ("bu ekranı kullanıcı sever mi, premium bulur mu" gibi) task: `consumer-design-audit` skill'i (`/consumer-design-audit`). Gerektiğinde bu skill kendi içinde `design-taste` skill'i (yalnız taste/anti-slop referansı), Figma, Maestro ve claude-in-chrome'u çağırır. Firebase/GitHub/Semgrep/Serena/Context7 yalnız o task için gerçekten REQUIRED/CONDITIONAL ise dahil edilir.
 
 ## Kurallar
 
@@ -28,3 +29,4 @@ Non-trivial görevlerde önce `project-scope-gate` ile REQUIRED/CONDITIONAL alan
 - Kütüphane sürümü belirsizse Context7 kullan.
 - Maestro'yu yalnız gerçek kullanıcı akışı doğrulaması gerektiğinde kullan.
 - Mevcut project-review, release-check, project-audit ve reviewer agent süreçleriyle çakışacak yeni review akışı oluşturma.
+- Normal UI implementation task'ında (component yazma, layout/padding düzeltmesi, bug fix, generic frontend/mobile coding, teknik accessibility) `consumer-design-audit` veya `design-taste` skill'ini otomatik çağırma — bunlar yalnız kullanıcı açıkça consumer appeal / visual taste / aesthetic direction istediğinde devreye girer.
