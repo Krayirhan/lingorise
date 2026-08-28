@@ -53,9 +53,11 @@ export function HomeScreen({
           dailyXpEarned={viewModel.dailyXpEarned}
           dailyXpTarget={viewModel.dailyXpTarget}
           isDailyCompleted={viewModel.isDailyCompleted}
+          isLevelFullyLearned={viewModel.isLevelFullyLearned}
           onPress={onQuestPress}
           onViewProgress={() => onTabPress("progress")}
           onPracticeAgain={onQuestPress}
+          onGoToPracticeHub={() => onTabPress("practice")}
           showGardenExplainer={showGardenExplainer}
           onDismissGardenExplainer={onDismissGardenExplainer}
         />

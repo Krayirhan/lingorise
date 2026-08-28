@@ -25,7 +25,7 @@ import {
 import { applyPracticeAnswer } from "../src/domain/practice/answer";
 import { buildDailySession, pickNewWords } from "../src/state/useAppSession";
 import { evaluatePromotion, assessLevelChoice } from "../src/domain/learning/promotion";
-import { buildLevelExam, isExamPassed, EXAM_PASS_COUNT, EXAM_QUESTION_COUNT } from "../src/domain/learning/levelExam";
+import { buildLevelExam, isExamPassed, isExamAvailable, EXAM_PASS_COUNT, EXAM_QUESTION_COUNT } from "../src/domain/learning/levelExam";
 import { isLevelReady, getNextLevel } from "../src/content/questions";
 import { getTopicLabel } from "../src/features/home/topicLabel";
 import { toPickTheWordSession, canUsePickTheWord } from "../src/domain/practice/reverseMode";
@@ -1665,6 +1665,110 @@ console.log("\n57. Automated Accessibility Scanner & reduceMotion Audit (ACC-001
   const skeletonContent = fs.readFileSync(skeletonPath, "utf-8");
   assert(skeletonContent.includes("isReduceMotionEnabled"), "SkeletonLoader checks system AccessibilityInfo.isReduceMotionEnabled");
   assert(skeletonContent.includes("isMotionReduced"), "SkeletonLoader respects isMotionReduced by stopping infinite pulsing loop");
+}
+
+// 58. Level-Exhausted Terminal State (CORE-004): once every word in a level
+// is learned, buildDailySession has nothing left to draw from — the daily
+// practice CTA must not stay a live, silently-dead-ending button. This block
+// checks the pure logic the fix relies on directly, and checks the UI
+// components/hook that consume it via source inspection (same pattern as
+// Birim 44/57), since this test harness has no React renderer.
+console.log("\n58. Level-Exhausted Terminal State (CORE-004):");
+{
+  const srcRoot = path.join(__dirname, "..", "src");
+
+  // A. Pure logic: a fully-learned level yields an empty daily session.
+  const fullyLearnedUser: UserData = {
+    ...DEFAULT_USER_DATA,
+    level: "A1",
+    rewardedQuestionIds: a1Pool.map((q) => q.id),
+    solvedQuestionIds: a1Pool.map((q) => q.id),
+  };
+  const exhaustedSession = buildDailySession(fullyLearnedUser);
+  assert(
+    exhaustedSession.length === 0,
+    "buildDailySession returns an empty list once every A1 word is rewarded (the state CORE-004's dead CTA was reachable from)"
+  );
+
+  // The same "fully learned" formula the fix's isLevelFullyLearned flag uses,
+  // checked directly against content data rather than duplicating UI code.
+  const levelQuestionIds = new Set(a1Pool.map((q) => q.id));
+  const solvedInLevel = fullyLearnedUser.rewardedQuestionIds.filter((id) => levelQuestionIds.has(id)).length;
+  assert(
+    solvedInLevel === a1Pool.length,
+    "The fully-learned user's rewarded-in-level count matches the level's total word count"
+  );
+
+  // A level with a real exam available stays available regardless of the
+  // learner's own progress — exam availability behavior is unchanged by this fix.
+  assert(isExamAvailable("A1"), "A1 still seats a real exam once fully learned (exam availability unaffected by CORE-004 fix)");
+
+  // B. Regression: a level that is NOT fully learned still returns a normal,
+  // non-empty session — the fix must not over-trigger the terminal state.
+  const partiallyLearnedUser: UserData = {
+    ...DEFAULT_USER_DATA,
+    level: "A1",
+    rewardedQuestionIds: a1Pool.slice(0, 5).map((q) => q.id),
+    solvedQuestionIds: a1Pool.slice(0, 5).map((q) => q.id),
+  };
+  const inProgressSession = buildDailySession(partiallyLearnedUser);
+  assert(
+    inProgressSession.length > 0,
+    "A level that still has unlearned words keeps returning a normal daily session (in-progress behavior unchanged)"
+  );
+
+  // C. useAppSession.ts: startPractice/startExam report failure instead of a
+  // bare silent return, so any caller (current or future) can react instead
+  // of dead-ending.
+  const sessionSrc = fs.readFileSync(path.join(srcRoot, "state/useAppSession.ts"), "utf-8");
+  assert(
+    /startPractice\s*=\s*useCallback[\s\S]*?if \(qList\.length === 0\) return false;/.test(sessionSrc),
+    "startPractice returns false (not a bare silent return) when there is no session to build"
+  );
+  assert(
+    /startExam\s*=\s*useCallback[\s\S]*?if \(qList\.length === 0\) return false;/.test(sessionSrc),
+    "startExam returns false (not a bare silent return) when the level has no exam to seat"
+  );
+
+  // D. useHomeViewModel.ts: exposes the terminal-state flag screens key off of.
+  const viewModelSrc = fs.readFileSync(path.join(srcRoot, "features/home/hooks/useHomeViewModel.ts"), "utf-8");
+  assert(viewModelSrc.includes("isLevelFullyLearned"), "useHomeViewModel computes and exposes isLevelFullyLearned");
+  assert(
+    !viewModelSrc.includes("yarın devam edelim"),
+    "The old 'come back tomorrow' copy (misleading once a level is permanently exhausted) is gone from useHomeViewModel"
+  );
+  // The greetingTitle/Subtitle branch chain has its own separate
+  // practiceState === "completed" case with the same "yarın yeni
+  // kelimelerle devam edeceksin" (come back tomorrow) promise — it must be
+  // checked AFTER isLevelFullyLearned, or a level finished on the same day
+  // the daily quest completes would show the false promise in the Home
+  // screen's greeting even though practiceRecommendation and GardenHeroCard
+  // both correctly show the level-done state right below it.
+  const levelFullyLearnedGreetingIndex = viewModelSrc.indexOf("} else if (isLevelFullyLearned) {");
+  const completedGreetingIndex = viewModelSrc.indexOf('practiceState === "completed"');
+  assert(
+    levelFullyLearnedGreetingIndex > -1 && completedGreetingIndex > -1 && levelFullyLearnedGreetingIndex < completedGreetingIndex,
+    "useHomeViewModel's greeting text checks isLevelFullyLearned before the daily-quest-completed branch, so the two greeting texts never contradict the (correct) level-done state shown elsewhere on Home"
+  );
+
+  // E. PracticeHubScreen.tsx: the hero CTA is gated on isLevelFullyLearned —
+  // it no longer unconditionally calls onStartDailyPractice regardless of
+  // whether there are fresh words to practice.
+  const hubSrc = fs.readFileSync(path.join(srcRoot, "screens/PracticeHubScreen.tsx"), "utf-8");
+  assert(hubSrc.includes("isLevelFullyLearned ?"), "PracticeHubScreen branches its hero card on isLevelFullyLearned");
+  assert(hubSrc.includes("heroIsExamCta"), "PracticeHubScreen's level-done hero becomes the exam CTA when an exam is pending");
+  assert(hubSrc.includes("disabled={!heroIsExamCta}"), "PracticeHubScreen's level-done hero is non-interactive when there is no exam action to take (no silent dead button)");
+
+  // F. GardenHeroCard.tsx: the "practice again" dead-end button is not shown
+  // once the level is fully learned.
+  const gardenCardSrc = fs.readFileSync(path.join(srcRoot, "features/home/components/GardenHeroCard.tsx"), "utf-8");
+  assert(gardenCardSrc.includes("showLevelDoneLayout"), "GardenHeroCard tracks the level-fully-learned layout state");
+  const practiceAgainIndex = gardenCardSrc.indexOf("heroPracticeAgain");
+  const levelDoneCtaIndex = gardenCardSrc.indexOf("showLevelDoneLayout ?");
+  assert(
+    practiceAgainIndex > -1 && levelDoneCtaIndex > -1 && levelDoneCtaIndex < practiceAgainIndex,
+    "The level-done CTA branch is checked before the 'practice again' button, so a fully-learned level never reaches it"
+  );
 }
 
 console.log("\n=========================================");

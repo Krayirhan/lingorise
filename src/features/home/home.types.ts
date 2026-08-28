@@ -46,6 +46,8 @@ export interface HomeViewModel {
   unitCount: number;
   unitLearned: number;
   unitTotal: number;
+  /** True once every word in the current level has been rewarded — buildDailySession has nothing left to draw from (CORE-004). */
+  isLevelFullyLearned: boolean;
   /** Words recalled reliably across every level — what the garden grows on. */
   masteredWords: number;
   questHistory: QuestHistoryEntry[];

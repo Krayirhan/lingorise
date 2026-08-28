@@ -22,6 +22,12 @@ export function useHomeViewModel(userData: UserData, copy: Copy, locale: Locale)
     const solvedInLevel = rewardedIds.filter((id) => levelQuestionIds.has(id)).length;
     const vocabPercent = levelQuestions.length > 0 ? Math.round((solvedInLevel / levelQuestions.length) * 100) : 0;
 
+    // Once every word in the level has been rewarded, buildDailySession has
+    // nothing left to draw from (CORE-004) — this is the one signal screens
+    // need to stop offering a daily-practice CTA and point at the level
+    // exam / next level instead.
+    const isLevelFullyLearned = levelQuestions.length > 0 && solvedInLevel >= levelQuestions.length;
+
     const stageName = locale === "tr" ? gardenProgress.stageNameTr : gardenProgress.stageNameEn;
 
     const vocabMeta =
@@ -51,11 +57,11 @@ export function useHomeViewModel(userData: UserData, copy: Copy, locale: Locale)
     const recommended = getRecommendedWord(userData.level, userData.solvedQuestionIds);
     const dailyQuests = userData.dailyQuests || [];
     const isDailyCompleted = dailyQuests.length > 0 && dailyQuests.every((q) => q.completed);
-    const practiceRecommendation = !isDailyCompleted
-      ? "Günlük hedefini tamamlamak için öneriliyor."
-      : solvedInLevel < levelQuestions.length
-        ? `${userData.level} seviyendeki yeni kelimelerden seçildi.`
-        : "Bugünlük yeni kelimen kalmadı — yarın devam edelim.";
+    const practiceRecommendation = isLevelFullyLearned
+      ? `${userData.level} seviyesindeki tüm kelimeleri öğrendin — sırada tamamlama sınavı var.`
+      : !isDailyCompleted
+        ? "Günlük hedefini tamamlamak için öneriliyor."
+        : `${userData.level} seviyendeki yeni kelimelerden seçildi.`;
 
     const practiceQuest = dailyQuests.find((q) => q.id === "quest_daily_practice");
     const sessionSize = userData.practiceSessionSize || 20;
@@ -92,6 +98,13 @@ export function useHomeViewModel(userData: UserData, copy: Copy, locale: Locale)
     } else if (practiceState === "in_progress") {
       greetingTitle = "Pratiğin devam ediyor.";
       greetingSubtitle = `${practiceCompletedCount} / ${practiceTargetCount} kelime tamamlandı.`;
+    } else if (isLevelFullyLearned) {
+      // Checked before practiceState === "completed" on purpose (CORE-004):
+      // that branch's "yarın yeni kelimelerle devam edeceksin" promise is
+      // false once the level has no words left, regardless of whether
+      // today's quest also happens to be complete.
+      greetingTitle = `${userData.level} seviyesindeki tüm kelimeleri öğrendin.`;
+      greetingSubtitle = "Sırada tamamlama sınavı var.";
     } else if (practiceState === "completed") {
       greetingTitle = "Bugünkü hedefini tamamladın 🌱";
       greetingSubtitle = "Yarın yeni kelimelerle öğrenmeye devam edeceksin.";
@@ -117,6 +130,7 @@ export function useHomeViewModel(userData: UserData, copy: Copy, locale: Locale)
       unitCount: unitInfo.unitCount,
       unitLearned: unitInfo.learnedInUnit,
       unitTotal: unitInfo.questions.length,
+      isLevelFullyLearned,
       masteredWords: learnedWordsGlobal,
       questHistory: userData.questHistory || [],
       greetingTitle,

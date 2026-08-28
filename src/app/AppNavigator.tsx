@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { HomeScreen } from "../screens/HomeScreen";
 import { OnboardingScreen } from "../screens/OnboardingScreen";
 import { PracticeScreen } from "../screens/PracticeScreen";
@@ -13,7 +13,7 @@ import { getTopicLabel } from "../features/home/topicLabel";
 import { useUserProgress } from "../state/useUserProgress";
 import { useAppSession } from "../state/useAppSession";
 import { useHomeViewModel } from "../features/home/hooks/useHomeViewModel";
-import { LevelCode } from "../types/content";
+import { LevelCode, MeaningMatchQuestion } from "../types/content";
 import { LevelProgressItem, TopicProgressItem } from "../features/progress/progress.types";
 import { HomeTab } from "../features/home/home.types";
 import { BadgeUnlockCelebration } from "../features/practice/components/BadgeUnlockCelebration";
@@ -51,6 +51,37 @@ export function AppNavigator({ userProgress, onAccountPress, deepLinkTarget, onD
     userData.passedLevelExams || [],
     userData.celebratedLevels || []
   );
+
+  // Defensive net for CORE-004: session.startPractice/startExam already
+  // return false instead of silently no-op'ing when there's nothing to build
+  // a session from. The primary fix is the UI never offering that CTA once a
+  // level is fully learned (PracticeHubScreen/GardenHeroCard), but every
+  // entry point is routed through here too so a missed or future call site
+  // still surfaces something instead of going dead and unexplained.
+  const startPracticeSafe = useCallback(
+    (customQuestions?: MeaningMatchQuestion[], reverseMode?: boolean) => {
+      const started = session.startPractice(customQuestions, reverseMode);
+      if (!started) {
+        showToast({
+          message: copy.game?.noWordsLeftNotice || "Bu seviyede şu anda yeni kelime kalmadı.",
+          type: "attention",
+          durationMs: 4000,
+        });
+      }
+    },
+    [session, showToast, copy]
+  );
+
+  const startExamSafe = useCallback(() => {
+    const started = session.startExam(userData.level);
+    if (!started) {
+      showToast({
+        message: copy.game?.noWordsLeftNotice || "Bu seviyede şu anda yeni kelime kalmadı.",
+        type: "attention",
+        durationMs: 4000,
+      });
+    }
+  }, [session, showToast, copy, userData.level]);
 
   // Records a level-completion exam's result exactly once per attempt. The
   // exam is the sole way a level is marked complete now (roadmap
@@ -221,7 +252,7 @@ export function AppNavigator({ userProgress, onAccountPress, deepLinkTarget, onD
         lastActiveDate={userData.lastActiveDate}
         practiceHistory={userData.practiceHistory}
         unlockedBadges={userData.unlockedBadges}
-        onPracticeWord={(q) => session.startPractice([q])}
+        onPracticeWord={(q) => startPracticeSafe([q])}
         onBack={session.goToHome}
         onTabPress={handleTabPress}
         reduceMotion={userData.reduceMotion}
@@ -238,10 +269,11 @@ export function AppNavigator({ userProgress, onAccountPress, deepLinkTarget, onD
         streak={userData.streak}
         practiceSessionSize={userData.practiceSessionSize}
         onPracticeSessionSizeChange={userProgress.setPracticeSessionSize}
-        onStartDailyPractice={(reverseMode) => session.startPractice(undefined, reverseMode)}
+        onStartDailyPractice={(reverseMode) => startPracticeSafe(undefined, reverseMode)}
         isExamAvailable={isExamAvailable(userData.level)}
         isExamPassed={(userData.passedLevelExams || []).includes(userData.level)}
-        onStartExam={() => session.startExam(userData.level)}
+        onStartExam={startExamSafe}
+        isLevelFullyLearned={homeViewModel.isLevelFullyLearned}
         onTabPress={handleTabPress}
       />
     );
@@ -283,7 +315,7 @@ export function AppNavigator({ userProgress, onAccountPress, deepLinkTarget, onD
         viewModel={homeViewModel}
         activeTab="garden"
         onLevelPress={() => setLevelSwitcherOpen(true)}
-        onQuestPress={() => session.startPractice()}
+        onQuestPress={() => startPracticeSafe()}
         onPracticePress={session.goToPracticeHome}
         onWordPress={(wordData) => {
           const matchQ = allQuestions.find(
@@ -292,9 +324,9 @@ export function AppNavigator({ userProgress, onAccountPress, deepLinkTarget, onD
               (q.prompt && q.prompt.toLowerCase() === wordData.word.toLowerCase())
           );
           if (matchQ) {
-            session.startPractice([matchQ]);
+            startPracticeSafe([matchQ]);
           } else {
-            session.startPractice();
+            startPracticeSafe();
           }
         }}
         onTabPress={handleTabPress}

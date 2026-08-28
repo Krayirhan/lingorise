@@ -114,15 +114,16 @@ export function useAppSession(userData: UserData, setActiveSession?: (session: A
     [resetQuestionState]
   );
 
+  /** Returns false (and starts nothing) when there is no session to build — the caller must not treat that as success (CORE-004). */
   const startPractice = useCallback(
-    (customQuestions?: MeaningMatchQuestion[], reverseMode?: boolean) => {
+    (customQuestions?: MeaningMatchQuestion[], reverseMode?: boolean): boolean => {
       let qList: MeaningMatchQuestion[] = [];
       if (customQuestions && customQuestions.length > 0) {
         qList = withFreshDistractors(customQuestions);
       } else {
         qList = buildDailySession(userData);
       }
-      if (qList.length === 0) return;
+      if (qList.length === 0) return false;
 
       if (!customQuestions) {
         track("practice_session_started", {
@@ -131,7 +132,7 @@ export function useAppSession(userData: UserData, setActiveSession?: (session: A
         });
       }
       if (reverseMode && canUsePickTheWord(qList.length)) qList = toPickTheWordSession(qList);
-      beginSession(qList, "PRACTICE");
+      return beginSession(qList, "PRACTICE");
     },
     [userData, beginSession]
   );
@@ -143,12 +144,13 @@ export function useAppSession(userData: UserData, setActiveSession?: (session: A
    * per-word spaced-repetition mastery as the promotion gate entirely (see
    * domain/learning/promotion.ts and domain/learning/levelExam.ts).
    */
+  /** Returns false (and starts nothing) when the level has no exam to seat — the caller must not treat that as success (CORE-004). */
   const startExam = useCallback(
-    (level: LevelCode) => {
+    (level: LevelCode): boolean => {
       const qList = withFreshDistractors(buildLevelExam(level));
-      if (qList.length === 0) return;
+      if (qList.length === 0) return false;
       track("level_exam_started", { level, questionCount: qList.length });
-      beginSession(qList, "EXAM");
+      return beginSession(qList, "EXAM");
     },
     [beginSession]
   );

@@ -33,6 +33,8 @@ interface Props {
   /** Whether the current level's completion exam has already been passed. */
   isExamPassed: boolean;
   onStartExam: () => void;
+  /** True once every word in the level is learned — the daily-practice CTA has nothing left to build a session from (CORE-004). */
+  isLevelFullyLearned: boolean;
 }
 
 export function PracticeHubScreen({
@@ -47,6 +49,7 @@ export function PracticeHubScreen({
   isExamAvailable,
   isExamPassed,
   onStartExam,
+  isLevelFullyLearned,
 }: Props) {
   const [reverseMode, setReverseMode] = useState(false);
   const streakText = `${streak} ${copy.game?.hubStreakSuffix || "gün seri"}`;
@@ -54,6 +57,15 @@ export function PracticeHubScreen({
 
   const fill = (template: string, values: Record<string, string | number>) =>
     Object.entries(values).reduce((text, [key, value]) => text.replace(`{${key}}`, String(value)), template);
+
+  // Once every word in the level is learned, the daily-practice hero has no
+  // session left to build (CORE-004) — it must not stay a live, always-armed
+  // CTA. When the exam is still pending, the hero itself becomes the exam
+  // entry point (the strongest single next action); the "Diğer seçenekler"
+  // exam card below is then redundant and hidden to avoid offering the same
+  // action twice.
+  const heroIsExamCta = isLevelFullyLearned && isExamAvailable && !isExamPassed;
+  const showExamOptionCard = isExamAvailable && !heroIsExamCta;
 
   // Daily practice is always and only new words now — a word already met is
   // never shown here again (roadmap 18-srs-flow-hardening.md "sınav"
@@ -135,51 +147,100 @@ export function PracticeHubScreen({
             </View>
           </View>
 
-          {/* Recommended Daily Practice Hero Card */}
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={`${copy.game?.hubHeroTitle || "Günün pratiği"}, ${level}, ${sessionSummary}. ${copy.game?.hubHeroCta || "Pratiğe başla"}`}
-            style={({ pressed }) => [
-              S.heroCard,
-              pressed && S.cardPressed,
-            ]}
-            onPress={() => onStartDailyPractice(reverseMode)}
-          >
-            <View style={S.heroTop}>
-              <View style={S.heroCopy}>
-                <View style={S.recommendedBadge}>
-                  <Text style={S.recommendedBadgeTxt}>
-                    {copy.game?.hubBadgeRecommended || "ÖNERİLEN"}
+          {/* Recommended Daily Practice Hero Card — replaced by a level-complete
+              state once there are no fresh words left to practice (CORE-004). */}
+          {isLevelFullyLearned ? (
+            <Pressable
+              accessibilityRole="button"
+              disabled={!heroIsExamCta}
+              accessibilityState={{ disabled: !heroIsExamCta }}
+              accessibilityLabel={`${fill(copy.game?.hubLevelDoneTitle || "{level} tamamlandı", { level })}. ${
+                heroIsExamCta
+                  ? copy.game?.examCardCta || "Sınava gir"
+                  : isExamPassed
+                    ? copy.game?.hubLevelDoneSubtitleExamPassed || ""
+                    : copy.game?.hubLevelDoneSubtitleNoExam || ""
+              }`}
+              style={({ pressed }) => [S.heroCard, pressed && heroIsExamCta && S.cardPressed]}
+              onPress={heroIsExamCta ? onStartExam : undefined}
+            >
+              <View style={S.heroTop}>
+                <View style={S.heroCopy}>
+                  <View style={S.recommendedBadge}>
+                    <Text style={S.recommendedBadgeTxt}>
+                      {copy.game?.hubBadgeRecommended || "ÖNERİLEN"}
+                    </Text>
+                  </View>
+                  <Text style={S.heroTitle}>
+                    {fill(copy.game?.hubLevelDoneTitle || "{level} tamamlandı!", { level })}
+                  </Text>
+                  <Text style={S.heroReason}>
+                    {isExamPassed
+                      ? copy.game?.hubLevelDoneSubtitleExamPassed || "Bu seviyedeki tüm kelimeleri öğrendin ve sınavını geçtin."
+                      : isExamAvailable
+                        ? copy.game?.hubLevelDoneSubtitleExamPending || "Bu seviyedeki tüm kelimeleri öğrendin. Şimdi sırada tamamlama sınavı var."
+                        : copy.game?.hubLevelDoneSubtitleNoExam || "Bu seviyedeki tüm kelimeleri öğrendin. Tamamlama sınavı bu seviye için henüz hazır değil."}
                   </Text>
                 </View>
-                <Text style={S.heroTitle}>
-                  {copy.game?.hubHeroTitle || "Günün pratiği"}
-                </Text>
-                <Text style={S.heroReason}>{sessionSummary}</Text>
-                <Text style={S.heroMeta}>
-                  {level} ·{" "}
-                  {fill(copy.home?.practiceMetaEstimate || "{count} kelime · yaklaşık {minutes} dk", {
-                    count: practiceSessionSize,
-                    minutes: estimatedMinutes,
-                  })}
-                </Text>
+
+                <Image source={sprig} style={S.heroMascot} resizeMode="contain" />
               </View>
 
-              <Image source={sprig} style={S.heroMascot} resizeMode="contain" />
-            </View>
+              {heroIsExamCta && (
+                <View style={S.heroCtaBtn}>
+                  <Text style={S.heroCtaBtnTxt}>
+                    {copy.game?.examCardCta || "Sınava gir"}
+                  </Text>
+                </View>
+              )}
+            </Pressable>
+          ) : (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`${copy.game?.hubHeroTitle || "Günün pratiği"}, ${level}, ${sessionSummary}. ${copy.game?.hubHeroCta || "Pratiğe başla"}`}
+              style={({ pressed }) => [
+                S.heroCard,
+                pressed && S.cardPressed,
+              ]}
+              onPress={() => onStartDailyPractice(reverseMode)}
+            >
+              <View style={S.heroTop}>
+                <View style={S.heroCopy}>
+                  <View style={S.recommendedBadge}>
+                    <Text style={S.recommendedBadgeTxt}>
+                      {copy.game?.hubBadgeRecommended || "ÖNERİLEN"}
+                    </Text>
+                  </View>
+                  <Text style={S.heroTitle}>
+                    {copy.game?.hubHeroTitle || "Günün pratiği"}
+                  </Text>
+                  <Text style={S.heroReason}>{sessionSummary}</Text>
+                  <Text style={S.heroMeta}>
+                    {level} ·{" "}
+                    {fill(copy.home?.practiceMetaEstimate || "{count} kelime · yaklaşık {minutes} dk", {
+                      count: practiceSessionSize,
+                      minutes: estimatedMinutes,
+                    })}
+                  </Text>
+                </View>
 
-            {/* Primary Gold CTA */}
-            <View style={S.heroCtaBtn}>
-              <Text style={S.heroCtaBtnTxt}>
-                {copy.game?.hubHeroCta || "Pratiğe başla →"}
-              </Text>
-            </View>
-          </Pressable>
+                <Image source={sprig} style={S.heroMascot} resizeMode="contain" />
+              </View>
+
+              {/* Primary Gold CTA */}
+              <View style={S.heroCtaBtn}>
+                <Text style={S.heroCtaBtnTxt}>
+                  {copy.game?.hubHeroCta || "Pratiğe başla →"}
+                </Text>
+              </View>
+            </Pressable>
+          )}
 
           {/* Level completion is a single deliberate exam, not something that
               accumulates from resurfaced words over days (roadmap
-              18-srs-flow-hardening.md "sınav" redesign). */}
-          {isExamAvailable && (
+              18-srs-flow-hardening.md "sınav" redesign). Hidden when the hero
+              above is already the exam entry point, to avoid the same CTA twice. */}
+          {showExamOptionCard && (
             <View style={S.sectionHdr}>
               <Text style={S.sectionTitle}>
                 {copy.game?.hubSectionOther || "Diğer seçenekler"}
@@ -187,7 +248,7 @@ export function PracticeHubScreen({
             </View>
           )}
 
-          {isExamAvailable && (
+          {showExamOptionCard && (
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={

@@ -24,9 +24,13 @@ interface Props {
   dailyXpEarned?: number;
   dailyXpTarget?: number;
   isDailyCompleted?: boolean;
+  /** True once every word in the level is learned — "practice again" would start an empty session (CORE-004). */
+  isLevelFullyLearned?: boolean;
   onPress: () => void;
   onViewProgress?: () => void;
   onPracticeAgain?: () => void;
+  /** Where the level-complete CTA sends the learner (the Practice tab shows the exam / next-level state). */
+  onGoToPracticeHub?: () => void;
   showGardenExplainer?: boolean;
   onDismissGardenExplainer?: () => void;
 }
@@ -47,15 +51,23 @@ export function GardenHeroCard({
   dailyXpEarned = 0,
   dailyXpTarget = 0,
   isDailyCompleted = false,
+  isLevelFullyLearned = false,
   onPress,
   onViewProgress,
   onPracticeAgain,
+  onGoToPracticeHub,
   showGardenExplainer = false,
   onDismissGardenExplainer,
 }: Props) {
   // Determine resolved state
   const isCompleted = practiceState === "completed" || isDailyCompleted;
   const isInProgress = practiceState === "in_progress" && !isCompleted;
+  // A fully-learned level takes priority over today's quest status — there is
+  // no fresh word left to build a session from either way (CORE-004), so the
+  // card must show the same "nothing left to practice" layout regardless of
+  // whether today's quota was technically reached.
+  const showLevelDoneLayout = isLevelFullyLearned;
+  const showCompletedLayout = showLevelDoneLayout || isCompleted;
 
   // Dynamic progress bar color based on percentage
   const stagePercent = gardenProgress.stageProgressPercent;
@@ -64,7 +76,7 @@ export function GardenHeroCard({
   const progressFillColor = "#7CC47F";
 
   // Mascot speech text
-  const mascotPrompt = isCompleted
+  const mascotPrompt = showCompletedLayout
     ? copy.home?.mascotPromptDone || "Bugün harika ilerledin! 👏"
     : isInProgress
       ? `${practiceCompletedCount}/${practiceTargetCount} Harika gidiyorsun! 🌱`
@@ -75,7 +87,7 @@ export function GardenHeroCard({
       {/* Top Header & Mascot */}
       <View style={S.top}>
         <View style={S.copy}>
-          {isCompleted ? (
+          {showCompletedLayout ? (
             <View style={S.completedTag}>
               <Ionicons name="checkmark-circle" size={14} color="#4CAF50" />
               <Text style={S.completedTagTxt}>
@@ -97,17 +109,21 @@ export function GardenHeroCard({
           )}
 
           <Text style={S.title}>
-            {isCompleted
-              ? copy.home?.heroCompletedTitle || "Bugünün pratiği tamamlandı"
-              : copy.home?.heroNotStarted || "Günün Pratiği"}
+            {showLevelDoneLayout
+              ? copy.home?.heroLevelDoneTitle || "Seviye tamamlandı!"
+              : isCompleted
+                ? copy.home?.heroCompletedTitle || "Bugünün pratiği tamamlandı"
+                : copy.home?.heroNotStarted || "Günün Pratiği"}
           </Text>
 
           <Text style={S.meta}>
-            {isCompleted
-              ? copy.home?.heroCompletedSubtitle || `${practiceTargetCount} kelimenin tamamını bitirdin.`
-              : isInProgress
-                ? `${practiceCompletedCount} / ${practiceTargetCount} kelime tamamlandı`
-                : `Bölümde ${unitLearned}/${unitTotal} kelime · +${dailyXpTarget} XP`}
+            {showLevelDoneLayout
+              ? copy.home?.heroLevelDoneSubtitle || "Bu seviyedeki tüm kelimeleri öğrendin."
+              : isCompleted
+                ? copy.home?.heroCompletedSubtitle || `${practiceTargetCount} kelimenin tamamını bitirdin.`
+                : isInProgress
+                  ? `${practiceCompletedCount} / ${practiceTargetCount} kelime tamamlandı`
+                  : `Bölümde ${unitLearned}/${unitTotal} kelime · +${dailyXpTarget} XP`}
           </Text>
         </View>
 
@@ -136,7 +152,7 @@ export function GardenHeroCard({
       </View>
 
       {/* Dynamic XP Progress Bar - ONLY shown when NOT completed */}
-      {!isCompleted && (
+      {!showCompletedLayout && (
         <View style={S.progressSection}>
           {/* This is a DIFFERENT tracker than "Bölümde X/Y" above — that one
               is this level's current unit; this one is every word learned
@@ -189,7 +205,23 @@ export function GardenHeroCard({
       )}
 
       {/* CTA Action Buttons */}
-      {isCompleted ? (
+      {showLevelDoneLayout ? (
+        // Every word in the level is learned — "practice again" would silently
+        // start an empty session (CORE-004). Route to the Practice tab instead,
+        // where the exam / next-level state is shown.
+        <View style={S.completedActions}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={copy.home?.heroGoToPracticeHubCta || "Sırada ne var, gör"}
+            style={({ pressed }) => [S.ctaBtn, S.ctaBtnCompleted, pressed && S.pressed]}
+            onPress={onGoToPracticeHub || onViewProgress || onPress}
+          >
+            <Text style={S.ctaBtnCompletedTxt}>
+              {copy.home?.heroGoToPracticeHubCta || "Sırada ne var, gör →"}
+            </Text>
+          </Pressable>
+        </View>
+      ) : isCompleted ? (
         <View style={S.completedActions}>
           <Pressable
             accessibilityRole="button"
