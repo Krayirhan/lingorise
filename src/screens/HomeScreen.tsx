@@ -62,7 +62,25 @@ export function HomeScreen({
           onDismissGardenExplainer={onDismissGardenExplainer}
         />
 
-        {/* Garden Skills Progress Section */}
+        {/* Daily Quests Area — moved above the Garden progress link (was
+            buried below it, off the first viewport per consumer reaudit's
+            "first 3 seconds" finding). Same today's-state content the hero
+            card already sits above; no new section. */}
+        <DailyQuestCard
+          copy={copy}
+          dailyQuests={viewModel.dailyQuests}
+          onHistoryPress={() => setHistoryVisible(true)}
+        />
+
+        {/* Recommended Word of the Day -> Opens Word Detail Modal */}
+        <RecommendedWordCard
+          copy={copy}
+          recommendedWord={viewModel.recommendedWord}
+          onPress={() => setSelectedWord(viewModel.recommendedWord)}
+        />
+
+        {/* Garden Skills Progress Section — a link-out to the Progress tab,
+            not today's-state content, so it now sits after the daily items. */}
         <View style={S.sectionRow}>
           <Text style={S.sectionTitle}>{copy.home.yourGarden}</Text>
           <Pressable
@@ -80,20 +98,6 @@ export function HomeScreen({
           copy={copy}
           skillProgress={viewModel.skillProgress}
           onViewProgress={() => onTabPress("progress")}
-        />
-
-        {/* Daily Quests Area */}
-        <DailyQuestCard
-          copy={copy}
-          dailyQuests={viewModel.dailyQuests}
-          onHistoryPress={() => setHistoryVisible(true)}
-        />
-
-        {/* Recommended Word of the Day -> Opens Word Detail Modal */}
-        <RecommendedWordCard
-          copy={copy}
-          recommendedWord={viewModel.recommendedWord}
-          onPress={() => setSelectedWord(viewModel.recommendedWord)}
         />
 
       </ScrollView>
