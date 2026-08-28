@@ -51,55 +51,69 @@ export function ProfileScreen({
           </View>
         </View>
 
-        {/* Account & Cloud Sync Management Card */}
-        <AccountManagementCard
-          copy={copy}
-          displayName={displayName}
-          avatarId={avatarId}
-          onDisplayNameChange={onDisplayNameChange}
-          onAvatarChange={onAvatarChange}
-          onOpenAuth={onAccountPress || (() => {})}
-        />
+        {/* Identity group — who the learner is and how they're doing.
+            Grouped under the account/sync eyebrow (previously defined in
+            copy but never wired to a heading) so it visually reads as one
+            "this is me" zone instead of two flat, equal-weight cards. */}
+        <View style={S.group}>
+          <Text style={S.groupLabel}>
+            {copy.profile?.accountSectionTitle || "Hesap & Bulut Senkronizasyonu"}
+          </Text>
 
-        {/* User Stats Card */}
-        <ProfileStatsCard
-          copy={copy}
-          level={level}
-          xp={xp}
-          streak={streak}
-          onChangeLevel={onChangeLevel}
-        />
+          <AccountManagementCard
+            copy={copy}
+            displayName={displayName}
+            avatarId={avatarId}
+            onDisplayNameChange={onDisplayNameChange}
+            onAvatarChange={onAvatarChange}
+            onOpenAuth={onAccountPress || (() => {})}
+          />
 
-        {/* Language Selection Card */}
-        <LanguageSettingsCard
-          copy={copy}
-          locale={locale}
-          onLocaleChange={onLocaleChange}
-        />
-
-        {/* Daily Reminders Toggle */}
-        <View style={S.settingCard}>
-          <View style={S.settingCopy}>
-            <Text style={S.settingTitle}>{copy.profile?.remindersTitle || "Günlük Hatırlatıcılar"}</Text>
-            <Text style={S.settingSub}>{copy.profile?.remindersSubtitle || "Her gün düzenli pratik için nazik bir bildirim al"}</Text>
-          </View>
-          <Switch
-            value={notificationsEnabled}
-            onValueChange={onNotificationToggle}
-            trackColor={{ false: C.line, true: C.primary }}
-            thumbColor={C.white}
-            accessibilityLabel={copy.profile?.remindersTitle || "Günlük Hatırlatıcılar"}
+          <ProfileStatsCard
+            copy={copy}
+            level={level}
+            xp={xp}
+            streak={streak}
+            onChangeLevel={onChangeLevel}
           />
         </View>
 
-        {/* Sound & Animation Accessibility Card */}
-        <SoundAndMotionCard
-          copy={copy}
-          soundEnabled={soundEnabled}
-          reduceMotion={reduceMotion}
-          onSoundToggle={onSoundToggle}
-          onReduceMotionToggle={onReduceMotionToggle}
-        />
+        {/* Preferences group — language, reminders, sound/motion are the
+            three genuinely homogeneous toggles; grouping them under one
+            eyebrow stops them reading as three unrelated flat cards. */}
+        <View style={S.group}>
+          <Text style={S.groupLabel}>
+            {copy.profile?.preferencesSectionTitle || "Tercihler"}
+          </Text>
+
+          <LanguageSettingsCard
+            copy={copy}
+            locale={locale}
+            onLocaleChange={onLocaleChange}
+          />
+
+          <View style={S.settingCard}>
+            <View style={S.settingCopy}>
+              <Text style={S.settingTitle}>{copy.profile?.remindersTitle || "Günlük Hatırlatıcılar"}</Text>
+              <Text style={S.settingSub}>{copy.profile?.remindersSubtitle || "Her gün düzenli pratik için nazik bir bildirim al"}</Text>
+            </View>
+            <Switch
+              value={notificationsEnabled}
+              onValueChange={onNotificationToggle}
+              trackColor={{ false: C.line, true: C.primary }}
+              thumbColor={C.white}
+              accessibilityLabel={copy.profile?.remindersTitle || "Günlük Hatırlatıcılar"}
+            />
+          </View>
+
+          <SoundAndMotionCard
+            copy={copy}
+            soundEnabled={soundEnabled}
+            reduceMotion={reduceMotion}
+            onSoundToggle={onSoundToggle}
+            onReduceMotionToggle={onReduceMotionToggle}
+          />
+        </View>
 
         {/* Data & Privacy Card */}
         <DataManagementCard copy={copy} onDataReset={onDataReset} />
@@ -136,6 +150,8 @@ const S = StyleSheet.create({
   pageEyebrow: { color: C.primary, fontSize: 11.5, fontWeight: "800", letterSpacing: 1.2 },
   pageTitle: { color: C.ink, fontSize: 26, fontWeight: "700", letterSpacing: -0.3 },
   content: { paddingHorizontal: 20, paddingTop: 14, gap: 16, paddingBottom: 28 },
+  group: { gap: 12 },
+  groupLabel: { color: C.primary, fontSize: 11, fontWeight: "700", letterSpacing: 1.1, marginLeft: 2 },
   settingCard: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", backgroundColor: C.surface, padding: 16, borderRadius: radius.lg || 18, borderWidth: 1, borderColor: C.line, gap: 10 },
   settingCopy: { flex: 1 },
   settingTitle: { color: C.ink, fontSize: 15, fontWeight: "800" },
