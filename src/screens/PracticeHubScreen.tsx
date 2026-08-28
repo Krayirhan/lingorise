@@ -52,7 +52,6 @@ export function PracticeHubScreen({
   isLevelFullyLearned,
 }: Props) {
   const [reverseMode, setReverseMode] = useState(false);
-  const streakText = `${streak} ${copy.game?.hubStreakSuffix || "gün seri"}`;
   const estimatedMinutes = Math.max(1, Math.round(practiceSessionSize * 0.15));
 
   const fill = (template: string, values: Record<string, string | number>) =>
@@ -94,58 +93,6 @@ export function PracticeHubScreen({
               {copy.game?.hubSubtitle || "Sana en uygun pratiği seç."}
             </Text>
         </View>
-
-        <View style={S.sessionSizeCard}>
-          <Text style={S.sessionSizeTitle}>{copy.game?.hubSessionLength || "Oturum uzunluğu"}</Text>
-          <View style={S.sessionSizeRow}>
-            {([5, 10, 20, 30] as const).map((size) => (
-              <Pressable key={size} accessibilityRole="button" accessibilityLabel={`${size} soru`} onPress={() => onPracticeSessionSizeChange(size)} style={[S.sessionSizeButton, practiceSessionSize === size && S.sessionSizeButtonActive]}>
-                <Text style={[S.sessionSizeText, practiceSessionSize === size && S.sessionSizeTextActive]}>{size}</Text>
-              </Pressable>
-            ))}
-          </View>
-          <Text style={S.sessionSizeHint}>{fill(copy.game?.hubSessionLengthHint || "Her pratikte {count} kelime gelir.", { count: practiceSessionSize })}</Text>
-
-          {/* Directional Mode Switcher (EN -> TR / TR -> EN) */}
-          <View style={S.modeRow}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityState={{ selected: !reverseMode }}
-              style={[S.modeButton, !reverseMode && S.modeButtonActive]}
-              onPress={() => setReverseMode(false)}
-            >
-              <Text style={[S.modeButtonText, !reverseMode && S.modeButtonTextActive]}>
-                {copy.game?.hubModePickMeaning || "İngilizce → Türkçe"}
-              </Text>
-            </Pressable>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityState={{ selected: reverseMode }}
-              style={[S.modeButton, reverseMode && S.modeButtonActive]}
-              onPress={() => setReverseMode(true)}
-            >
-              <Text style={[S.modeButtonText, reverseMode && S.modeButtonTextActive]}>
-                {copy.game?.hubModePickWord || "Türkçe → İngilizce"}
-              </Text>
-            </Pressable>
-          </View>
-        </View>
-
-          {/* User Status Mini-Stats Row */}
-          <View style={S.statsRow}>
-            <View style={S.statPill}>
-              <Text style={S.statLvlBadge}>{level}</Text>
-              <Text style={S.statPillTxt}>{copy.game?.hubLevelPrefix || "Seviye"}</Text>
-            </View>
-            <View style={S.statPill}>
-              <Ionicons name="flash" size={13} color={C.rewardText} />
-              <Text style={S.statPillTxt}>{xp} XP</Text>
-            </View>
-            <View style={S.statPill}>
-              <Ionicons name="flame" size={13} color={C.attention} />
-              <Text style={S.statPillTxt}>{streakText}</Text>
-            </View>
-          </View>
 
           {/* Recommended Daily Practice Hero Card — replaced by a level-complete
               state once there are no fresh words left to practice (CORE-004). */}
@@ -235,6 +182,44 @@ export function PracticeHubScreen({
               </View>
             </Pressable>
           )}
+
+          {/* Session configuration — secondary to the hero CTA above (CD-002:
+              config used to lead the screen, ahead of the motivating hero). */}
+          <View style={S.sessionSizeCard}>
+            <Text style={S.sessionSizeTitle}>{copy.game?.hubSessionLength || "Oturum uzunluğu"}</Text>
+            <View style={S.sessionSizeRow}>
+              {([5, 10, 20, 30] as const).map((size) => (
+                <Pressable key={size} accessibilityRole="button" accessibilityLabel={`${size} soru`} onPress={() => onPracticeSessionSizeChange(size)} style={[S.sessionSizeButton, practiceSessionSize === size && S.sessionSizeButtonActive]}>
+                  <Text style={[S.sessionSizeText, practiceSessionSize === size && S.sessionSizeTextActive]}>{size}</Text>
+                </Pressable>
+              ))}
+            </View>
+            <Text style={S.sessionSizeHint}>{fill(copy.game?.hubSessionLengthHint || "Her pratikte {count} kelime gelir.", { count: practiceSessionSize })}</Text>
+
+            {/* Directional Mode Switcher (EN -> TR / TR -> EN) */}
+            <View style={S.modeRow}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityState={{ selected: !reverseMode }}
+                style={[S.modeButton, !reverseMode && S.modeButtonActive]}
+                onPress={() => setReverseMode(false)}
+              >
+                <Text style={[S.modeButtonText, !reverseMode && S.modeButtonTextActive]}>
+                  {copy.game?.hubModePickMeaning || "İngilizce → Türkçe"}
+                </Text>
+              </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityState={{ selected: reverseMode }}
+                style={[S.modeButton, reverseMode && S.modeButtonActive]}
+                onPress={() => setReverseMode(true)}
+              >
+                <Text style={[S.modeButtonText, reverseMode && S.modeButtonTextActive]}>
+                  {copy.game?.hubModePickWord || "Türkçe → İngilizce"}
+                </Text>
+              </Pressable>
+            </View>
+          </View>
 
           {/* Level completion is a single deliberate exam, not something that
               accumulates from resurfaced words over days (roadmap
@@ -331,36 +316,6 @@ const S = StyleSheet.create({
     fontSize: 15,
     lineHeight: 20,
     fontWeight: "400",
-  },
-  statsRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    flexWrap: "wrap",
-    marginTop: 2,
-  },
-  statPill: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-    backgroundColor: C.streak,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: radius.md || 14,
-  },
-  statLvlBadge: {
-    backgroundColor: C.primarySoft,
-    color: C.primary,
-    fontSize: 10,
-    fontWeight: "800",
-    paddingHorizontal: 5,
-    paddingVertical: 1,
-    borderRadius: radius.xs,
-  },
-  statPillTxt: {
-    color: C.ink,
-    fontSize: 12,
-    fontWeight: "700",
   },
   heroCard: {
     backgroundColor: C.primary,
