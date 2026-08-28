@@ -7,6 +7,7 @@ import { clearAllLocalData, exportUserDataJSON } from "../../../services/storage
 import { auth } from "../../../services/firebase";
 import { Copy } from "../../../i18n/en";
 import { C, radius } from "../../../theme/colors";
+import { AppDialog } from "../../../components/AppDialog";
 
 interface Props {
   copy: Copy;
@@ -21,6 +22,8 @@ export function DataManagementCard({ copy, onDataReset }: Props) {
   const isCloudSynced = !!auth.currentUser;
   const [privacyModalVisible, setPrivacyModalVisible] = useState(false);
   const [backupExported, setBackupExported] = useState<string | null>(null);
+  const [resetConfirmVisible, setResetConfirmVisible] = useState(false);
+  const [resetSuccessVisible, setResetSuccessVisible] = useState(false);
 
   const handleExport = async () => {
     try {
@@ -40,31 +43,35 @@ export function DataManagementCard({ copy, onDataReset }: Props) {
     }
   };
 
-  const handleResetData = () => {
-    const confirmMsg =
-      copy.profile?.resetDataConfirm ||
-      "Tüm yerel ilerlemeni ve verilerini sıfırlamak istediğinden emin misin? Bu işlem geri alınamaz.";
+  const resetConfirmMsg =
+    copy.profile?.resetDataConfirm ||
+    "Tüm yerel ilerlemeni ve verilerini sıfırlamak istediğinden emin misin? Bu işlem geri alınamaz.";
 
+  const handleResetData = () => {
     if (Platform.OS === "web") {
-      if (window.confirm(confirmMsg)) {
+      if (window.confirm(resetConfirmMsg)) {
         void executeReset();
       }
     } else {
-      Alert.alert("Verileri Sıfırla", confirmMsg, [
-        { text: "İptal", style: "cancel" },
-        {
-          text: "Sıfırla",
-          style: "destructive",
-          onPress: () => void executeReset(),
-        },
-      ]);
+      setResetConfirmVisible(true);
     }
   };
+
+  const handleConfirmReset = () => {
+    setResetConfirmVisible(false);
+    void executeReset();
+  };
+
+  const handleCancelReset = () => setResetConfirmVisible(false);
 
   const executeReset = async () => {
     await clearAllLocalData();
     if (onDataReset) onDataReset();
-    Alert.alert("Başarılı", "Yerel veriler sıfırlandı.");
+    if (Platform.OS === "web") {
+      Alert.alert("Başarılı", "Yerel veriler sıfırlandı.");
+    } else {
+      setResetSuccessVisible(true);
+    }
   };
 
   return (
@@ -192,6 +199,36 @@ export function DataManagementCard({ copy, onDataReset }: Props) {
           </View>
         </SafeAreaView>
       </Modal>
+
+      {/* Reset Data Confirmation Dialog (CD-001) */}
+      <AppDialog
+        visible={resetConfirmVisible}
+        title="Verileri Sıfırla"
+        message={resetConfirmMsg}
+        primaryAction={{
+          label: "İptal",
+          onPress: handleCancelReset,
+        }}
+        secondaryAction={{
+          label: "Sıfırla",
+          onPress: handleConfirmReset,
+          destructive: true,
+        }}
+        onRequestClose={handleCancelReset}
+      />
+
+      {/* Reset Success Dialog (CD-001) */}
+      <AppDialog
+        visible={resetSuccessVisible}
+        title="Başarılı"
+        message="Yerel veriler sıfırlandı."
+        icon={{ name: "checkmark-circle", tone: "success" }}
+        primaryAction={{
+          label: "Tamam",
+          onPress: () => setResetSuccessVisible(false),
+        }}
+        onRequestClose={() => setResetSuccessVisible(false)}
+      />
 
       {/* Backup JSON Viewer Modal */}
       {backupExported && (

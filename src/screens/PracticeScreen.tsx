@@ -1,5 +1,5 @@
-import { useEffect } from "react";
-import { Alert, BackHandler, Platform, Pressable, ScrollView, StatusBar, StyleSheet, Text, View } from "react-native";
+import { useEffect, useState } from "react";
+import { BackHandler, Platform, Pressable, ScrollView, StatusBar, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { Copy } from "../i18n/en";
@@ -15,6 +15,7 @@ import { AnswerList } from "../features/practice/components/AnswerList";
 import { FeedbackCard } from "../features/practice/components/FeedbackCard";
 import { PracticeMascot } from "../features/practice/components/PracticeMascot";
 import { PrimaryButton } from "../components/PrimaryButton";
+import { AppDialog } from "../components/AppDialog";
 import { SessionSummaryCard } from "../features/practice/components/SessionSummaryCard";
 import { track } from "../services/telemetry";
 import { EXAM_PASS_COUNT, isExamPassed } from "../domain/learning/levelExam";
@@ -66,35 +67,35 @@ export function PracticeScreen({
   const speech = useSpeech(wordPrompt, question.pronunciation, soundEnabled, reduceMotion);
   const session = usePracticeSession(question, correctAnswer, onCheck);
   const feedback = usePracticeFeedback(submitted, isCorrect, reduceMotion);
+  const [exitDialogVisible, setExitDialogVisible] = useState(false);
+
+  const exitTitle = copy.game?.exitConfirmTitle || "Pratikten çıkmak istiyor musun?";
+  const exitMsg = copy.game?.exitConfirmMessage || "Bu oturumdaki çözülmemiş sorular kaydedilmeyecek.";
+  const trackAbandon = () =>
+    track("session_abandoned", { questionsAnswered: sessionAnswers.length, questionsTotal: totalQuestions });
 
   const handleRequestExit = () => {
     if (isSessionCompleted) {
       onBack();
       return;
     }
-    const title = copy.game?.exitConfirmTitle || "Pratikten çıkmak istiyor musun?";
-    const msg = copy.game?.exitConfirmMessage || "Bu oturumdaki çözülmemiş sorular kaydedilmeyecek.";
-    const trackAbandon = () =>
-      track("session_abandoned", { questionsAnswered: sessionAnswers.length, questionsTotal: totalQuestions });
     if (Platform.OS === "web") {
-      if (window.confirm(`${title}\n${msg}`)) {
+      if (window.confirm(`${exitTitle}\n${exitMsg}`)) {
         trackAbandon();
         onBack();
       }
     } else {
-      Alert.alert(title, msg, [
-        { text: copy.game?.exitCancel || "Devam Et", style: "cancel" },
-        {
-          text: copy.game?.exitConfirm || "Çıkış Yap",
-          style: "destructive",
-          onPress: () => {
-            trackAbandon();
-            onBack();
-          },
-        },
-      ]);
+      setExitDialogVisible(true);
     }
   };
+
+  const handleConfirmExit = () => {
+    setExitDialogVisible(false);
+    trackAbandon();
+    onBack();
+  };
+
+  const handleCancelExit = () => setExitDialogVisible(false);
 
   useEffect(() => {
     const sub = BackHandler.addEventListener("hardwareBackPress", () => {
@@ -242,6 +243,23 @@ export function PracticeScreen({
           )}
         </ScrollView>
       </View>
+
+      <AppDialog
+        visible={exitDialogVisible}
+        title={exitTitle}
+        message={exitMsg}
+        primaryAction={{
+          label: copy.game?.exitCancel || "Devam Et",
+          onPress: handleCancelExit,
+        }}
+        secondaryAction={{
+          label: copy.game?.exitConfirm || "Çıkış Yap",
+          onPress: handleConfirmExit,
+          destructive: true,
+        }}
+        onRequestClose={handleCancelExit}
+        reduceMotion={reduceMotion}
+      />
     </SafeAreaView>
   );
 }
