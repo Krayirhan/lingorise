@@ -27,7 +27,7 @@
     "expo-file-system": "~56.0.10",
     "expo-font": "~56.0.7",
     "expo-notifications": "~56.0.24",
-    "expo-sharing": "~56.0.25",
+    "expo-sharing": "~57.0.15",
     "expo-speech": "~56.0.3",
     "expo-status-bar": "~56.0.4",
     "expo-system-ui": "~56.0.5",
