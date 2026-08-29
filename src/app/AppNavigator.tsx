@@ -32,7 +32,7 @@ interface Props {
 }
 
 export function AppNavigator({ userProgress, onAccountPress, deepLinkTarget, onDeepLinkConsumed }: Props) {
-  const { userData, recordAnswer, bookmarkQuestion, setLocale, setLevel, markLevelCelebrated, markGardenExplainerSeen, completeOnboarding, markLevelExamPassed, badgeUnlockQueue, dismissBadgeUnlock, saveFailureNotice, clearSaveFailureNotice } = userProgress;
+  const { userData, recordAnswer, bookmarkQuestion, setLocale, setLevel, markLevelCelebrated, markGardenExplainerSeen, completeOnboarding, markLevelExamPassed, badgeUnlockQueue, dismissBadgeUnlock, saveFailureNotice, clearSaveFailureNotice, cloudSyncFailureNotice, clearCloudSyncFailureNotice } = userProgress;
   const session = useAppSession(userData, userProgress.setActiveSession);
   const [levelSwitcherOpen, setLevelSwitcherOpen] = useState(false);
   const { showToast } = useToast();
@@ -42,6 +42,12 @@ export function AppNavigator({ userProgress, onAccountPress, deepLinkTarget, onD
     showToast({ message: saveFailureNotice, type: "attention", durationMs: 5000 });
     clearSaveFailureNotice();
   }, [saveFailureNotice, showToast, clearSaveFailureNotice]);
+
+  useEffect(() => {
+    if (!cloudSyncFailureNotice) return;
+    showToast({ message: cloudSyncFailureNotice, type: "attention", durationMs: 5000 });
+    clearCloudSyncFailureNotice();
+  }, [cloudSyncFailureNotice, showToast, clearCloudSyncFailureNotice]);
 
   const copy = copyByLocale[userData.locale];
   const homeViewModel = useHomeViewModel(userData, copy, userData.locale);
@@ -297,7 +303,7 @@ export function AppNavigator({ userProgress, onAccountPress, deepLinkTarget, onD
         onNotificationToggle={userProgress.setNotificationsEnabled}
         onDisplayNameChange={userProgress.setDisplayName}
         onAvatarChange={userProgress.setAvatarId}
-        onDataReset={userProgress.refresh}
+        onDataReset={userProgress.reloadLocalOnly}
         onRefresh={userProgress.refresh}
         onLocaleChange={setLocale}
         onChangeLevel={() => setLevelSwitcherOpen(true)}

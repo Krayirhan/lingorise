@@ -1,13 +1,46 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
+
+    // Bounded, proportionate field-shape validation for the owner-writable
+    // progress fields (SEC-QA-001 / GLOBAL-QA-014). Firestore rules cannot
+    // (and should not try to) validate every nested field of a document this
+    // shape-flexible — this mirrors the canonical merge-field classification
+    // in src/domain/sync/progressMerge.ts for the fields where an
+    // out-of-range or wrong-type value would let a client fabricate an
+    // implausible progress state, without turning this into a full schema
+    // validator.
+    function isValidLevelCode(level) {
+      return level in ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
+    }
+
+    function isNonNegativeNumber(value) {
+      return value is number && value >= 0;
+    }
+
+    function isValidUserDoc(data) {
+      return (!('xp' in data) || isNonNegativeNumber(data.xp))
+        && (!('streak' in data) || isNonNegativeNumber(data.streak))
+        && (!('level' in data) || isValidLevelCode(data.level))
+        && (!('passedLevelExams' in data) || data.passedLevelExams is list)
+        && (!('unlockedBadges' in data) || data.unlockedBadges is list)
+        && (!('solvedQuestionIds' in data) || data.solvedQuestionIds is list)
+        && (!('rewardedQuestionIds' in data) || data.rewardedQuestionIds is list)
+        && (!('celebratedLevels' in data) || data.celebratedLevels is list);
+    }
+
     // User progress and profile data: Only authenticated owner can read & write
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow create, update: if request.auth != null && request.auth.uid == userId
+        && isValidUserDoc(request.resource.data);
+      allow delete: if request.auth != null && request.auth.uid == userId;
 
       match /progress/{document=**} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow create, update: if request.auth != null && request.auth.uid == userId
+          && isValidUserDoc(request.resource.data);
+        allow delete: if request.auth != null && request.auth.uid == userId;
       }
 
       match /dailyTasks/{document=**} {

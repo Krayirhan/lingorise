@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LingoRise — Hesap Silme / Account Deletion</title>
+<style>
+  :root { color-scheme: light; }
+  body { margin:0; background:#F7F4EC; color:#1C1B1A; font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif; line-height:1.6; }
+  .wrap { max-width: 680px; margin: 0 auto; padding: 32px 20px 80px; }
+  h1 { font-size: 1.5rem; }
+  h2 { font-size: 1.1rem; margin-top: 1.8em; color:#6B4355; }
+  .lang-toggle { display:flex; gap:8px; margin-bottom: 1.5em; }
+  .lang-toggle button { border:1px solid #E7E1D7; background:#FFFFFF; padding:6px 14px; border-radius:8px; font-size:0.85rem; cursor:pointer; }
+  .lang-toggle button.active { background:#6B4355; color:#FFFFFF; border-color:#6B4355; }
+  section[lang="en"] { display:none; }
+  section.active { display:block !important; }
+  a { color:#6B4355; }
+  ol li { margin-bottom: 0.6em; }
+  footer { margin-top: 3em; font-size:0.8rem; color:#6B6763; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="lang-toggle">
+    <button id="btn-tr" class="active" onclick="showLang('tr')">Türkçe</button>
+    <button id="btn-en" onclick="showLang('en')">English</button>
+  </div>
+
+  <section id="sec-tr" lang="tr" class="active">
+    <h1>Hesap Silme Talimatları</h1>
+    <p>LingoRise hesabınızı ve buluta kayıtlı ilerleme verilerinizi kalıcı olarak silmek için:</p>
+    <ol>
+      <li>LingoRise uygulamasını açın ve oturum açtığınızdan emin olun.</li>
+      <li><b>Profil</b> sekmesine gidin.</li>
+      <li><b>Hesap Yönetimi</b> bölümünde <b>Hesabı Sil</b> seçeneğine dokunun.</li>
+      <li>Onay isteğini kabul edin.</li>
+    </ol>
+
+    <h2>Ne silinir?</h2>
+    <p>Firestore'daki ilerleme belgeniz (XP, seri, seviye, çözülen sorular, geçilen seviye sınavları, favori kelimeler, pratik/görev geçmişi dahil) ve Firebase Authentication hesabınız kalıcı olarak silinir.</p>
+
+    <h2>Sınırlamalar</h2>
+    <p>Hesap silme, istemci tarafından tetiklenen iki ayrı adımdan oluşur: önce bulut verisi silinir, ardından kimlik doğrulama hesabı silinir. Bir adım başarısız olursa uygulama bunu size açıkça bildirir ve yeniden denemenizi ister — kısmi bir hata asla "tamamlandı" olarak gösterilmez. Bu cihazdaki yerel kopya, hesap silme işleminden ayrı olarak "Yerel Verileri Sıfırla" ile de temizlenebilir, ancak hesap hâlâ mevcutken bu işlem buluttaki veriyi silmez.</p>
+
+    <h2>Uygulama içi silme ile bu sayfanın ilişkisi</h2>
+    <p>Hesap silme yalnızca uygulama içinden, oturum açmış durumdayken gerçekleştirilebilir — bu web sayfası üzerinden uzaktan bir silme talebi göndermek şu anda mümkün değildir. Uygulamaya erişiminiz yoksa (örn. cihazınızı kaybettiyseniz), silme talebi için <a href="mailto:fusturan@gmail.com">fusturan@gmail.com</a> adresinden bizimle iletişime geçin; kimliğinizi doğruladıktan sonra hesabınızı manuel olarak sileriz.</p>
+
+    <p>Ayrıca bakınız: <a href="/privacy-policy/">Gizlilik Politikası</a>.</p>
+  </section>
+
+  <section id="sec-en" lang="en">
+    <h1>Account Deletion Instructions</h1>
+    <p>To permanently delete your LingoRise account and your cloud-stored progress data:</p>
+    <ol>
+      <li>Open the LingoRise app and make sure you are signed in.</li>
+      <li>Go to the <b>Profile</b> tab.</li>
+      <li>In the <b>Account Management</b> section, tap <b>Delete Account</b>.</li>
+      <li>Confirm the request.</li>
+    </ol>
+
+    <h2>What gets deleted?</h2>
+    <p>Your progress document in Firestore (including XP, streak, level, solved questions, passed level exams, favorite words, and practice/quest history) and your Firebase Authentication account are permanently deleted.</p>
+
+    <h2>Limitations</h2>
+    <p>Account deletion is two separate, client-initiated steps: cloud data is deleted first, then the authentication account. If one step fails, the app explicitly tells you and asks you to retry — a partial failure is never reported as "complete." The local copy on this device can also be cleared separately via "Reset Local Data," but while the account still exists, that action does not delete your cloud data.</p>
+
+    <h2>How this relates to in-app deletion</h2>
+    <p>Account deletion can currently only be performed from inside the app while signed in — this web page does not support submitting a remote deletion request. If you no longer have access to the app (e.g., you lost your device), contact us at <a href="mailto:fusturan@gmail.com">fusturan@gmail.com</a> to request deletion; we will verify your identity and delete your account manually.</p>
+
+    <p>See also: <a href="/privacy-policy/">Privacy Policy</a>.</p>
+  </section>
+
+  <footer>LingoRise · <a href="mailto:fusturan@gmail.com">fusturan@gmail.com</a></footer>
+</div>
+<script>
+function showLang(lang){
+  document.getElementById('sec-tr').classList.toggle('active', lang==='tr');
+  document.getElementById('sec-en').classList.toggle('active', lang==='en');
+  document.getElementById('btn-tr').classList.toggle('active', lang==='tr');
+  document.getElementById('btn-en').classList.toggle('active', lang==='en');
+}
+</script>
+</body>
+</html>

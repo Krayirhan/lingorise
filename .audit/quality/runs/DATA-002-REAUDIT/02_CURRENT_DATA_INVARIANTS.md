@@ -1,0 +1,44 @@
+# DATA-002-REAUDIT — Current Data Invariants
+
+Independently reconstructed from the actual current working-tree source (not from Sprint 1's own field-semantics matrix, though the two are cross-checked against each other below).
+
+## Canonical progress ownership — independently assessed
+
+**A. Is there now ONE authoritative ownership mechanism?** For the *merge* layer: yes. `src/domain/sync/progressMerge.ts`'s `PROGRESS_FIELD_STRATEGY: Record<keyof UserData, FieldStrategy>` is the single declaration every `UserData` field's merge behavior derives from.
+
+**B. What exactly is canonical?** The merge strategy per field — not the field's existence, default value, or local-storage persistence, which remain owned elsewhere (see C/D/E/F/G below).
+
+**C. Which production consumers derive from it?** Only `mergeUserData()` itself, called by `mergeAndSyncUserData()` (`src/services/firestore.ts`) via `decideMergeAction()` (`src/domain/sync/remoteSync.ts`). `syncUserData()` (full-document mirror) and `syncUserProgress()` (curated summary subset) do not consult the registry — they write the already-merged result (`syncUserData`) or a separately-curated field list (`syncUserProgress`), respectively. This is architecturally correct for `syncUserData` (it just mirrors whatever `UserData` object it's given) but means `syncUserProgress`'s own field list remains a second, smaller, hand-maintained list outside the registry's protection (see `07_FINDING_RECONCILIATION.md`).
+
+**D. Can a developer add a new persisted progress field and silently forget the merge layer?** No — see E.
+
+**E. Would TypeScript fail?** Yes, verified directly: `PROGRESS_FIELD_STRATEGY`'s type annotation is `Record<keyof UserData, FieldStrategy>`. Adding a field to the `UserData` interface (`src/types/user.ts`) without adding a matching entry to this object literal produces a TS2741/TS2739-class compile error (a required property is missing). Independently confirmed by reading the type definition — this is a real, load-bearing TypeScript mapped-type guarantee, not an aspirational comment.
+
+**F. Would an exhaustive executable test fail?** Partially, as a backstop: `tests/testSuite.ts` §56 asserts `Object.keys(DEFAULT_USER_DATA).every((key) => key in PROGRESS_FIELD_STRATEGY)` — this only catches a field present in `DEFAULT_USER_DATA` missing from the registry (a weaker, redundant check given E already provides a stronger compile-time guarantee for ALL of `UserData`, including fields absent from `DEFAULT_USER_DATA`). It does NOT verify that `mergeUserData()`'s body actually implements the strategy the registry declares for a given field — that gap is covered field-by-field by dedicated assertions instead (verified per-field in `03_MERGE_AND_FIELD_MATRIX.md`), not by a single exhaustive mechanism.
+
+**G. Are any safety-critical hand-maintained duplicate lists still capable of drifting?**
+- `syncUserProgress()`'s field list (`xp`, `level`, `streak`, `lastActiveDate`, `practiceHistory`) — YES, still a separate manual list, unconnected to the registry. Current risk: LOW — this doc is an intentionally smaller summary (not a full mirror), `users/{uid}` (written by `syncUserData`, which mirrors the full object) remains the merge's actual read source, and no evidence was found that `progress/main`'s narrower scope is currently relied upon anywhere. Tracked as a Maintainability-tier observation, not elevated to a new Data finding (see `07_FINDING_RECONCILIATION.md`).
+- `normalizeUserData()`'s field-by-field defaulting (`src/services/storage.ts`'s `fillDefaults()`) — a separate, narrower concern; assessed in detail below.
+
+**Layer distinction, as required:**
+- **MERGE ownership** (cross-device reconciliation): compiler-enforced, established. STRONG.
+- **NORMALIZATION ownership** (local-storage load-time defaulting/validation): NOT compiler-enforced; a plain object-spread pattern with explicit validation only for array-typed fields. See below.
+- **PERSISTENCE ownership** (what gets written to `users/{uid}` vs. `progress/main`): `syncUserData` mirrors the full object (no field list to drift); `syncUserProgress` has its own separate, smaller, hand-maintained list (not compiler-enforced, but bounded in current impact — see G above).
+
+Sprint 1's own claim ("Canonical progress ownership: ESTABLISHED") is accurate for the MERGE layer specifically, and only for that layer — it should not be read as "every persistence-adjacent field list is now compiler-enforced." This reaudit's independent verification narrows the claim's scope rather than rejecting it.
+
+## normalizeUserData() residual risk — dedicated examination
+
+1. **Is the manual list real?** Yes — `fillDefaults()` (`src/services/storage.ts:265-291`) explicitly special-cases: `dailyGoalMinutes`, `practiceSessionSize`, `notificationsEnabled`, `soundEnabled`, `reduceMotion`, `avatarId`, `displayName`, `favoriteWordIds`, `solvedQuestionIds`, `rewardedQuestionIds`, `unlockedBadges`, `dailyQuests`, `dailyReviewXpIds`, `learningProgress`, `celebratedLevels`, `passedLevelExams`, `practiceHistory`, `questHistory`, `activeSession`. Everything else (`xp`, `level`, `locale`, `streak`, `lastActiveDate`, `onboardingCompleted`, `lastSyncSuccessAt`, `lastKnownServerDate`, `schemaVersion`, `hasSeenGardenExplainer`, `lastCompletedWord`) passes through via `{...DEFAULT_USER_DATA, ...parsed}`'s plain object spread — NOT specially handled.
+
+2. **Can a current legitimate field be silently dropped, defaulted, reset, or transformed incorrectly?** For the *not-explicitly-listed* scalar fields above: NO — the object spread preserves any present, valid value and only falls back to the default when the key is genuinely absent from `parsed` (i.e. never persisted, or corrupted-to-`undefined` at the JSON layer, which is not otherwise a plausible outcome of `JSON.stringify`/`JSON.parse` round-tripping a real value). For the explicitly-listed array-typed fields: a value is preserved if and only if `Array.isArray(...)` is true, otherwise it resets to `[]`/default — this is a defensive validation for CORRUPT data, not a mechanism that drops a *legitimately shaped* value. Independently traced through every one of the 18 explicitly-listed fields; none of them can lose a legitimately-typed value through this function.
+
+3/4. **Maintainability debt vs. a genuine Data Integrity drift path?** This reaudit's independent conclusion narrows Sprint 1's own self-reported characterization: the real risk is **maintainability debt with a narrow, low-materiality Data-adjacent edge**, not a defect comparable in kind to the historical merge bug. The historical DATA-QA-002 defect silently discarded *always-present, correctly-shaped* data during *normal, frequent operation* (every signed-in cold start after any transient sync hiccup). By contrast, a hypothetical future gap here would require BOTH (a) a new field added to `UserData` without a corresponding `fillDefaults()` entry AND (b) that specific field needing array/shape validation (not a plain pass-through-safe scalar) for the gap to matter at all — a narrow, unlikely-to-recur combination, and even then the failure mode would be "a corrupted value isn't cleaned up," not "a valid value is dropped." Not elevated to a new DATA-QA finding; noted as a bounded confidence gap contributing a small deduction to the Schema migration & normalization dimension (unchanged from baseline, since Sprint 1 did not touch this function).
+
+5. **Does executable migration/normalization coverage protect it?** Partially — `tests/testSuite.ts` exercises `migrateV1ToV2`/`migrateV2ToV3`/`normalizeUserData` against several representative legacy shapes (unchanged by Sprint 1, still passing), but there is no exhaustive per-field test of `fillDefaults()` specifically.
+
+6. **If a new field is added, what happens?** A new scalar field: passes through safely (untested but structurally safe, per #2). A new array-typed field needing validation: normalizes to a default only when actually malformed; otherwise passes through correctly even without being added to the explicit list, since `{...parsed}` already includes it — the explicit `Array.isArray` guards exist for defensive validation, not to "let the field through" (it would already come through via the spread). This means the practical risk is even smaller than characterized in point 3/4: omitting a new field from the explicit list mainly means missing a validation guard, not silently discarding a valid value.
+
+7. **Could old persisted user data lose legitimate state while loading?** No evidence found of this happening for any currently-existing field. Confirmed via the passing `testSuite.ts` migration-scenario assertions (unchanged, still 100% passing).
+
+**Conclusion:** MAINTAINABILITY RISK (matches Sprint 1's own residual-risk framing, refined and narrowed by this independent examination) — not a Data Integrity finding.

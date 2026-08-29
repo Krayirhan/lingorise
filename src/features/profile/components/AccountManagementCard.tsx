@@ -3,7 +3,7 @@ import { ActivityIndicator, Alert, Platform, Pressable, Text, View } from "react
 import { updateProfile } from "firebase/auth";
 import { Ionicons } from "@expo/vector-icons";
 import { auth } from "../../../services/firebase";
-import { deleteAccount, logout, resetPassword, sendVerificationEmail } from "../../../services/auth";
+import { deleteAccount, logout, PartialAccountDeletionError, resetPassword, sendVerificationEmail } from "../../../services/auth";
 import { Copy } from "../../../i18n/en";
 import { C } from "../../../theme/colors";
 import { AvatarPicker, AVATARS } from "./AvatarPicker";
@@ -125,15 +125,24 @@ export function AccountManagementCard({
       await deleteAccount();
       if (onLoggedOut) onLoggedOut();
     } catch (e: any) {
-      if (e?.code === "auth/requires-recent-login") {
+      // A PartialAccountDeletionError means the user's data is already gone
+      // — only the Auth credential remains — so the message must not imply
+      // deletion never started (DATA-QA-004 / SEC-QA-003 / GLOBAL-QA-007).
+      const isPartial = e instanceof PartialAccountDeletionError;
+      const underlying = isPartial ? e.cause : e;
+      if (underlying?.code === "auth/requires-recent-login") {
         Alert.alert(
           "Yeniden Giriş Gerekli",
-          "Güvenliğin için hesabını silmeden önce lütfen oturumu kapatıp yeniden giriş yap."
+          isPartial
+            ? "Verilerin zaten silindi; hesabını tamamen kapatmak için lütfen yeniden giriş yapıp tekrar dene."
+            : "Güvenliğin için hesabını silmeden önce lütfen oturumu kapatıp yeniden giriş yap."
         );
       } else {
         Alert.alert(
           "Hata",
-          "Hesap silinirken bir hata oluştu. Lütfen tekrar giriş yapıp deneyin."
+          isPartial
+            ? "Verilerin silindi, ancak hesap kaydın tam olarak kaldırılamadı. Lütfen tekrar giriş yapıp tekrar dene."
+            : "Hesap silinirken bir hata oluştu. Lütfen tekrar giriş yapıp deneyin."
         );
       }
     } finally {

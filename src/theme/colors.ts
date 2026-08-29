@@ -22,7 +22,11 @@ export const colors = {
   rewardText: "#8A5B00",
   streak: "#EDEAE1",
   ink: "#1C1B1A",
-  muted: "#7A7672",
+  // Darkened from #7A7672 (4.10:1 against `canvas` — below WCAG AA's 4.5:1
+  // for normal text, A11Y-QA-003 / GLOBAL-QA-026). #6B6763 keeps the same
+  // warm neutral hue while reaching 5.10:1 against canvas / 5.61:1 against
+  // surface, both comfortably above the AA threshold.
+  muted: "#6B6763",
   faint: "#A8A49E",
   line: "#E7E1D7",
   lineSoft: "#F0ECE2",

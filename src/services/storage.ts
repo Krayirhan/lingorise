@@ -373,14 +373,27 @@ export async function importUserDataJSON(jsonString: string): Promise<UserData> 
   }
 }
 
-export async function clearAllLocalData(): Promise<UserData> {
+export interface ClearLocalDataResult {
+  success: boolean;
+  data: UserData;
+}
+
+/**
+ * Clears local storage. Returns whether it actually succeeded instead of
+ * silently swallowing an AsyncStorage error (REL-QA-003 / GLOBAL-QA-006) —
+ * a trust-sensitive "your data has been erased" action must not report
+ * success when the underlying clear failed.
+ */
+export async function clearAllLocalData(): Promise<ClearLocalDataResult> {
+  let success = true;
   try {
     await AsyncStorage.multiRemove([STORAGE_KEY, LEGACY_STORAGE_KEY]);
   } catch (err) {
     console.warn("AsyncStorage clear error", err);
+    success = false;
   }
   await clearTelemetry();
-  return DEFAULT_USER_DATA;
+  return { success, data: DEFAULT_USER_DATA };
 }
 
 export async function resetUserData(): Promise<UserData> {

@@ -1,0 +1,24 @@
+# ARCHITECTURE-001-BASELINE — State Ownership Matrix
+
+Revision: `16b9aab1f776503ec52067d4f543af8ab6f2e9aa`
+
+| State | Owner | Classification | Notes |
+|---|---|---|---|
+| Current user (Firebase Auth) | `firebase.auth().currentUser`, read via `src/services/firebase.ts`'s `auth` export | ONE CLEAR OWNER | Correctly a thin wrapper around the SDK's own state; no app-level duplication found, except two components reading it directly (ARCH-QA-002 — a boundary-clarity issue, not a competing-owner issue) |
+| Guest/auth state | `isGuestMode()`/`enableGuestMode()`/`disableGuestMode()` in `src/services/auth.ts` (AsyncStorage flag) + Firebase Auth's own `currentUser` | ONE CLEAR OWNER (composite) | The two signals (guest flag + Firebase user) are correctly paired at every transition point (login/register/logout/deleteAccount all toggle the guest flag) |
+| Selected CEFR level | `UserData.level`, owned by `useUserProgress` | ONE CLEAR OWNER | Single field, single hook |
+| XP | `UserData.xp`, owned by `useUserProgress`; mirrored to Firestore via `syncUserData`/`syncUserProgress` | ONE CLEAR OWNER (local) + intentional cloud mirror | Local is deliberately the source of truth; Firestore is a best-effort mirror, not a competing owner — correct for this app's local-first design |
+| Streak | `UserData.streak`, owned by `useUserProgress`/`domain/gamification/streak.ts` | ONE CLEAR OWNER | Same pattern as XP |
+| `learningProgress` (per-word mastery) | `UserData.learningProgress`, owned by `useUserProgress`, computed by `domain/learning/mastery.ts` | ONE CLEAR OWNER | Merge strategy for this specific field is well-designed (whole-record, tie-broken); already assessed for correctness in DATA-001-BASELINE |
+| Daily quests | `UserData.dailyQuests`, owned by `useUserProgress`/`domain/gamification/badges.ts` + `dailyRollover.ts` | ONE CLEAR OWNER | |
+| Badges | `UserData.unlockedBadges`, owned by `useUserProgress`; celebration queue (`badgeUnlockQueue`) is separate transient UI state in the same hook | ONE CLEAR OWNER + DERIVED (celebration queue is correctly derived/transient, not persisted) | |
+| Practice session | `activeSession` field within `UserData`, written by `useAppSession`'s effect via a `setActiveSession` callback threaded from `useUserProgress` | ONE CLEAR OWNER | Single field, single writer path; restoration logic is contained entirely within `useAppSession` |
+| Exam session | Same `activeSession` mechanism, `sessionMode: "EXAM"` | ONE CLEAR OWNER | Shares the practice-session mechanism appropriately (same underlying concept) |
+| Catalogue/content | Module-level global (`setRuntimeQuestions` in `src/content/questions/index.ts`), written once by `AppBootstrap.tsx` at startup and on level change | ONE CLEAR OWNER (single writer), a deliberate module-level singleton rather than React state | Appropriate simplicity for this app's scale — not over-engineered into Context/Redux. The write-ordering race here is a RELIABILITY concern (REL-QA-001, RELIABILITY-001-BASELINE), not an ownership-model defect: the ownership model itself (AppBootstrap is the sole writer) is sound |
+| Cloud synchronization state | **No explicit state model exists** (no `isSyncing`/`lastSyncedAt`/`syncError` concept anywhere) | ABSENT BY DESIGN | This is an intentional, appropriate simplicity for a local-first app where cloud is a best-effort mirror, not a defect in itself. The user-facing consequence of this absence (silent sync failures) is already scored as RELIABILITY-001-BASELINE's REL-QA-004 — not re-scored here |
+| Settings (sound/motion/notifications/locale/etc.) | `UserData` fields, owned by `useUserProgress` | ONE CLEAR OWNER | |
+| **Cloud representation of "user progress" as a concept** | **No single canonical owner** — independently declared in three places: `syncUserData()`'s full-object spread to `users/{uid}`, `syncUserProgress()`'s separately hand-curated subset written to the second document `users/{uid}/progress/main`, and `mergeAndSyncUserData()`'s own separate hand-picked merge-field list | **MIRRORED STATE / MULTIPLE INDEPENDENT DECLARATIONS** | See ARCH-QA-001. This is the one real state-ownership gap found — not multiple *competing* owners in the sense of conflicting writers, but multiple independently-maintained *declarations* of the same schema with no shared source, which has already caused drift (DATA-QA-002, DATA-001-BASELINE) |
+
+## Summary
+
+State ownership across the app is clear and appropriately simple for its scale, with one genuine exception: the cloud-side representation of "what fields make up user progress" is declared three separate times by hand rather than through one canonical schema, which is both a state-ownership gap and (more centrally) a module-cohesion/change-isolation problem — scored primarily under that dimension in `SUMMARY.md`, with only a light cross-reference here to avoid double-counting the same root cause.

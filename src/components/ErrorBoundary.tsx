@@ -13,15 +13,29 @@ interface Props {
 interface State {
   hasError: boolean;
   error: Error | null;
+  /**
+   * Bumped on every restart and used as the recovered subtree's React `key`
+   * — the previous implementation only cleared `hasError`, which re-rendered
+   * the SAME crashed component tree with whatever state it was already in,
+   * not a real recovery (REL-QA-002 / GLOBAL-QA-020). Changing `key` forces
+   * React to unmount and remount `children` from scratch, which is what
+   * "Restart" actually promises.
+   */
+  restartKey: number;
 }
 
 export class ErrorBoundary extends Component<Props, State> {
   public state: State = {
     hasError: false,
     error: null,
+    restartKey: 0,
   };
 
-  public static getDerivedStateFromError(error: Error): State {
+  public static getDerivedStateFromError(error: Error): Partial<State> {
+    // Deliberately omits `restartKey` — this only needs to flip into the
+    // error view; the counter is owned exclusively by `handleRestart` and
+    // must never be reset here, or two crashes in a row could coincidentally
+    // reuse a key React has already seen.
     return { hasError: true, error };
   }
 
@@ -30,7 +44,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   private handleRestart = () => {
-    this.setState({ hasError: false, error: null });
+    this.setState((prev) => ({ hasError: false, error: null, restartKey: prev.restartKey + 1 }));
     if (this.props.onRestart) {
       this.props.onRestart();
     }
@@ -59,7 +73,7 @@ export class ErrorBoundary extends Component<Props, State> {
       );
     }
 
-    return this.props.children;
+    return <React.Fragment key={this.state.restartKey}>{this.props.children}</React.Fragment>;
   }
 }
 
