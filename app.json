@@ -19,6 +19,12 @@
       "expo-font",
       "expo-sharing",
       "expo-status-bar"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "cb13fe89-238a-4a69-9b8e-a128808fc1c6"
+      }
+    },
+    "owner": "mfurkant"
   }
 }
