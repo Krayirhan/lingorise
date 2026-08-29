@@ -32,6 +32,13 @@ jobs:
   # build a release locally. This uses the committed debug keystore (already
   # what release builds are signed with — see android/app/build.gradle) so no
   # secrets are needed to prove the release artifact still compiles.
+  #
+  # SUPPLY-QA-004 / GLOBAL-QA-009: this job's APK is a COMPILE-VERIFICATION
+  # artifact only — it is never uploaded or distributed, and it is NOT the
+  # production release artifact. The actual distributable production build is
+  # a separate EAS `production` profile Android App Bundle (AAB), signed with
+  # EAS/Play App Signing credentials this workflow has no access to and does
+  # not attempt to reproduce (see eas.json, `05_SIGNING_AND_ARTIFACT_PROVENANCE.md`).
   android-build:
     runs-on: ubuntu-latest
     steps:
@@ -103,7 +110,15 @@ jobs:
         run: |
           chmod +x ./gradlew
           ./gradlew assembleRelease --no-daemon
+      # Pinned to a specific released version (matches the version validated
+      # locally against this project's own smoke test) instead of piping the
+      # installer's floating "latest" into bash — a deterministic version
+      # avoids an unreviewed upstream release silently changing CI behavior,
+      # and reduces trust in the remote script to "run this exact, known
+      # version" rather than "run whatever is live today" (SUPPLY-QA-003).
       - name: Install Maestro CLI
+        env:
+          MAESTRO_VERSION: "2.9.0"
         run: |
           curl -Ls "https://get.maestro.mobile.dev" | bash
           echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"

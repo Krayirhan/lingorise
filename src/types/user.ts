@@ -101,6 +101,17 @@ export interface UserData {
   onboardingCompleted?: boolean;
   xp: number;
   level: LevelCode;
+  /**
+   * Epoch ms of the last deliberate `level` change on this device (manual
+   * switch via LevelSwitcherModal, onboarding choice, or automatic
+   * promotion). `level` is a free, always-available content-selection
+   * preference — not a monotonic achievement like `passedLevelExams` — so a
+   * cross-device merge must prefer whichever side changed it more recently,
+   * not whichever side happens to be "higher" (DATA-QA-005). Absent on data
+   * written before this field existed; merge falls back to the pre-existing
+   * higher-level heuristic only when neither side has a timestamp.
+   */
+  levelSetAt?: number;
   locale: Locale;
   streak: number;
   lastActiveDate: string; // YYYY-MM-DD

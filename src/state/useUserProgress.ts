@@ -3,8 +3,7 @@ import { ActiveSessionState, UserData } from "../types/user";
 import { LevelCode, MeaningMatchQuestion } from "../types/content";
 import { Locale } from "../i18n/en";
 import { DEFAULT_USER_DATA, loadUserData, saveUserData } from "../services/storage";
-import { updateDailyStreak } from "../domain/gamification/streak";
-import { applyDailyRollover } from "../domain/gamification/dailyRollover";
+import { rolloverToToday } from "../domain/gamification/dailyRollover";
 import { bringForward, getDueReviewItems } from "../domain/review/spacedRepetition";
 import { applyPracticeAnswer, PracticeSessionMode } from "../domain/practice/answer";
 import { auth } from "../services/firebase";
@@ -15,24 +14,18 @@ import { deriveStatus, isLeech } from "../domain/learning/mastery";
 import { calculateGardenProgress } from "../domain/gamification/xp";
 import { detectUnitJustCompleted } from "../content/questions";
 import { inferQuality, AnswerQualityMeta } from "../domain/review/qualitySignal";
-
-function daysBetween(fromISO: string, toISO: string): number {
-  const from = new Date(`${fromISO}T00:00:00Z`).getTime();
-  const to = new Date(`${toISO}T00:00:00Z`).getTime();
-  return Math.round((to - from) / (24 * 60 * 60 * 1000));
-}
+import { daysBetween, detectClockAnomaly } from "../domain/sync/clockAnomaly";
 
 function checkServerDateAnomaly(lastKnownServerDate?: string, todayFormatted?: string) {
   const user = auth.currentUser;
-  if (user && lastKnownServerDate && todayFormatted) {
-    const diffDays = daysBetween(lastKnownServerDate, todayFormatted);
-    if (diffDays > 1) {
-      track("suspicious_date_jump", {
-        deviceDate: todayFormatted,
-        lastKnownServerDate,
-        daysDifference: diffDays,
-      });
-    }
+  if (!user) return;
+  const { isAnomalous, daysDifference } = detectClockAnomaly(lastKnownServerDate, todayFormatted);
+  if (isAnomalous && lastKnownServerDate && todayFormatted && daysDifference !== null) {
+    track("suspicious_date_jump", {
+      deviceDate: todayFormatted,
+      lastKnownServerDate,
+      daysDifference,
+    });
   }
 }
 
@@ -44,6 +37,9 @@ export function useUserProgress() {
   const [saveFailureNotice, setSaveFailureNotice] = useState<string | null>(null);
   const consecutiveSaveFailuresRef = useRef(0);
   const saveFailureAlertedRef = useRef(false);
+  const [cloudSyncFailureNotice, setCloudSyncFailureNotice] = useState<string | null>(null);
+  const consecutiveCloudSyncFailuresRef = useRef(0);
+  const cloudSyncFailureAlertedRef = useRef(false);
 
   // A single failed write is often transient (a momentary AsyncStorage
   // hiccup); only surface it once progress has actually failed to persist
@@ -64,36 +60,52 @@ export function useUserProgress() {
 
   const clearSaveFailureNotice = useCallback(() => setSaveFailureNotice(null), []);
 
+  // Cloud-sync failures were previously console-only (REL-QA-004 /
+  // GLOBAL-QA-004) — the learner had no way to know their progress hadn't
+  // reached the cloud. Same consecutive-failure gate as local save failures,
+  // for the same reason: one transient network blip shouldn't alarm anyone.
+  const noteCloudSyncOutcome = useCallback((succeeded: boolean) => {
+    if (succeeded) {
+      consecutiveCloudSyncFailuresRef.current = 0;
+      cloudSyncFailureAlertedRef.current = false;
+      return;
+    }
+    consecutiveCloudSyncFailuresRef.current += 1;
+    if (consecutiveCloudSyncFailuresRef.current >= 2 && !cloudSyncFailureAlertedRef.current) {
+      cloudSyncFailureAlertedRef.current = true;
+      setCloudSyncFailureNotice("İlerlemen buluta yüklenemiyor. İnternet bağlantını kontrol et; yerel ilerlemen güvende.");
+    }
+  }, []);
+
+  const clearCloudSyncFailureNotice = useCallback(() => setCloudSyncFailureNotice(null), []);
+
+  /** Lets a caller outside this hook's own sync paths (e.g. AppBootstrap's sign-in merge) report a cloud-sync failure through the same user-visible channel. */
+  const reportCloudSyncFailure = useCallback(() => {
+    noteCloudSyncOutcome(false);
+  }, [noteCloudSyncOutcome]);
+
   // Hydrate on mount and calculate daily streak
   useEffect(() => {
     async function init() {
       const loaded = await loadUserData();
-      const streakResult = updateDailyStreak(loaded.lastActiveDate, loaded.streak);
+      const { data: updated, isNewDay, todayFormatted } = rolloverToToday(loaded);
 
-      checkServerDateAnomaly(loaded.lastKnownServerDate, streakResult.todayFormatted);
+      checkServerDateAnomaly(loaded.lastKnownServerDate, todayFormatted);
 
       track("session_started", {
         daysSinceLastOpen: loaded.lastActiveDate
-          ? daysBetween(loaded.lastActiveDate, streakResult.todayFormatted)
+          ? daysBetween(loaded.lastActiveDate, todayFormatted)
           : null,
       });
 
-      if (streakResult.isNewDay) {
+      if (isNewDay) {
         track("daily_rollover_applied", {
           streakBefore: loaded.streak,
-          streakAfter: streakResult.newStreak,
+          streakAfter: updated.streak,
           pendingReviewsAtOpen: getDueReviewItems(loaded.learningProgress || {}).length,
         });
       }
 
-      const rolled = streakResult.isNewDay
-        ? applyDailyRollover(loaded, streakResult.todayFormatted)
-        : loaded;
-      const updated: UserData = {
-        ...rolled,
-        streak: streakResult.newStreak,
-        lastActiveDate: streakResult.todayFormatted,
-      };
       setUserData(updated);
       // A signed-in cold start also runs AppBootstrap's onAuthStateChanged
       // merge (local + remote, then a single authoritative save), which
@@ -135,17 +147,20 @@ export function useUserProgress() {
       saveUserData(next).then(noteSaveOutcome);
       const user = auth.currentUser;
       if (user) {
-        Promise.all([syncUserData(user.uid, next), syncUserProgress(user.uid, next)]).catch((error) => {
-          console.warn("LingoRise: Firebase sync failed; local data is safe", error);
-        });
+        Promise.all([syncUserData(user.uid, next), syncUserProgress(user.uid, next)])
+          .then(() => noteCloudSyncOutcome(true))
+          .catch((error) => {
+            console.warn("LingoRise: Firebase sync failed; local data is safe", error);
+            noteCloudSyncOutcome(false);
+          });
       }
       return next;
     });
-  }, []);
+  }, [noteCloudSyncOutcome]);
 
   const refresh = useCallback(async () => {
     const loaded = await loadUserData();
-    const streakResult = updateDailyStreak(loaded.lastActiveDate, loaded.streak);
+    const { data: rolledUpdate, isNewDay, todayFormatted } = rolloverToToday(loaded);
 
     // The locally cached lastKnownServerDate is only ever written at sign-in
     // (AppBootstrap's onAuthStateChanged flow) or here. A long session between
@@ -162,32 +177,43 @@ export function useUserProgress() {
       }
     }
 
-    checkServerDateAnomaly(lastKnownServerDate, streakResult.todayFormatted);
-    if (streakResult.isNewDay) {
+    checkServerDateAnomaly(lastKnownServerDate, todayFormatted);
+    if (isNewDay) {
       track("daily_rollover_applied", {
         streakBefore: loaded.streak,
-        streakAfter: streakResult.newStreak,
+        streakAfter: rolledUpdate.streak,
         pendingReviewsAtOpen: getDueReviewItems(loaded.learningProgress || {}).length,
       });
     }
-    const rolled = streakResult.isNewDay
-      ? applyDailyRollover(loaded, streakResult.todayFormatted)
-      : loaded;
-    const updated: UserData = {
-      ...rolled,
-      streak: streakResult.newStreak,
-      lastActiveDate: streakResult.todayFormatted,
-      lastKnownServerDate,
-    };
+    const updated: UserData = { ...rolledUpdate, lastKnownServerDate };
     setUserData(updated);
     await saveUserData(updated);
     if (user) {
       try {
         await Promise.all([syncUserData(user.uid, updated), syncUserProgress(user.uid, updated)]);
+        noteCloudSyncOutcome(true);
       } catch (error) {
         console.warn("LingoRise: Firebase sync failed during refresh; local data is safe", error);
+        noteCloudSyncOutcome(false);
       }
     }
+  }, [noteCloudSyncOutcome]);
+
+  /**
+   * Reloads state from local storage only — never syncs it to the cloud.
+   * Used after a local-only data reset (DataManagementCard's "Yerel Verileri
+   * Sıfırla"): the previous implementation reused `refresh()`, which pushes
+   * whatever it loads straight to Firestore via `syncUserData`/`syncUserProgress`
+   * — for a signed-in user, that meant a "reset LOCAL data" action was
+   * silently overwriting the account's cloud progress with the wiped
+   * defaults (DATA-QA-003 / GLOBAL-QA-005). A local-only reset must only
+   * ever touch local storage.
+   */
+  const reloadLocalOnly = useCallback(async () => {
+    const loaded = await loadUserData();
+    const { data: updated } = rolloverToToday(loaded);
+    setUserData(updated);
+    await saveUserData(updated);
   }, []);
 
   const completeOnboarding = useCallback(() => {
@@ -319,7 +345,10 @@ export function useUserProgress() {
 
   const setLevel = useCallback(
     (newLevel: LevelCode) => {
-      updateAndPersist((prev) => ({ ...prev, level: newLevel }));
+      // Stamped so a cross-device merge can tell this was a deliberate,
+      // recent choice and prefer it over a stale-but-higher remote value
+      // (DATA-QA-005) — see levelSetAt's own doc comment in types/user.ts.
+      updateAndPersist((prev) => ({ ...prev, level: newLevel, levelSetAt: Date.now() }));
     },
     [updateAndPersist]
   );
@@ -438,6 +467,8 @@ export function useUserProgress() {
     isHydrated,
     userData,
     refresh,
+    reloadLocalOnly,
+    reportCloudSyncFailure,
     completeOnboarding,
     markLevelExamPassed,
     recordAnswer,
@@ -459,5 +490,7 @@ export function useUserProgress() {
     dismissBadgeUnlock,
     saveFailureNotice,
     clearSaveFailureNotice,
+    cloudSyncFailureNotice,
+    clearCloudSyncFailureNotice,
   };
 }

@@ -233,6 +233,10 @@ export function PracticeScreen({
               accessibilityRole="button"
               accessibilityLabel={copy.game?.remindLater || "Daha sonra hatırlat"}
               style={S.remindBtn}
+              // The visible control is ~36dp tall — below platform touch-target
+              // guidance (A11Y-QA-002 / GLOBAL-QA-025). hitSlop expands the
+              // tappable area without changing the compact visual size.
+              hitSlop={{ top: 8, bottom: 8, left: 12, right: 12 }}
               onPress={() => onRemindLater(question)}
             >
               <Ionicons name="bookmark-outline" size={14} color={C.primary} />

@@ -11,12 +11,16 @@ import { AppDialog } from "../../../components/AppDialog";
 
 interface Props {
   copy: Copy;
-  onDataReset?: () => void;
+  onDataReset?: () => void | Promise<void>;
 }
 
-// roadmap Birim 13 §13.2 — the store listing needs a public URL for this
-// same policy; this is that URL, kept in sync with the in-app text below.
-const PRIVACY_POLICY_URL = "https://claude.ai/code/artifact/90a36725-0440-4caf-b2ca-5b26212c2b11";
+// RELEASE-QA-003 / GLOBAL-QA-011 — durable, public, anonymously-reachable,
+// app-specific policy hosted on this project's own Firebase Hosting site
+// (see firebase.json's "hosting" config and public/privacy-policy/index.html),
+// kept in sync with the in-app text above. Replaces the placeholder Claude
+// Artifact URL that anonymous verification found did not serve app-specific
+// content.
+const PRIVACY_POLICY_URL = "https://lingorise-65cb1.web.app/privacy-policy/";
 
 export function DataManagementCard({ copy, onDataReset }: Props) {
   const isCloudSynced = !!auth.currentUser;
@@ -24,6 +28,7 @@ export function DataManagementCard({ copy, onDataReset }: Props) {
   const [backupExported, setBackupExported] = useState<string | null>(null);
   const [resetConfirmVisible, setResetConfirmVisible] = useState(false);
   const [resetSuccessVisible, setResetSuccessVisible] = useState(false);
+  const [resetErrorVisible, setResetErrorVisible] = useState(false);
 
   const handleExport = async () => {
     try {
@@ -43,9 +48,16 @@ export function DataManagementCard({ copy, onDataReset }: Props) {
     }
   };
 
-  const resetConfirmMsg =
-    copy.profile?.resetDataConfirm ||
-    "Tüm yerel ilerlemeni ve verilerini sıfırlamak istediğinden emin misin? Bu işlem geri alınamaz.";
+  // A signed-in account's cloud progress is never touched by this action —
+  // only this device's local cache is cleared, and the next sync will
+  // re-download it. Claiming "irreversible" for a cloud-synced account was
+  // misleading (DATA-QA-003 / GLOBAL-QA-005): the copy must match what
+  // actually happens for each case.
+  const resetConfirmMsg = isCloudSynced
+    ? copy.profile?.resetDataConfirmSynced ||
+      "Bu cihazdaki yerel kopyanı sıfırlayacak. Hesabına kayıtlı bulut ilerlemen etkilenmez ve bir sonraki senkronizasyonda geri yüklenir."
+    : copy.profile?.resetDataConfirm ||
+      "Tüm yerel ilerlemeni ve verilerini sıfırlamak istediğinden emin misin? Bu işlem geri alınamaz.";
 
   const handleResetData = () => {
     if (Platform.OS === "web") {
@@ -65,8 +77,19 @@ export function DataManagementCard({ copy, onDataReset }: Props) {
   const handleCancelReset = () => setResetConfirmVisible(false);
 
   const executeReset = async () => {
-    await clearAllLocalData();
-    if (onDataReset) onDataReset();
+    const { success } = await clearAllLocalData();
+    if (!success) {
+      if (Platform.OS === "web") {
+        Alert.alert("Hata", "Yerel veriler sıfırlanamadı. Lütfen tekrar dene.");
+      } else {
+        setResetErrorVisible(true);
+      }
+      return;
+    }
+    // Reloads local-only state; never syncs the wipe to the cloud (unlike
+    // the old `userProgress.refresh()` wiring, which did — see
+    // useUserProgress.ts's `reloadLocalOnly` comment).
+    if (onDataReset) await onDataReset();
     if (Platform.OS === "web") {
       Alert.alert("Başarılı", "Yerel veriler sıfırlandı.");
     } else {
@@ -149,7 +172,7 @@ export function DataManagementCard({ copy, onDataReset }: Props) {
         <SafeAreaView style={S.modalSafe}>
           <View style={S.modalShell}>
             <View style={S.modalHeader}>
-              <Text style={S.modalTitle}>Gizlilik ve Kullanım Şartları</Text>
+              <Text style={S.modalTitle}>{copy.profile?.privacyModalTitle || "Gizlilik ve Kullanım Şartları"}</Text>
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel={copy.home?.wordDetailClose || "Kapat"}
@@ -160,40 +183,34 @@ export function DataManagementCard({ copy, onDataReset }: Props) {
               </Pressable>
             </View>
             <ScrollView contentContainerStyle={S.modalContent}>
-              <Text style={S.legalTitle}>1. Gizlilik Politikası</Text>
+              <Text style={S.legalTitle}>{copy.profile?.privacyPolicySection1Title || "1. Gizlilik Politikası"}</Text>
               <Text style={S.legalBody}>
-                LingoRise, öğrenme ilerlemenizi yalnızca kelime bilginizi geliştirmek
-                ve aralıklı tekrar (SM-2) döngülerini yönetmek için saklar. Misafir
-                modunda tüm verileriniz cihazınızda yerel kalır.
+                {copy.profile?.privacyPolicySection1Body ||
+                  "LingoRise, öğrenme ilerlemenizi yalnızca kelime bilginizi geliştirmek ve aralıklı tekrar (SM-2) döngülerini yönetmek için saklar. Misafir modunda tüm verileriniz cihazınızda yerel kalır."}
               </Text>
-              <Text style={S.legalTitle}>2. Hesap & Bulut Senkronizasyonu</Text>
+              <Text style={S.legalTitle}>{copy.profile?.privacyPolicySection2Title || "2. Hesap & Bulut Senkronizasyonu"}</Text>
               <Text style={S.legalBody}>
-                Hesap oluşturduğunuzda ilerlemeniz Firebase Firestore üzerinde
-                güvenli biçimde yedeklenir. İstediğiniz an hesabınızı ve tüm bulut
-                verilerinizi kalıcı olarak silebilirsiniz.
+                {copy.profile?.privacyPolicySection2Body ||
+                  "Hesap oluşturduğunuzda ilerlemeniz Firebase Firestore üzerinde güvenli biçimde yedeklenir. İstediğiniz an hesabınızı ve tüm bulut verilerinizi kalıcı olarak silebilirsiniz."}
               </Text>
-              <Text style={S.legalTitle}>3. Reklam ve Üçüncü Taraflar</Text>
+              <Text style={S.legalTitle}>{copy.profile?.privacyPolicySection3Title || "3. Reklam ve Üçüncü Taraflar"}</Text>
               <Text style={S.legalBody}>
-                LingoRise hiçbir üçüncü taraf reklam ağına kişisel verilerinizi
-                aktarmaz.
+                {copy.profile?.privacyPolicySection3Body || "LingoRise hiçbir üçüncü taraf reklam ağına kişisel verilerinizi aktarmaz."}
               </Text>
-              <Text style={S.legalTitle}>4. Uygulama İçi Kullanım Kayıtları</Text>
+              <Text style={S.legalTitle}>{copy.profile?.privacyPolicySection4Title || "4. Uygulama İçi Kullanım Kayıtları"}</Text>
               <Text style={S.legalBody}>
-                Uygulamayı nasıl kullandığınızı anlamak için (hangi ekranı ne sıklıkta
-                açtığınız, bir pratiği tamamlayıp tamamlamadığınız gibi) bazı kullanım
-                olayları yalnızca bu cihazda saklanır. Bu kayıtlar hiçbir sunucuya veya
-                üçüncü tarafa gönderilmez; "Yerel Verileri Sıfırla" ile diğer verilerinizle
-                birlikte silinir.
+                {copy.profile?.privacyPolicySection4Body ||
+                  'Uygulamayı nasıl kullandığınızı anlamak için (hangi ekranı ne sıklıkta açtığınız, bir pratiği tamamlayıp tamamlamadığınız gibi) bazı kullanım olayları yalnızca bu cihazda saklanır. Bu kayıtlar hiçbir sunucuya veya üçüncü tarafa gönderilmez; "Yerel Verileri Sıfırla" ile diğer verilerinizle birlikte silinir.'}
               </Text>
 
               <Pressable
                 accessibilityRole="link"
-                accessibilityLabel="Gizlilik politikasının tam metnini web'de aç"
+                accessibilityLabel={copy.profile?.privacyPolicyWebLinkLabel || "Gizlilik politikasının tam metnini web'de aç"}
                 style={S.webLinkBtn}
                 onPress={() => Linking.openURL(PRIVACY_POLICY_URL)}
               >
                 <Ionicons name="open-outline" size={15} color={C.primary} />
-                <Text style={S.webLinkTxt}>Web'de tam metni görüntüle</Text>
+                <Text style={S.webLinkTxt}>{copy.profile?.privacyPolicyWebLinkText || "Web'de tam metni görüntüle"}</Text>
               </Pressable>
             </ScrollView>
           </View>
@@ -203,7 +220,7 @@ export function DataManagementCard({ copy, onDataReset }: Props) {
       {/* Reset Data Confirmation Dialog (CD-001) */}
       <AppDialog
         visible={resetConfirmVisible}
-        title="Verileri Sıfırla"
+        title={copy.profile?.resetDataDialogTitle || "Verileri Sıfırla"}
         message={resetConfirmMsg}
         primaryAction={{
           label: "İptal",
@@ -228,6 +245,19 @@ export function DataManagementCard({ copy, onDataReset }: Props) {
           onPress: () => setResetSuccessVisible(false),
         }}
         onRequestClose={() => setResetSuccessVisible(false)}
+      />
+
+      {/* Reset Failure Dialog (GLOBAL-QA-006) — a failed clear must never be reported as a success */}
+      <AppDialog
+        visible={resetErrorVisible}
+        title="Hata"
+        message="Yerel veriler sıfırlanamadı. Lütfen tekrar dene."
+        icon={{ name: "alert-circle" }}
+        primaryAction={{
+          label: "Tamam",
+          onPress: () => setResetErrorVisible(false),
+        }}
+        onRequestClose={() => setResetErrorVisible(false)}
       />
 
       {/* Backup JSON Viewer Modal */}

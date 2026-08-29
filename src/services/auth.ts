@@ -59,12 +59,33 @@ export async function sendVerificationEmail(): Promise<void> {
   }
 }
 
+/**
+ * Thrown when the user's Firestore data was fully deleted but the Firebase
+ * Auth account itself could not be removed (e.g. `auth/requires-recent-login`).
+ * The client architecture cannot make Firestore + Auth deletion atomic, so
+ * this makes the resulting partial state explicit rather than reporting a
+ * failed deletion as if nothing happened (DATA-QA-004 / SEC-QA-003 /
+ * GLOBAL-QA-007). Retrying `deleteAccount()` after resolving the underlying
+ * cause converges safely — `deleteUserData` is a no-op on already-empty
+ * collections/documents.
+ */
+export class PartialAccountDeletionError extends Error {
+  constructor(public readonly cause: unknown) {
+    super("Account data was deleted, but removing the authentication credential failed.");
+    this.name = "PartialAccountDeletionError";
+  }
+}
+
 export async function deleteAccount(): Promise<void> {
   const user = auth.currentUser;
   if (!user) return;
   const uid = user.uid;
   await deleteUserData(uid);
-  await deleteUser(user);
+  try {
+    await deleteUser(user);
+  } catch (err) {
+    throw new PartialAccountDeletionError(err);
+  }
   await enableGuestMode();
 }
 

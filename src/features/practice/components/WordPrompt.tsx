@@ -57,6 +57,10 @@ export function WordPrompt({
             onPress={onToggleHint}
             accessibilityRole="button"
             accessibilityLabel={showHint ? (copy.game?.hintActive || "İpucu açık") : (copy.game?.hint || "İpucu")}
+            // The visible chip is ~18dp tall — well below platform touch-target
+            // guidance (A11Y-QA-002 / GLOBAL-QA-025). hitSlop expands the
+            // tappable area without enlarging the compact visual chip.
+            hitSlop={{ top: 14, bottom: 14, left: 10, right: 10 }}
           >
             <Ionicons name="bulb-outline" size={13} color={showHint ? C.rewardText : C.muted} />
             <Text style={[S.hintTxt, showHint && S.hintTxtAct]}>{showHint ? (copy.game?.hintActive || "İpucu açık") : (copy.game?.hint || "İpucu")}</Text>
@@ -66,7 +70,16 @@ export function WordPrompt({
 
       <View style={S.cntRow}>
         <View style={S.titleWrap}>
-          <Text style={[S.title, { fontSize: dynamicFontSize, lineHeight: Math.round(dynamicFontSize * 1.14) }]} numberOfLines={1} adjustsFontSizeToFit>
+          {/*
+            Was numberOfLines={1} + adjustsFontSizeToFit — shrinks this word,
+            the single most important text in the app's core interaction, to
+            fit one line, actively resisting the learner's system font-scale
+            setting instead of respecting it (A11Y-QA-001 / GLOBAL-QA-015).
+            Wrapping to a second line instead lets the text render at the
+            learner's actual requested size; a rare very-long word wraps
+            rather than becoming illegible.
+          */}
+          <Text style={[S.title, { fontSize: dynamicFontSize, lineHeight: Math.round(dynamicFontSize * 1.14) }]} numberOfLines={2}>
             {wordPrompt}
           </Text>
           {question.phonetic && <Text style={S.pho}>{question.phonetic}</Text>}

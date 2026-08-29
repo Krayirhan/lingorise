@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LingoRise — Gizlilik Politikası / Privacy Policy</title>
+<style>
+  :root { color-scheme: light; }
+  body { margin:0; background:#F7F4EC; color:#1C1B1A; font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif; line-height:1.6; }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 32px 20px 80px; }
+  h1 { font-size: 1.6rem; margin-bottom: 4px; }
+  h2 { font-size: 1.15rem; margin-top: 2.2em; color:#6B4355; }
+  p, li { font-size: 0.98rem; }
+  .updated { color:#6B6763; font-size:0.85rem; margin-bottom: 2em; }
+  .lang-toggle { display:flex; gap:8px; margin-bottom: 1.5em; }
+  .lang-toggle button { border:1px solid #E7E1D7; background:#FFFFFF; padding:6px 14px; border-radius:8px; font-size:0.85rem; cursor:pointer; }
+  .lang-toggle button.active { background:#6B4355; color:#FFFFFF; border-color:#6B4355; }
+  section[lang="en"] { display:none; }
+  section.active { display:block !important; }
+  a { color:#6B4355; }
+  footer { margin-top: 3em; font-size:0.8rem; color:#6B6763; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>LingoRise</h1>
+  <div class="lang-toggle">
+    <button id="btn-tr" class="active" onclick="showLang('tr')">Türkçe</button>
+    <button id="btn-en" onclick="showLang('en')">English</button>
+  </div>
+
+  <section id="sec-tr" lang="tr" class="active">
+    <h1>Gizlilik Politikası</h1>
+    <p class="updated">Son güncelleme: 29 Ağustos 2026</p>
+
+    <p>LingoRise ("uygulama"), Türkçe konuşanlar için İngilizce kelime öğrenmeyi destekleyen bir mobil uygulamadır. Bu politika, uygulamanın hangi veriyi hangi amaçla işlediğini açıklar ve yalnızca uygulamanın gerçek davranışını tarif eder.</p>
+
+    <h2>1. Hesapsız (misafir) kullanım</h2>
+    <p>Hesap oluşturmadan kullanabilirsiniz. Bu modda tüm ilerleme verisi (XP, seri, seviye, çözülen sorular, öğrenme kayıtları) yalnızca cihazınızda, uygulamanın yerel depolama alanında (AsyncStorage) tutulur ve hiçbir sunucuya gönderilmez.</p>
+
+    <h2>2. Hesap oluşturma ve Firebase Authentication</h2>
+    <p>Hesap oluşturduğunuzda kimlik doğrulama Google Firebase Authentication üzerinden yapılır. Bu, e-posta adresiniz ve şifrenizle (veya seçtiğiniz oturum açma yöntemiyle) ilişkili bir kullanıcı kimliği (UID) oluşturur. LingoRise şifrenizi kendi sunucusunda saklamaz; bu Firebase Authentication'ın sorumluluğundadır.</p>
+
+    <h2>3. Bulut senkronizasyonu ve Firestore</h2>
+    <p>Hesabınızla oturum açtığınızda, ilerleme verileriniz (XP, seri, seviye, tamamlanan/çözülen sorular, ödül durumu, günlük görevler, favori kelimeler, geçilen seviye sınavları, pratik/görev geçmişi) Google Cloud Firestore'da, yalnızca sizin kullanıcı kimliğinizle ilişkilendirilmiş bir belgede saklanır. Erişim kontrolü Firestore güvenlik kurallarıyla sağlanır: yalnızca oturum açmış hesap sahibi kendi verisini okuyabilir/yazabilir.</p>
+
+    <h2>4. Cihaz üzerinde saklanan diğer veriler</h2>
+    <p>Bildirim tercihi, ses/animasyon tercihleri gibi ayarlar ve aktif pratik oturumunun geçici durumu yalnızca cihazınızda tutulur, hiçbir sunucuya gönderilmez.</p>
+
+    <h2>5. Bildirimler</h2>
+    <p>Günlük hatırlatıcı bildirimleri tamamen cihaz üzerinde (yerel olarak) zamanlanır. Uygulama herhangi bir push bildirim jetonu (push token) toplamaz veya bir sunucuya göndermez.</p>
+
+    <h2>6. Uygulama içi kullanım kayıtları</h2>
+    <p>Hangi ekranı ne sıklıkta açtığınız veya bir pratiği tamamlayıp tamamlamadığınız gibi bazı kullanım olayları yalnızca cihazınızda saklanır. Bu kayıtlar hiçbir sunucuya veya üçüncü tarafa gönderilmez.</p>
+
+    <h2>7. Reklam ve analitik / üçüncü taraflar</h2>
+    <p>LingoRise şu anda hiçbir reklam ağı, analitik (analytics) veya çökme raporlama (crash reporting) hizmeti kullanmamaktadır. Kişisel verileriniz hiçbir üçüncü taraf reklam veya pazarlama ağına aktarılmaz. Kullanılan tek dış hizmet sağlayıcı, kimlik doğrulama ve bulut senkronizasyonu için Google Firebase'dir.</p>
+
+    <h2>8. Veri saklama ve silme</h2>
+    <p><b>Yerel verileri sıfırlama:</b> Uygulama içindeki "Yerel Verileri Sıfırla" seçeneği yalnızca bu cihazdaki yerel kopyayı temizler. Hesabınız bulut senkronizasyonu kullanıyorsa, hesabınıza kayıtlı bulut ilerlemeniz bu işlemden etkilenmez ve bir sonraki senkronizasyonda geri yüklenir.</p>
+    <p><b>Hesap silme:</b> Uygulama içindeki hesap silme işlemi, Firestore'daki ilerleme belgenizi ve Firebase Authentication hesabınızı kalıcı olarak siler. Bu istemci tarafından başlatılan iki ayrı geri alınamaz işlemdir; bir işlem başarısız olursa uygulama bunu açıkça size bildirir ve yeniden denemenizi ister (kısmi bir hata sessizce "başarılı" olarak gösterilmez).</p>
+
+    <h2>9. Haklarınız ve iletişim</h2>
+    <p>Verilerinizin erişimi, düzeltilmesi veya silinmesiyle ilgili bir talebiniz varsa, uygulama içindeki "Yerel Verileri Sıfırla" ve "Hesabı Sil" seçeneklerini kullanabilir veya <a href="mailto:fusturan@gmail.com">fusturan@gmail.com</a> adresinden bizimle iletişime geçebilirsiniz.</p>
+
+    <h2>10. Hesap silme — web üzerinden bilgi</h2>
+    <p>Google Play'in gerektirdiği hesap silme bilgilendirmesi için ayrı sayfa: <a href="/account-deletion/">Hesap Silme Talimatları</a>.</p>
+
+    <h2>11. Politika güncellemeleri</h2>
+    <p>Bu politika, uygulamanın gerçek veri davranışı değiştikçe güncellenebilir. Güncel sürüm her zaman bu sayfada ve uygulama içindeki Gizlilik & Şartlar bölümünde yer alır.</p>
+  </section>
+
+  <section id="sec-en" lang="en">
+    <h1>Privacy Policy</h1>
+    <p class="updated">Last updated: August 29, 2026</p>
+
+    <p>LingoRise ("the app") is a mobile application that helps Turkish speakers learn English vocabulary. This policy describes what data the app actually processes and why — it is written to match the app's real behavior, not a generic template.</p>
+
+    <h2>1. Guest (no-account) use</h2>
+    <p>You can use the app without creating an account. In this mode, all progress data (XP, streak, level, solved questions, learning records) is kept only on your device, in the app's local storage (AsyncStorage), and is never sent to any server.</p>
+
+    <h2>2. Account creation and Firebase Authentication</h2>
+    <p>When you create an account, authentication is handled by Google Firebase Authentication. This creates a user ID (UID) associated with your email address and password (or your chosen sign-in method). LingoRise does not store your password on its own servers — that is Firebase Authentication's responsibility.</p>
+
+    <h2>3. Cloud synchronization and Firestore</h2>
+    <p>When you sign in, your progress data (XP, streak, level, completed/solved questions, reward state, daily quests, favorite words, passed level exams, practice/quest history) is stored in Google Cloud Firestore, in a document associated only with your user ID. Access is controlled by Firestore security rules: only the signed-in account owner can read or write their own data.</p>
+
+    <h2>4. Other data stored on your device</h2>
+    <p>Settings such as notification preference, sound/animation preference, and the temporary state of an active practice session are kept only on your device and are never sent to any server.</p>
+
+    <h2>5. Notifications</h2>
+    <p>Daily reminder notifications are scheduled entirely on-device (locally). The app does not collect or send any push notification token to any server.</p>
+
+    <h2>6. In-app usage logs</h2>
+    <p>Some usage events — such as which screen you open and how often, or whether you completed a practice session — are stored only on this device. These logs are never sent to any server or third party.</p>
+
+    <h2>7. Advertising, analytics, and third parties</h2>
+    <p>LingoRise currently does not use any advertising network, analytics service, or crash-reporting service. Your personal data is never shared with any third-party advertising or marketing network. The only external service provider used is Google Firebase, for authentication and cloud synchronization.</p>
+
+    <h2>8. Data retention and deletion</h2>
+    <p><b>Resetting local data:</b> The in-app "Reset Local Data" option only clears the local copy on this device. If your account uses cloud synchronization, your account's cloud progress is not affected by this action and will be restored on the next sync.</p>
+    <p><b>Account deletion:</b> The in-app account deletion action permanently deletes your progress document in Firestore and your Firebase Authentication account. These are two separate, client-initiated, irreversible operations; if one step fails, the app explicitly tells you and asks you to retry — a partial failure is never silently reported as a success.</p>
+
+    <h2>9. Your rights and contact</h2>
+    <p>If you have a request regarding access to, correction of, or deletion of your data, you can use the in-app "Reset Local Data" and "Delete Account" options, or contact us at <a href="mailto:fusturan@gmail.com">fusturan@gmail.com</a>.</p>
+
+    <h2>10. Account deletion — web information</h2>
+    <p>For the account-deletion information page required by Google Play: <a href="/account-deletion/">Account Deletion Instructions</a>.</p>
+
+    <h2>11. Policy updates</h2>
+    <p>This policy may be updated as the app's actual data behavior changes. The current version is always available on this page and in the app's Privacy & Terms section.</p>
+  </section>
+
+  <footer>LingoRise · <a href="mailto:fusturan@gmail.com">fusturan@gmail.com</a></footer>
+</div>
+<script>
+function showLang(lang){
+  document.getElementById('sec-tr').classList.toggle('active', lang==='tr');
+  document.getElementById('sec-en').classList.toggle('active', lang==='en');
+  document.getElementById('btn-tr').classList.toggle('active', lang==='tr');
+  document.getElementById('btn-en').classList.toggle('active', lang==='en');
+}
+</script>
+</body>
+</html>

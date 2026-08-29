@@ -12,11 +12,18 @@ import {
 import { db } from "./firebase";
 import { LearningItemProgress, UserData } from "../types/user";
 import { MeaningMatchQuestion } from "../types/content";
-import { mergeLearningProgress } from "../domain/learning/mastery";
 import { normalizeUserData } from "./storage";
+import {
+  decideMergeAction,
+  RemoteStateUnknownError,
+  RemoteUserDataResult,
+} from "../domain/sync/remoteSync";
 
 import { withRetry } from "./errorReporter";
 import { logger } from "../utils/logger";
+
+export type { RemoteUserDataResult } from "../domain/sync/remoteSync";
+export { decideMergeAction, RemoteStateUnknownError } from "../domain/sync/remoteSync";
 
 /**
  * Firestore returns serverTimestamp() fields as Timestamp objects, not plain
@@ -56,25 +63,43 @@ function resolveServerDate(raw: unknown): string | undefined {
   return undefined;
 }
 
-/** Fetches remote user document from Firestore */
-export async function fetchUserData(userId: string): Promise<UserData | null> {
+/**
+ * Fetches the remote user document, distinguishing "does not exist" from
+ * "the read failed" (DATA-QA-001 / GLOBAL-QA-003). Callers that must not
+ * treat an unknown remote state as an empty one (the merge path) should use
+ * this instead of `fetchUserData`.
+ */
+export async function fetchUserDataResult(userId: string): Promise<RemoteUserDataResult> {
   try {
     return await withRetry(async () => {
       const snap = await getDoc(doc(db, "users", userId));
-      if (snap.exists()) {
-        const data = snap.data() as UserData & { lastKnownServerDate?: unknown };
-        return {
+      if (!snap.exists()) return { status: "absent" as const };
+      const data = snap.data() as UserData & { lastKnownServerDate?: unknown };
+      return {
+        status: "found" as const,
+        data: {
           ...data,
           learningProgress: resolveServerSyncedTimestamps(data.learningProgress) || {},
           lastKnownServerDate: resolveServerDate(data.lastKnownServerDate),
-        };
-      }
-      return null;
+        },
+      };
     }, 2, 400);
   } catch (error) {
-    logger.warn("LingoRise: fetchUserData error", error);
-    return null;
+    logger.warn("LingoRise: fetchUserDataResult error", error);
+    return { status: "failed", error };
   }
+}
+
+/**
+ * Fetches remote user data, collapsing "absent" and "failed" to `null`.
+ * Safe only for callers where that distinction doesn't matter (e.g. an
+ * optional informational read) — the merge path must use
+ * `fetchUserDataResult` instead, since it must never treat a failed read as
+ * an empty account.
+ */
+export async function fetchUserData(userId: string): Promise<UserData | null> {
+  const result = await fetchUserDataResult(userId);
+  return result.status === "found" ? result.data : null;
 }
 
 /** Deletes remote user document and progress from Firestore */
@@ -95,6 +120,19 @@ export async function deleteUserData(userId: string): Promise<void> {
         const batch = writeBatch(db);
         for (const itemDoc of docs.slice(i, i + 500)) {
           batch.delete(itemDoc.ref);
+        }
+        await batch.commit();
+      }
+
+      // `dailyTasks/{date}` docs (one per day the user has been active) were
+      // never purged here — the exact same shape of gap as the `items`
+      // subcollection above, just discovered later (SEC-QA-003 / DATA-QA-004).
+      const dailyTasksSnap = await getDocs(collection(db, "users", userId, "dailyTasks"));
+      const dailyTaskDocs = dailyTasksSnap.docs;
+      for (let i = 0; i < dailyTaskDocs.length; i += 500) {
+        const batch = writeBatch(db);
+        for (const taskDoc of dailyTaskDocs.slice(i, i + 500)) {
+          batch.delete(taskDoc.ref);
         }
         await batch.commit();
       }
@@ -195,36 +233,24 @@ export async function syncLearningItemProgress(
   }
 }
 
-/** Merges local and remote user data upon login and persists the unified record to Firestore. */
+/**
+ * Merges local and remote user data upon login and persists the unified
+ * record to Firestore.
+ *
+ * Throws `RemoteStateUnknownError` if the remote state could not be
+ * determined (network/service failure) — callers must treat that as "keep
+ * local state, try again later," never as authorization to push or persist
+ * anything.
+ */
 export async function mergeAndSyncUserData(userId: string, localData: UserData): Promise<UserData> {
-  const rawRemote = await fetchUserData(userId);
-  if (!rawRemote) {
-    await syncUserData(userId, localData);
-    await syncUserProgress(userId, localData);
-    return localData;
+  const remoteResult = await fetchUserDataResult(userId);
+  const decision = decideMergeAction(remoteResult, localData);
+
+  if (decision.action === "unknown-remote-state") {
+    throw new RemoteStateUnknownError(decision.error);
   }
-  const remote = normalizeUserData(rawRemote);
 
-  const mergedXp = Math.max(localData.xp || 0, remote.xp || 0);
-  const mergedStreak = Math.max(localData.streak || 0, remote.streak || 0);
-  const mergedSolved = Array.from(new Set([...(localData.solvedQuestionIds || []), ...(remote.solvedQuestionIds || [])]));
-  const mergedRewarded = Array.from(new Set([...(localData.rewardedQuestionIds || []), ...(remote.rewardedQuestionIds || [])]));
-  const mergedBadges = Array.from(new Set([...(localData.unlockedBadges || []), ...(remote.unlockedBadges || [])]));
-
-  const mergedData: UserData = {
-    ...localData,
-    ...remote,
-    xp: mergedXp,
-    streak: mergedStreak,
-    solvedQuestionIds: mergedSolved,
-    rewardedQuestionIds: mergedRewarded,
-    unlockedBadges: mergedBadges,
-    learningProgress: mergeLearningProgress(
-      localData.learningProgress || {},
-      remote.learningProgress || {}
-    ),
-    onboardingCompleted: true,
-  };
+  const mergedData = decision.data;
 
   await syncUserData(userId, mergedData);
   await syncUserProgress(userId, mergedData);

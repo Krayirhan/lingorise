@@ -10,6 +10,7 @@ import { auth } from "../services/firebase";
 import { AuthScreen } from "../screens/AuthScreen";
 import { mergeAndSyncUserData } from "../services/firestore";
 import { loadUserData, saveUserData } from "../services/storage";
+import { rolloverToToday } from "../domain/gamification/dailyRollover";
 import { loadCatalogue } from "../services/catalogueService";
 import { setRuntimeQuestions } from "../content/questions";
 
@@ -48,12 +49,24 @@ export function AppBootstrap() {
       setAuthUser(user);
       if (user) {
         try {
-          const localData = await loadUserData();
+          // Rolled over to the device's actual current date BEFORE merging —
+          // a stale, long-unopened device's raw streak/daily state must be
+          // normalized first, or a cross-device merge can resurrect a
+          // frozen-stale streak and mask the gap from ever being detected
+          // afterwards (DATA-QA-006).
+          const rawLocalData = await loadUserData();
+          const { data: localData } = rolloverToToday(rawLocalData);
           const mergedData = await mergeAndSyncUserData(user.uid, localData);
           await saveUserData(mergedData);
           userProgress.refresh();
         } catch (err) {
+          // A failed merge (including an unknown remote state — see
+          // RemoteStateUnknownError) must leave local data untouched, not
+          // silently push or persist anything; the learner is still told,
+          // instead of this failing only to the console (REL-QA-004 /
+          // GLOBAL-QA-004).
           console.warn("LingoRise: Auth state change sync error", err);
+          userProgress.reportCloudSyncFailure();
         }
       }
     });

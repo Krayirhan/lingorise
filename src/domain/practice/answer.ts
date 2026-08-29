@@ -16,7 +16,7 @@ export function applyPracticeAnswer(
   question: MeaningMatchQuestion,
   picked: string,
   xpReward: number,
-  _sessionMode: PracticeSessionMode = "PRACTICE"
+  sessionMode: PracticeSessionMode = "PRACTICE"
 ): UserData {
   const correctAnswer = question.meaning || question.answer;
   const isCorrect = picked === correctAnswer;
@@ -48,8 +48,21 @@ export function applyPracticeAnswer(
     }
   }
 
+  // The level-completion exam draws from the level's whole word pool — not
+  // just words the learner has already met in daily practice (see
+  // buildLevelExam's own doc comment) — and the daily practice quest is
+  // sized to "what a learner actually has to answer in a daily session," not
+  // to exam activity (see createDailyQuests). Progressing/completing the
+  // daily quest from exam answers let the gamification economy be satisfied
+  // by an activity it wasn't designed to measure (CORE-QA-001); XP,
+  // rewarded/solved state, and mastery tracking below are unaffected — a
+  // correctly-answered word is genuinely learned regardless of which
+  // session type taught it.
   const questEvent = isFirstEncounter ? "PRACTICE" : "REVIEW";
-  const questResult = updateDailyQuests(previous.dailyQuests, { type: questEvent, isCorrect });
+  const questResult =
+    sessionMode === "EXAM"
+      ? { updatedQuests: previous.dailyQuests, bonusXpEarned: 0 }
+      : updateDailyQuests(previous.dailyQuests, { type: questEvent, isCorrect });
   nextXp += questResult.bonusXpEarned;
 
   const today = todayISO();
