@@ -8,7 +8,8 @@
     "userInterfaceStyle": "light",
     "icon": "./assets/lingorise-app-icon.png",
     "android": {
-      "package": "com.lingorise.app"
+      "package": "com.lingorise.app",
+      "versionCode": 2
     },
     "ios": {
       "bundleIdentifier": "com.lingorise.app"
