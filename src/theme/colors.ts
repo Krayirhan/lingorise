@@ -3,6 +3,7 @@ import { spacing } from "./spacing";
 
 export const colors = {
   canvas: "#F7F4EC",
+  canvasWarm: "#F8F1E4",
   surface: "#FFFFFF",
   primary: "#6B4355",
   primarySoft: "#EFE8EB",

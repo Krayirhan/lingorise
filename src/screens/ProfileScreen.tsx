@@ -141,7 +141,7 @@ const S = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 18,
-    backgroundColor: "#F8F1E4",
+    backgroundColor: C.canvasWarm,
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden",

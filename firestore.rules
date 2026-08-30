@@ -29,6 +29,20 @@ service cloud.firestore {
         && (!('celebratedLevels' in data) || data.celebratedLevels is list);
     }
 
+    // Same bounded-validation philosophy applied to the per-word SRS record
+    // shape actually written by syncLearningItemProgress() (src/services/
+    // firestore.ts) — this subcollection previously had no shape validation
+    // at all, only ownership, unlike the parent user doc.
+    function isValidItemDoc(data) {
+      return (!('level' in data) || isValidLevelCode(data.level))
+        && (!('attempts' in data) || isNonNegativeNumber(data.attempts))
+        && (!('correctCount' in data) || isNonNegativeNumber(data.correctCount))
+        && (!('wrongCount' in data) || isNonNegativeNumber(data.wrongCount))
+        && (!('repetitions' in data) || isNonNegativeNumber(data.repetitions))
+        && (!('distinctCorrectDays' in data) || isNonNegativeNumber(data.distinctCorrectDays))
+        && (!('intervalDays' in data) || isNonNegativeNumber(data.intervalDays));
+    }
+
     // User progress and profile data: Only authenticated owner can read & write
     match /users/{userId} {
       allow read: if request.auth != null && request.auth.uid == userId;
@@ -49,7 +63,10 @@ service cloud.firestore {
 
       // Per-word SRS state belongs only to its owner.
       match /items/{itemId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow create, update: if request.auth != null && request.auth.uid == userId
+          && isValidItemDoc(request.resource.data);
+        allow delete: if request.auth != null && request.auth.uid == userId;
       }
     }
 

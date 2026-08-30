@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { radius } from "../../../theme/colors";
+import { C, radius } from "../../../theme/colors";
 import { Copy } from "../../../i18n/en";
 import { HomeTab } from "../home.types";
 
@@ -54,7 +54,7 @@ export function HomeBottomNav({
                 <Ionicons
                   name={isSel ? tab.iconActive : tab.iconInactive}
                   size={22}
-                  color={isSel ? "#6B4355" : "#8D8883"}
+                  color={isSel ? C.primary : "#8D8883"}
                 />
               </View>
               <Text style={isSel ? S.lblActive : S.lbl}>{label}</Text>
@@ -100,7 +100,7 @@ const S = StyleSheet.create({
     gap: 3,
   },
   tabPillActive: {
-    backgroundColor: "#F1E8ED",
+    backgroundColor: C.primarySoft,
   },
   iconWrap: {
     position: "relative",
@@ -110,7 +110,7 @@ const S = StyleSheet.create({
     justifyContent: "center",
   },
   lblActive: {
-    color: "#6B4355",
+    color: C.primary,
     fontSize: 11,
     fontWeight: "800",
   },

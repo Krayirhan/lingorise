@@ -268,7 +268,7 @@ export function GardenHeroCard({
 
 const S = StyleSheet.create({
   card: {
-    backgroundColor: "#482639",
+    backgroundColor: C.primary,
     borderRadius: 20,
     padding: 20,
     borderWidth: 1,

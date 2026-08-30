@@ -86,7 +86,7 @@ const S = StyleSheet.create({
     width: 170,
     height: 170,
     borderRadius: 56,
-    backgroundColor: "#F8F1E4",
+    backgroundColor: C.canvasWarm,
     alignItems: "center",
     justifyContent: "center",
     marginTop: 10,

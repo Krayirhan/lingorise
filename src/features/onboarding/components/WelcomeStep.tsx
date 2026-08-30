@@ -37,7 +37,7 @@ export function WelcomeStep({ copy, onNext, onSkip }: Props) {
 
 const S = StyleSheet.create({
   container: { flex: 1 },
-  gardenArt: { alignSelf: "center", width: 198, height: 198, borderRadius: 62, backgroundColor: "#F8F1E4", alignItems: "center", justifyContent: "center", marginTop: 26, overflow: "hidden" },
+  gardenArt: { alignSelf: "center", width: 198, height: 198, borderRadius: 62, backgroundColor: C.canvasWarm, alignItems: "center", justifyContent: "center", marginTop: 26, overflow: "hidden" },
   mascot: { width: 194, height: 194 },
   eyebrow: { color: C.primary, fontSize: 11, fontWeight: "800", letterSpacing: 1.5, marginTop: 24 },
   hero: { color: C.ink, fontSize: 30, lineHeight: 36, fontWeight: "800", marginTop: 16 },

@@ -54,8 +54,8 @@ export function PracticeMascot({ correct, isMotionReduced, leafAnim, mascotBounc
 const S = StyleSheet.create({
   mascotSection: { alignItems: "center", justifyContent: "center" },
   mascotCard: { width: 40, height: 44, borderRadius: radius.sm, alignItems: "center", justifyContent: "center", position: "relative", borderWidth: 1 },
-  mascotCardCorrect: { backgroundColor: "#DFEEDB", borderColor: C.successBorder },
-  mascotCardWrong: { backgroundColor: "#FBE6E2", borderColor: C.attentionBorder },
+  mascotCardCorrect: { backgroundColor: C.successSoft, borderColor: C.successBorder },
+  mascotCardWrong: { backgroundColor: C.attentionSoft, borderColor: C.attentionBorder },
   feedbackMascot: { width: 34, height: 38 },
   sproutLeafBadge: {
     position: "absolute",

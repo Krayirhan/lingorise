@@ -191,7 +191,7 @@ const S = StyleSheet.create({
     lineHeight: 19,
   },
   titleDone: {
-    color: "#2C402E",
+    color: C.successText,
   },
   meta: {
     color: C.muted,
