@@ -1,0 +1,41 @@
+{
+  "package": "com.lingorise.app",
+  "version": "0.1.0",
+  "versionCode": 4,
+  "sourceSha": "68904b7e27ba5258521a3f9d14028ae622d9895b",
+  "primaryLocale": "en-US",
+  "locales": [
+    "en-US",
+    "tr-TR",
+    "de-DE",
+    "es-ES",
+    "fr-FR",
+    "it-IT",
+    "pt-BR",
+    "ar"
+  ],
+  "category": "Education (target, owner UI required)",
+  "tags": [],
+  "countries": "worldwide (verified via countryAvailability API, no restriction)",
+  "listingHashes": {
+    "en-US": "569683a2beddc47da6a31fe45dc531794dc3103fa4e88584982ec5f5af600b63"
+  },
+  "screenshotHashes": {
+    "home-garden_1080x1920.png": "386631f0497520ba5d7227c44c2014e2ad283b5b95412e80178e62905aebbed4",
+    "practice-session_1080x1920.png": "960001f5d41c6842f346c76b7cf6a194b8bba0cfe7a2a9f54881c04a33a8e55e",
+    "progress-mastery_1080x1920.png": "20747d506a92065fe8d17d1649a1f18280c629221ae2b37076ee49b946208b35"
+  },
+  "icon": {
+    "path": ".store/icon/play-icon-512.png",
+    "sha256": "6fd20490ffe64774ac5ab89581ce69e6dfbd7051d951d727939b6eeea09e3c3c"
+  },
+  "featureGraphic": {
+    "path": ".store/feature-graphic/feature-graphic-1024x500-v1.png",
+    "sha256": "d5c391afc8e6febae57d500f4ce3bfedae1b9f245735a399caa6c56df953ba54"
+  },
+  "releaseNotes": {
+    "en": "staged, see 25_RELEASE_NOTES.md",
+    "tr": "staged, see 25_RELEASE_NOTES.md"
+  },
+  "generatedAt": "2026-08-30T10:28:25.401Z"
+}

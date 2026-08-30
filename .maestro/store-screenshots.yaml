@@ -1,0 +1,44 @@
+appId: com.lingorise.app
+---
+# Store screenshot capture flow. Reuses the exact onboarding path validated
+# by .maestro/smoke.yaml (see that file's comments for why each selector is
+# shaped the way it is — same app, same known Maestro text-matching quirks).
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: ".*Başla.*"
+    timeout: 35000
+- tapOn: ".*Başla.*"
+- tapOn: "Seviyemi seç"
+- tapOn: "A1"
+- tapOn: ".*A1 ·.*"
+- tapOn: ".*Misafir Olarak.*"
+- tapOn:
+    text: "Allow|İzin Ver|İzin ver"
+    optional: true
+
+# 1. Home / first impression (garden tab, landed on by default post-onboarding)
+- tapOn: ".*Ana Sayfa.*"
+- assertVisible: ".*Bugün ne çalışmak istersin?.*"
+- takeScreenshot: 01_home
+
+# 2. Practice hub (mode/exercise selection)
+- tapOn: ".*Pratik.*"
+- assertVisible: ".*Bugün ne çalışmak istersin?.*"
+- takeScreenshot: 02_practice_hub
+
+# 3 & 4. Inside an actual practice/exercise + answer feedback — exact entry
+# point depends on PracticeHubScreen's current copy; capture whatever the
+# first practice card leads to since hub content is data-driven.
+- tapOn:
+    point: "50%,40%"
+    optional: true
+- takeScreenshot: 03_practice_exercise
+
+# 5. Progress (XP / streak / level progress)
+- tapOn: ".*İlerleme.*"
+- takeScreenshot: 04_progress
+
+# 6. Profile
+- tapOn: ".*Profil.*"
+- takeScreenshot: 05_profile
