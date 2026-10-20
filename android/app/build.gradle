@@ -87,15 +87,20 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.lingorise.app'
+    namespace 'com.lingterra.app'
     defaultConfig {
-        applicationId 'com.lingorise.app'
+        applicationId 'com.lingterra.app'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 2
-        versionName "0.1.0"
+        versionCode 8
+        versionName "0.2.2"
 
         buildConfigField "String", "REACT_NATIVE_RELEASE_LEVEL", "\"${findProperty('reactNativeReleaseLevel') ?: 'stable'}\""
+        externalNativeBuild {
+            cmake {
+                arguments "-DCMAKE_OBJECT_PATH_MAX=248"
+            }
+        }
     }
     signingConfigs {
         debug {
@@ -116,7 +121,7 @@ android {
             def enableShrinkResources = findProperty('android.enableShrinkResourcesInReleaseBuilds') ?: 'false'
             shrinkResources enableShrinkResources.toBoolean()
             minifyEnabled enableMinifyInReleaseBuilds
-            proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
+            proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
             def enablePngCrunchInRelease = findProperty('android.enablePngCrunchInReleaseBuilds') ?: 'true'
             crunchPngs enablePngCrunchInRelease.toBoolean()
         }
@@ -129,6 +134,11 @@ android {
     }
     androidResources {
         ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:!CVS:!thumbs.db:!picasa.ini:!*~'
+    }
+    externalNativeBuild {
+        cmake {
+            buildStagingDirectory file("D:/c")
+        }
     }
 }
 
@@ -153,6 +163,7 @@ android {
 }
 
 dependencies {
+    implementation("com.google.android.play:app-update:2.1.0")
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
 
@@ -180,3 +191,7 @@ dependencies {
         implementation jscFlavor
     }
 }
+
+// Required by @react-native-firebase/app — must be applied after the
+// Android application plugin, hence placed at the end of this file.
+apply plugin: "com.google.gms.google-services"
