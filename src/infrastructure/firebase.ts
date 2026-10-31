@@ -5,7 +5,7 @@ import {
   getAuth,
   initializeAuth,
 } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { getFirestore, initializeFirestore } from "firebase/firestore";
 import { Platform } from "react-native";
 
 // These values are Firebase client configuration, not admin credentials.
@@ -50,6 +50,14 @@ try {
 }
 
 export const auth = authInstance;
-export const db = getFirestore(app);
+// Progress objects contain optional fields. Firestore rejects undefined values
+// by default, so omit them rather than failing an otherwise valid profile sync.
+let firestoreInstance: ReturnType<typeof getFirestore>;
+try {
+  firestoreInstance = initializeFirestore(app, { ignoreUndefinedProperties: true });
+} catch {
+  firestoreInstance = getFirestore(app);
+}
+export const db = firestoreInstance;
 export default app;
 

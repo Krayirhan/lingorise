@@ -10,22 +10,22 @@ class AppLogger {
 
   public debug(message: string, ...args: any[]) {
     if (this.isDev) {
-      console.log(`[LingoRise:DEBUG] ${message}`, ...args);
+      console.log(`[Lingterra:DEBUG] ${message}`, ...args);
     }
   }
 
   public info(message: string, ...args: any[]) {
     if (this.isDev) {
-      console.info(`[LingoRise:INFO] ${message}`, ...args);
+      console.info(`[Lingterra:INFO] ${message}`, ...args);
     }
   }
 
   public warn(message: string, ...args: any[]) {
-    console.warn(`[LingoRise:WARN] ${message}`, ...args);
+    console.warn(`[Lingterra:WARN] ${message}`, ...args);
   }
 
   public error(message: string, error?: any, context?: Record<string, any>) {
-    console.error(`[LingoRise:ERROR] ${message}`, {
+    console.error(`[Lingterra:ERROR] ${message}`, {
       error: error?.message || error,
       code: error?.code,
       context,

@@ -1,61 +1,14 @@
-import { useState, useCallback, useEffect } from "react";
-import { MeaningMatchQuestion } from "../types/content";
-import { getCurrentLevelUnitQuestions, getQuestionById, getQuestionsByLevel } from "../content/questions";
-import { toPickTheWordSession, canUsePickTheWord } from "../domain/practice/reverseMode";
-import { randomizeDistractors } from "../domain/practice/distractors";
-import { buildLevelExam } from "../domain/learning/levelExam";
-import { ActiveSessionState, UserData } from "../types/user";
-import { LevelCode } from "../types/content";
-import { now } from "../utils/clock";
-import { track } from "../services/telemetry";
+import { useCallback, useEffect, useState } from "react";
+import { restoreSession } from "../application/sessionRestoration";
+import { useApplication } from "../context/ApplicationContext";
+import { MeaningMatchQuestion } from "../domain/models/content";
 
-/**
- * Picks new words ordered by increasing difficulty (1-5), with randomized order
- * within each difficulty group to prevent rote memorization while ensuring a gentle ramp.
- */
-export function pickNewWords(freshWords: MeaningMatchQuestion[], count: number): MeaningMatchQuestion[] {
-  const byDifficulty = new Map<number, MeaningMatchQuestion[]>();
-  for (const q of freshWords) {
-    const d = q.difficulty || 1;
-    if (!byDifficulty.has(d)) byDifficulty.set(d, []);
-    byDifficulty.get(d)!.push(q);
-  }
-  const ordered = [...byDifficulty.keys()].sort((a, b) => a - b).flatMap((d) => {
-    const group = byDifficulty.get(d)!;
-    return [...group].sort(() => Math.random() - 0.5); // grup içinde hâlâ rastgele — ezber riski kalmıyor
-  });
-  return ordered.slice(0, count);
-}
 
-/**
- * Daily practice, always and only new words. A word the learner has already
- * met correctly is never shown here again, by construction — there is no
- * review queue mixing anything back in. Level completion is decided
- * separately and explicitly, by the level exam (domain/learning/levelExam.ts),
- * not by resurfacing individual words for reinforcement.
- */
-function buildDailySessionCore(userData: UserData): MeaningMatchQuestion[] {
-  const sessionSize = userData.practiceSessionSize || 20;
-  const unitQuestions = getCurrentLevelUnitQuestions(userData.level, userData.solvedQuestionIds);
-  const freshWords = unitQuestions.filter((q) => !userData.rewardedQuestionIds.includes(q.id));
-
-  return pickNewWords(freshWords, sessionSize);
-}
-
-/**
- * Draws each question's decoys fresh from its own level's pool (roadmap
- * Birim 10.1) rather than the fixed set baked in at content-authoring time.
- */
-function withFreshDistractors(questions: MeaningMatchQuestion[]): MeaningMatchQuestion[] {
-  return questions.map((q) => randomizeDistractors(q, getQuestionsByLevel(q.level)));
-}
-
-export function buildDailySession(userData: UserData): MeaningMatchQuestion[] {
-  return withFreshDistractors(buildDailySessionCore(userData));
-}
+import { LevelCode } from "../domain/models/content";
+import { ActiveSessionState, UserData } from "../domain/models/user";
 
 export type ScreenType = "onboarding" | "home" | "practiceHome" | "practice" | "progress" | "profile";
-export type SessionMode = "PRACTICE" | "EXAM";
+export type SessionMode = "PRACTICE" | "EXAM" | "CHECKPOINT";
 
 export interface SessionAnswerRecord {
   questionId: string;
@@ -64,20 +17,23 @@ export interface SessionAnswerRecord {
 }
 
 export function useAppSession(userData: UserData, setActiveSession?: (session: ActiveSessionState | null) => void) {
-  const restored = userData.activeSession || null;
-  const restoredQuestions = restored?.questionIds
-    .map((id) => getQuestionById(id))
-    .filter((q): q is MeaningMatchQuestion => q !== undefined) || [];
-  const hasRestorableSession = restoredQuestions.length > 0 && !!restored;
+  const application = useApplication();
+  const { CONTENT_VERSION } = application.catalogue;
+  const { now } = application.clock;
+  const createSessionId = () => `session-${now()}-${application.random.next().toString(36).slice(2, 10)}`;
+
+  const { restored, questions: restoredQuestions, hasRestorableSession } = restoreSession(userData, application.catalogue);
   const [screen, setScreen] = useState<ScreenType>(hasRestorableSession ? "practice" : userData.onboardingCompleted ? "home" : "onboarding");
   const [onboardingStep, setOnboardingStep] = useState(0);
   const [sessionMode, setSessionMode] = useState<SessionMode>(restored?.sessionMode || "PRACTICE");
+  const [sessionId, setSessionId] = useState(restored?.sessionId || createSessionId());
   const [sessionQuestions, setSessionQuestions] = useState<MeaningMatchQuestion[]>(restoredQuestions);
   const [currentIndex, setCurrentIndex] = useState(Math.min(restored?.currentIndex || 0, Math.max(0, restoredQuestions.length - 1)));
   const [sessionAnswers, setSessionAnswers] = useState<SessionAnswerRecord[]>(restored?.answers || []);
   const [isSessionCompleted, setIsSessionCompleted] = useState(false);
-  const [picked, setPicked] = useState<string | null>(null);
-  const [submitted, setSubmitted] = useState(false);
+  const [picked, setPicked] = useState<string | null>(restored?.pickedAnswer ?? null);
+  const [submitted, setSubmitted] = useState(restored?.submitted ?? false);
+  const [writingOffer, setWritingOffer] = useState<ActiveSessionState["writingOffer"]>(restored?.writingOffer);
 
   useEffect(() => {
     if (!setActiveSession) return;
@@ -86,13 +42,19 @@ export function useAppSession(userData: UserData, setActiveSession?: (session: A
       return;
     }
     setActiveSession({
+      sessionId,
+      catalogVersion: CONTENT_VERSION,
       questionIds: sessionQuestions.map((question) => question.id),
       currentIndex,
       answers: sessionAnswers,
       sessionMode,
       startedAt: restored?.startedAt || now(),
+      pickedAnswer: picked,
+      submitted,
+      writingOffer,
+      reversedOptions: Object.fromEntries(sessionQuestions.filter((question) => question.mode === "PICK_THE_WORD" && question.options?.length).map((question) => [question.id, question.options!])),
     });
-  }, [screen, isSessionCompleted, sessionQuestions, currentIndex, sessionAnswers, sessionMode, setActiveSession]);
+  }, [screen, isSessionCompleted, sessionQuestions, currentIndex, sessionAnswers, sessionMode, sessionId, picked, submitted, writingOffer, setActiveSession]);
 
   const resetQuestionState = useCallback(() => {
     setPicked(null);
@@ -103,8 +65,10 @@ export function useAppSession(userData: UserData, setActiveSession?: (session: A
     (qList: MeaningMatchQuestion[], mode: SessionMode) => {
       if (qList.length === 0) return false;
       setSessionQuestions(qList);
+      setSessionId(createSessionId());
       setCurrentIndex(0);
       setSessionAnswers([]);
+      setWritingOffer(undefined);
       setIsSessionCompleted(false);
       setSessionMode(mode);
       resetQuestionState();
@@ -115,45 +79,23 @@ export function useAppSession(userData: UserData, setActiveSession?: (session: A
   );
 
   /** Returns false (and starts nothing) when there is no session to build — the caller must not treat that as success (CORE-004). */
-  const startPractice = useCallback(
-    (customQuestions?: MeaningMatchQuestion[], reverseMode?: boolean): boolean => {
-      let qList: MeaningMatchQuestion[] = [];
-      if (customQuestions && customQuestions.length > 0) {
-        qList = withFreshDistractors(customQuestions);
-      } else {
-        qList = buildDailySession(userData);
-      }
-      if (qList.length === 0) return false;
+  const startPractice = useCallback((customQuestions?: MeaningMatchQuestion[], reverseMode?: boolean): boolean => {
+    const latestUser = application.progress.getSnapshot().isHydrated
+      ? application.progress.getSnapshot().userData
+      : userData;
+    const questions = application.sessionCommands.practice(latestUser, customQuestions, reverseMode);
+    return questions ? beginSession(questions, "PRACTICE") : false;
+  }, [application, userData, beginSession]);
 
-      if (!customQuestions) {
-        track("practice_session_started", {
-          freshCount: qList.length,
-          reverseMode: Boolean(reverseMode),
-        });
-      }
-      if (reverseMode && canUsePickTheWord(qList.length)) qList = toPickTheWordSession(qList);
-      return beginSession(qList, "PRACTICE");
-    },
-    [userData, beginSession]
-  );
+  const startExam = useCallback((level: LevelCode): boolean => {
+    const questions = application.sessionCommands.exam(level);
+    return questions ? beginSession(questions, "EXAM") : false;
+  }, [application, beginSession]);
 
-  /**
-   * The level completion exam: 60 questions drawn from the whole level
-   * (not just words the learner has already met), easy/medium/hard evenly
-   * mixed. Scoring 50+ correct marks the level complete — this replaces
-   * per-word spaced-repetition mastery as the promotion gate entirely (see
-   * domain/learning/promotion.ts and domain/learning/levelExam.ts).
-   */
-  /** Returns false (and starts nothing) when the level has no exam to seat — the caller must not treat that as success (CORE-004). */
-  const startExam = useCallback(
-    (level: LevelCode): boolean => {
-      const qList = withFreshDistractors(buildLevelExam(level));
-      if (qList.length === 0) return false;
-      track("level_exam_started", { level, questionCount: qList.length });
-      return beginSession(qList, "EXAM");
-    },
-    [beginSession]
-  );
+  const startTopicCheckpoint = useCallback((level: LevelCode, topicId: string): boolean => {
+    const questions = application.sessionCommands.checkpoint(level, topicId);
+    return questions ? beginSession(questions, "CHECKPOINT") : false;
+  }, [application, beginSession]);
 
   const recordSessionStep = useCallback((isCorrect: boolean, xpEarned: number) => {
     const currentQ = sessionQuestions[currentIndex];
@@ -167,12 +109,7 @@ export function useAppSession(userData: UserData, setActiveSession?: (session: A
       setCurrentIndex((prev) => prev + 1);
       resetQuestionState();
     } else {
-      track("practice_session_completed", {
-        questionsAnswered: sessionAnswers.length,
-        questionsTotal: sessionQuestions.length,
-        correctCount: sessionAnswers.filter((a) => a.isCorrect).length,
-        sessionMode,
-      });
+      application.sessionCommands.complete(sessionAnswers, sessionQuestions.length, sessionMode);
       setIsSessionCompleted(true);
       resetQuestionState();
     }
@@ -208,6 +145,8 @@ export function useAppSession(userData: UserData, setActiveSession?: (session: A
     currentQuestion,
     picked,
     submitted,
+    writingOffer,
+    setWritingOffer,
     setPicked,
     setSubmitted,
     setOnboardingStep,
@@ -216,6 +155,7 @@ export function useAppSession(userData: UserData, setActiveSession?: (session: A
     nextQuestion,
     startPractice,
     startExam,
+    startTopicCheckpoint,
     goToHome,
     goToPracticeHome,
     goToProgress,

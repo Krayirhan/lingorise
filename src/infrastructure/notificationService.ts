@@ -1,5 +1,7 @@
 import { isRunningInExpoGo } from "expo";
 import { Platform } from "react-native";
+import { dailyReminderMessages, isOwnedDailyReminder } from "../domain/notifications/dailyReminders";
+import { Locale } from "../domain/models/locale";
 
 const CHANNEL_ID = "lingorise-daily-reminder";
 type NotificationsModule = typeof import("expo-notifications");
@@ -23,7 +25,21 @@ function configureNotificationHandler(Notifications: NotificationsModule): void 
   });
 }
 
-export async function scheduleDailyReminder(hour = 19): Promise<boolean> {
+let operationQueue: Promise<unknown> = Promise.resolve();
+function queueOperation<T>(operation: () => Promise<T>): Promise<T> {
+  const result = operationQueue.then(operation, operation);
+  operationQueue = result.then(() => undefined, () => undefined);
+  return result;
+}
+
+async function cancelReminders(Notifications: NotificationsModule): Promise<void> {
+  const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+  await Promise.all(scheduled.filter(isOwnedDailyReminder)
+    .map(item => Notifications.cancelScheduledNotificationAsync(item.identifier)));
+}
+
+export function scheduleDailyReminder(locale: Locale = "tr", askPermission = true): Promise<boolean> {
+  return queueOperation(async () => {
   try {
     const Notifications = getNotifications();
     if (!Notifications) return false;
@@ -38,22 +54,23 @@ export async function scheduleDailyReminder(hour = 19): Promise<boolean> {
     }
 
     const current = await Notifications.getPermissionsAsync();
-    const permission = current.granted ? current : await Notifications.requestPermissionsAsync();
+    const permission = current.granted || !askPermission ? current : await Notifications.requestPermissionsAsync();
     if (!permission.granted) return false;
 
-    await cancelDailyReminder();
-    await Notifications.scheduleNotificationAsync({
-      content: {
-        title: "Bahçen seni bekliyor 🌱",
-        body: "Bugünkü kısa pratiğinle serini koru.",
-      },
-      trigger: {
-        type: Notifications.SchedulableTriggerInputTypes.DAILY,
-        hour,
-        minute: 0,
-        ...(Platform.OS === "android" ? { channelId: CHANNEL_ID } : {}),
-      },
-    });
+    await cancelReminders(Notifications);
+    try {
+      for (const message of dailyReminderMessages(locale)) {
+        await Notifications.scheduleNotificationAsync({
+          identifier: message.identifier,
+          content: { title: message.title, body: message.body, data: { kind: "daily-reminder" } },
+          trigger: { type: Notifications.SchedulableTriggerInputTypes.WEEKLY, weekday: message.weekday,
+            hour: 19, minute: 0, ...(Platform.OS === "android" ? { channelId: CHANNEL_ID } : {}) },
+        });
+      }
+    } catch (error) {
+      await cancelReminders(Notifications);
+      throw error;
+    }
     return true;
   } catch (error) {
     // Expo Go and a device can reject a native notification call; never surface that
@@ -61,14 +78,17 @@ export async function scheduleDailyReminder(hour = 19): Promise<boolean> {
     console.warn("Daily reminder could not be scheduled", error);
     return false;
   }
+  });
 }
 
-export async function cancelDailyReminder(): Promise<void> {
+export function cancelDailyReminder(): Promise<void> {
+  return queueOperation(async () => {
   try {
     const Notifications = getNotifications();
     if (!Notifications) return;
-    await Notifications.cancelAllScheduledNotificationsAsync();
+    await cancelReminders(Notifications);
   } catch (error) {
     console.warn("Daily reminder could not be cancelled", error);
   }
+  });
 }

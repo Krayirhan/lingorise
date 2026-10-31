@@ -1,28 +1,20 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { HomeScreen } from "../screens/HomeScreen";
-import { OnboardingScreen } from "../screens/OnboardingScreen";
-import { PracticeScreen } from "../screens/PracticeScreen";
-import { ProgressScreen } from "../screens/ProgressScreen";
-import { ProfileScreen } from "../screens/ProfileScreen";
-import { PracticeHubScreen } from "../screens/PracticeHubScreen";
+import { useCallback, useEffect, useState } from "react";
 import { GlobalAppLayout } from "../components/GlobalAppLayout";
 import { GlobalTopBarProps } from "../components/GlobalTopBar";
+import { useApplication } from "../context/ApplicationContext";
 import { copyByLocale } from "../i18n/en";
-import { allQuestions, getQuestionsByLevel, isLevelReady } from "../content/questions";
-import { getTopicLabel } from "../features/home/topicLabel";
-import { useUserProgress } from "../state/useUserProgress";
-import { useAppSession } from "../state/useAppSession";
-import { useHomeViewModel } from "../features/home/hooks/useHomeViewModel";
-import { LevelCode, MeaningMatchQuestion } from "../types/content";
-import { LevelProgressItem, TopicProgressItem } from "../features/progress/progress.types";
+import { MeaningMatchQuestion } from "../domain/models/content";
 import { HomeTab } from "../features/home/home.types";
-import { BadgeUnlockCelebration } from "../features/practice/components/BadgeUnlockCelebration";
-import { evaluatePromotion } from "../domain/learning/promotion";
-import { isExamAvailable, isExamPassed } from "../domain/learning/levelExam";
-import { track } from "../services/telemetry";
+import { useHomeViewModel } from "../features/home/hooks/useHomeViewModel";
+import { useAppSession } from "../state/useAppSession";
+import { useUserProgress } from "../state/useUserProgress";
+
+
+import { useToast } from "../context/ToastContext";
 import { LevelPromotionModal } from "../features/home/components/LevelPromotionModal";
 import { LevelSwitcherModal } from "../features/home/components/LevelSwitcherModal";
-import { useToast } from "../context/ToastContext";
+import { getMainRoute } from "./getMainRoute";
+import { SessionRoute } from "./SessionRoute";
 
 interface Props {
   userProgress: ReturnType<typeof useUserProgress>;
@@ -32,7 +24,16 @@ interface Props {
 }
 
 export function AppNavigator({ userProgress, onAccountPress, deepLinkTarget, onDeepLinkConsumed }: Props) {
-  const { userData, recordAnswer, bookmarkQuestion, setLocale, setLevel, markLevelCelebrated, markGardenExplainerSeen, completeOnboarding, markLevelExamPassed, badgeUnlockQueue, dismissBadgeUnlock, saveFailureNotice, clearSaveFailureNotice, cloudSyncFailureNotice, clearCloudSyncFailureNotice } = userProgress;
+  const application = useApplication();
+  const { allQuestions } = application.catalogue;
+  const { getQuestionsByLevel } = application.catalogue;
+  const { isLevelReady } = application.catalogue;
+  const { evaluatePromotion } = application.learning;
+  const { isExamAvailable } = application.learning;
+  const { getTopicProgressSummaries, getNextCurriculumLesson, getPendingTopicCheckpoint } = application.learning;
+  const { track } = application;
+
+  const { userData, recordAnswer, bookmarkQuestion, setLocale, setLevel, markLevelCelebrated, markGardenExplainerSeen, saveFailureNotice, clearSaveFailureNotice, cloudSyncFailureNotice, clearCloudSyncFailureNotice } = userProgress;
   const session = useAppSession(userData, userProgress.setActiveSession);
   const [levelSwitcherOpen, setLevelSwitcherOpen] = useState(false);
   const { showToast } = useToast();
@@ -93,30 +94,13 @@ export function AppNavigator({ userProgress, onAccountPress, deepLinkTarget, onD
   // exam is the sole way a level is marked complete now (roadmap
   // 18-srs-flow-hardening.md "sınav" redesign) — no per-word mastery
   // percentage feeds this any more.
-  const examResultRecordedRef = useRef<string | null>(null);
+  const [recordSessionResult] = useState(application.createResultRecorder);
   useEffect(() => {
-    if (session.sessionMode !== "EXAM" || !session.isSessionCompleted) return;
-    const examKey = session.sessionQuestions.map((q) => q.id).join(",");
-    if (!examKey || examResultRecordedRef.current === examKey) return;
-    examResultRecordedRef.current = examKey;
-
-    const correctCount = session.sessionAnswers.filter((a) => a.isCorrect).length;
-    const passed = isExamPassed(correctCount);
-    track("level_exam_completed", {
-      level: userData.level,
-      correctCount,
-      totalCount: session.sessionQuestions.length,
-      passed,
+    recordSessionResult({
+      mode: session.sessionMode, completed: session.isSessionCompleted,
+      level: userData.level, questions: session.sessionQuestions, answers: session.sessionAnswers
     });
-    if (passed) markLevelExamPassed(userData.level);
-  }, [
-    session.sessionMode,
-    session.isSessionCompleted,
-    session.sessionQuestions,
-    session.sessionAnswers,
-    userData.level,
-    markLevelExamPassed,
-  ]);
+  }, [recordSessionResult, session.sessionMode, session.isSessionCompleted, session.sessionQuestions, session.sessionAnswers, userData.level]);
 
   useEffect(() => {
     if (!deepLinkTarget) return;
@@ -127,66 +111,8 @@ export function AppNavigator({ userProgress, onAccountPress, deepLinkTarget, onD
     onDeepLinkConsumed?.();
   }, [deepLinkTarget, onDeepLinkConsumed, session]);
 
-  if (session.screen === "onboarding") {
-    return (
-      <OnboardingScreen
-        copy={copy}
-        level={userData.level}
-        step={session.onboardingStep}
-        dailyGoalMinutes={userData.dailyGoalMinutes}
-        notificationsEnabled={userData.notificationsEnabled}
-        onStep={session.setOnboardingStep}
-        onGoalSelect={userProgress.setDailyGoalMinutes}
-        onNotificationToggle={userProgress.setNotificationsEnabled}
-        onLevel={(lvl) => {
-          if (lvl) setLevel(lvl);
-        }}
-        onComplete={() => {
-          completeOnboarding();
-          session.goToHome();
-        }}
-        onOpenAuth={onAccountPress}
-        onBack={session.goToHome}
-      />
-    );
-  }
-
-  if (session.screen === "practice" && session.currentQuestion) {
-    const currentQuestion = session.currentQuestion;
-    const correctAnswer = currentQuestion.meaning || currentQuestion.answer || "";
-    return (
-      <>
-      <PracticeScreen
-        copy={copy}
-        question={currentQuestion}
-        index={session.currentIndex}
-        totalQuestions={session.sessionQuestions.length || 1}
-        sessionMode={session.sessionMode}
-        picked={session.picked}
-        submitted={session.submitted}
-        isSessionCompleted={session.isSessionCompleted}
-        sessionAnswers={session.sessionAnswers}
-        onPick={session.setPicked}
-        onCheck={(xpReward, quality) => {
-          session.recordSessionStep(session.picked === correctAnswer, xpReward);
-          recordAnswer(currentQuestion, session.picked || "", xpReward, session.sessionMode, quality);
-          session.setSubmitted(true);
-        }}
-        onRetry={session.resetQuestionState}
-        onNext={session.nextQuestion}
-        onRemindLater={(q) => bookmarkQuestion(q.id)}
-        onBack={session.goToHome}
-        soundEnabled={userData.soundEnabled}
-        reduceMotion={userData.reduceMotion}
-      />
-      <BadgeUnlockCelebration
-        badgeId={badgeUnlockQueue[0]}
-        locale={userData.locale}
-        reduceMotion={userData.reduceMotion}
-        onDismiss={dismissBadgeUnlock}
-      />
-      </>
-    );
+  if (session.screen === "onboarding" || (session.screen === "practice" && session.currentQuestion)) {
+    return <SessionRoute application={application} session={session} userData={userData} userProgress={userProgress} copy={copy} recordAnswer={recordAnswer} bookmarkQuestion={bookmarkQuestion} onAccountPress={onAccountPress} />;
   }
 
   const topBarProps: GlobalTopBarProps = {
@@ -206,143 +132,13 @@ export function AppNavigator({ userProgress, onAccountPress, deepLinkTarget, onD
     else if (tab === "profile") session.goToProfile();
   };
 
-  let activeTab: HomeTab = "garden";
-  let content = null;
-
-  if (session.screen === "progress") {
-    activeTab = "progress";
-    const levels: LevelCode[] = ["A1", "A2", "B1", "B2", "C1", "C2"];
-    const levelProgressList: LevelProgressItem[] = levels.map((lvl) => {
-      const qs = getQuestionsByLevel(lvl);
-      const qIds = qs.map((question) => question.id);
-      return {
-        level: lvl,
-        total: qs.length,
-        // Answered correctly at least once — the number that actually moves
-        // the moment you practice, so a finished session is never invisible.
-        seen: userData.solvedQuestionIds.filter((id) => qIds.includes(id)).length,
-        examPassed: (userData.passedLevelExams || []).includes(lvl),
-        isReady: isLevelReady(lvl),
-      };
-    });
-
-    // Topics are labelled through the same helper the home screen uses, so raw
-    // content keys like "core_verbs" never reach the reader.
-    const topicCounts: Record<string, number> = {};
-    for (const q of allQuestions) {
-      if (userData.solvedQuestionIds.includes(q.id) && q.topic) {
-        const label = getTopicLabel(copy, q.topic);
-        topicCounts[label] = (topicCounts[label] || 0) + 1;
-      }
-    }
-    const topicBreakdown: TopicProgressItem[] = Object.entries(topicCounts)
-      .sort((a, b) => b[1] - a[1])
-      .map(([topic, count]) => ({ topic, count }));
-
-    const levelQuestionIds = getQuestionsByLevel(userData.level).map((q) => q.id);
-
-    content = (
-      <ProgressScreen
-        copy={copy}
-        locale={userData.locale}
-        xp={userData.xp}
-        streak={userData.streak}
-        level={userData.level}
-        gardenProgress={homeViewModel.gardenProgress}
-        totalSolved={(userData.rewardedQuestionIds || []).length}
-        seenWordCount={userData.solvedQuestionIds.filter((id) => levelQuestionIds.includes(id)).length}
-        levelWordCount={levelQuestionIds.length}
-        levelProgressList={levelProgressList}
-        topicBreakdown={topicBreakdown}
-        solvedQuestionIds={userData.solvedQuestionIds}
-        lastActiveDate={userData.lastActiveDate}
-        practiceHistory={userData.practiceHistory}
-        unlockedBadges={userData.unlockedBadges}
-        onPracticeWord={(q) => startPracticeSafe([q])}
-        onBack={session.goToHome}
-        onTabPress={handleTabPress}
-        reduceMotion={userData.reduceMotion}
-      />
-    );
-  } else if (session.screen === "practiceHome") {
-    activeTab = "practice";
-    content = (
-      <PracticeHubScreen
-        copy={copy}
-        locale={userData.locale}
-        level={userData.level}
-        xp={userData.xp}
-        streak={userData.streak}
-        practiceSessionSize={userData.practiceSessionSize}
-        onPracticeSessionSizeChange={userProgress.setPracticeSessionSize}
-        onStartDailyPractice={(reverseMode) => startPracticeSafe(undefined, reverseMode)}
-        isExamAvailable={isExamAvailable(userData.level)}
-        isExamPassed={(userData.passedLevelExams || []).includes(userData.level)}
-        onStartExam={startExamSafe}
-        isLevelFullyLearned={homeViewModel.isLevelFullyLearned}
-        onTabPress={handleTabPress}
-      />
-    );
-  } else if (session.screen === "profile") {
-    activeTab = "profile";
-    content = (
-      <ProfileScreen
-        copy={copy}
-        locale={userData.locale}
-        level={userData.level}
-        xp={userData.xp}
-        streak={userData.streak}
-        unlockedBadges={userData.unlockedBadges}
-        soundEnabled={userData.soundEnabled}
-        reduceMotion={userData.reduceMotion}
-        notificationsEnabled={userData.notificationsEnabled}
-        displayName={userData.displayName}
-        avatarId={userData.avatarId}
-        onSoundToggle={userProgress.setSoundEnabled}
-        onReduceMotionToggle={userProgress.setReduceMotion}
-        onNotificationToggle={userProgress.setNotificationsEnabled}
-        onDisplayNameChange={userProgress.setDisplayName}
-        onAvatarChange={userProgress.setAvatarId}
-        onDataReset={userProgress.reloadLocalOnly}
-        onRefresh={userProgress.refresh}
-        onLocaleChange={setLocale}
-        onChangeLevel={() => setLevelSwitcherOpen(true)}
-        onBack={session.goToHome}
-        onAccountPress={onAccountPress}
-        onTabPress={handleTabPress}
-      />
-    );
-  } else {
-    activeTab = "garden";
-    content = (
-      <HomeScreen
-        copy={copy}
-        locale={userData.locale}
-        viewModel={homeViewModel}
-        activeTab="garden"
-        onLevelPress={() => setLevelSwitcherOpen(true)}
-        onQuestPress={() => startPracticeSafe()}
-        onPracticePress={session.goToPracticeHome}
-        onWordPress={(wordData) => {
-          const matchQ = allQuestions.find(
-            (q) =>
-              (q.word && q.word.toLowerCase() === wordData.word.toLowerCase()) ||
-              (q.prompt && q.prompt.toLowerCase() === wordData.word.toLowerCase())
-          );
-          if (matchQ) {
-            startPracticeSafe([matchQ]);
-          } else {
-            startPracticeSafe();
-          }
-        }}
-        onTabPress={handleTabPress}
-        onRefresh={userProgress.refresh}
-        reduceMotion={userData.reduceMotion}
-        showGardenExplainer={!userData.hasSeenGardenExplainer}
-        onDismissGardenExplainer={markGardenExplainerSeen}
-      />
-    );
-  }
+  const { activeTab, content } = getMainRoute({
+    userData, copy, homeViewModel, getQuestionsByLevel, isLevelReady, isExamAvailable,
+    getTopicProgressSummaries, getNextCurriculumLesson, getPendingTopicCheckpoint,
+    startPracticeSafe, startExamSafe, setPracticeSessionSize: userProgress.setPracticeSessionSize,
+    setLocale, setLevel, session, userProgress, onAccountPress, markGardenExplainerSeen, handleTabPress,
+    allQuestions, setLevelSwitcherOpen,
+  });
   return (
     <>
       <GlobalAppLayout
