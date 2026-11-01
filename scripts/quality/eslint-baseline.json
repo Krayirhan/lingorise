@@ -1,0 +1,288 @@
+{
+  "version": 1,
+  "entries": {
+    "src/features/practice/components/SessionSummaryCard.tsx": {
+      "@typescript-eslint/no-unused-vars:2": 1
+    },
+    "tests/fixtures/editorialAuditCalibration.ts": {
+      "@typescript-eslint/no-unused-vars:2": 1
+    },
+    "src/screens/OnboardingScreen.styles.ts": {
+      "@typescript-eslint/no-unused-vars:2": 1
+    },
+    "src/infrastructure/notificationService.ts": {
+      "@typescript-eslint/no-require-imports:2": 1
+    },
+    "src/features/onboarding/components/WelcomeStep.tsx": {
+      "@typescript-eslint/no-unused-vars:2": 1,
+      "@typescript-eslint/no-require-imports:2": 1
+    },
+    "src/infrastructure/telemetry.ts": {
+      "parse:1": 1
+    },
+    "src/domain/editorial/fields/collocation.ts": {
+      "@typescript-eslint/no-unused-vars:2": 1
+    },
+    "tests/cases/level-units.ts": {
+      "@typescript-eslint/no-unused-vars:2": 1
+    },
+    "tests/cases/c2-p0-full-rewrite-and-pedagogical-quality-gates.ts": {
+      "@typescript-eslint/no-explicit-any:2": 15,
+      "@typescript-eslint/no-unused-vars:2": 2,
+      "@typescript-eslint/no-require-imports:2": 2
+    },
+    "src/features/practice/components/BadgeUnlockCelebration.tsx": {
+      "react-hooks/exhaustive-deps:1": 1
+    },
+    "tests/cases/dictionary-completeness.ts": {
+      "@typescript-eslint/no-unused-vars:2": 2
+    },
+    "src/features/profile/components/AccountManagementCard.tsx": {
+      "@typescript-eslint/no-unused-vars:2": 1
+    },
+    "src/screens/ProfileScreen.tsx": {
+      "@typescript-eslint/no-unused-vars:2": 6,
+      "@typescript-eslint/no-require-imports:2": 1
+    },
+    "tests/cases/b2-reasoned-register-aware-production-gates.ts": {
+      "@typescript-eslint/no-explicit-any:2": 4,
+      "@typescript-eslint/no-unused-vars:2": 2,
+      "@typescript-eslint/no-require-imports:2": 2
+    },
+    "src/features/home/home.styles.ts": {
+      "@typescript-eslint/no-unused-vars:2": 1
+    },
+    "src/features/practice/hooks/usePracticeExit.ts": {
+      "react-hooks/exhaustive-deps:1": 1
+    },
+    "src/infrastructure/errorReporter.ts": {
+      "@typescript-eslint/no-explicit-any:2": 5
+    },
+    "src/application/progressController.ts": {
+      "@typescript-eslint/no-unused-vars:2": 2
+    },
+    "src/screens/PracticeHubScreen.tsx": {
+      "@typescript-eslint/no-unused-vars:2": 7,
+      "@typescript-eslint/no-require-imports:2": 1
+    },
+    "src/features/home/components/LevelSwitcherModal.tsx": {
+      "@typescript-eslint/no-unused-vars:2": 1
+    },
+    "tests/cases/multi-day-rollover-chain.ts": {
+      "@typescript-eslint/no-unused-vars:2": 1
+    },
+    "tests/cases/localization-key-parity-check.ts": {
+      "@typescript-eslint/no-explicit-any:2": 1
+    },
+    "src/features/home/components/HomeBottomNav.tsx": {
+      "@typescript-eslint/no-unused-vars:2": 2
+    },
+    "tests/cases/item-definition-of-done-delivery-form-calibration.ts": {
+      "@typescript-eslint/no-explicit-any:2": 39,
+      "@typescript-eslint/no-unused-vars:2": 3,
+      "@typescript-eslint/no-require-imports:2": 3
+    },
+    "src/screens/PracticeScreenParts.tsx": {
+      "@typescript-eslint/no-unused-vars:2": 1
+    },
+    "src/infrastructure/speechService.ts": {
+      "no-empty:2": 1
+    },
+    "src/domain/practice/answer.ts": {
+      "prefer-const:2": 3
+    },
+    "scripts/generateBaselineManifest.ts": {
+      "@typescript-eslint/no-explicit-any:2": 1
+    },
+    "tests/cases/canonical-progress-merge-field-merge-regression-matrix.ts": {
+      "@typescript-eslint/no-unused-vars:2": 1
+    },
+    "src/features/home/hooks/useHomeViewModel.ts": {
+      "react-hooks/exhaustive-deps:1": 1
+    },
+    "src/app/AppBootstrap.tsx": {
+      "react-hooks/exhaustive-deps:1": 2
+    },
+    "src/features/home/gardenHeroModel.ts": {
+      "@typescript-eslint/no-unused-vars:2": 1
+    },
+    "src/features/profile/components/DataManagementCard.tsx": {
+      "@typescript-eslint/no-unused-vars:2": 10
+    },
+    "src/domain/editorial/fields/example.ts": {
+      "@typescript-eslint/no-unused-vars:2": 1
+    },
+    "src/domain/editorial/fields/publication.ts": {
+      "@typescript-eslint/no-unused-vars:2": 1
+    },
+    "src/infrastructure/firebase.ts": {
+      "parse:1": 1,
+      "@typescript-eslint/no-require-imports:2": 1
+    },
+    "tests/cases/garden-gamification-progress.ts": {
+      "@typescript-eslint/no-unused-vars:2": 1
+    },
+    "src/screens/AuthScreen.tsx": {
+      "@typescript-eslint/no-require-imports:2": 1
+    },
+    "tests/cases/a2-functional-production-progression-gates.ts": {
+      "@typescript-eslint/no-explicit-any:2": 10,
+      "@typescript-eslint/no-unused-vars:2": 1,
+      "@typescript-eslint/no-require-imports:2": 9
+    },
+    "src/components/ErrorBoundary.tsx": {
+      "@typescript-eslint/no-unused-vars:2": 1
+    },
+    "src/features/practice/hooks/useSpeech.ts": {
+      "react-hooks/exhaustive-deps:1": 4
+    },
+    "src/state/useAppSession.ts": {
+      "react-hooks/exhaustive-deps:1": 3
+    },
+    "src/features/onboarding/components/ReadyStep.tsx": {
+      "@typescript-eslint/no-require-imports:2": 1
+    },
+    "src/features/practice/hooks/usePracticeFeedback.ts": {
+      "no-empty:2": 2
+    },
+    "tests/cases/editorial-reviewer-workflow-rubric-validation.ts": {
+      "@typescript-eslint/no-unused-vars:2": 1,
+      "@typescript-eslint/no-require-imports:2": 2
+    },
+    "tests/cases/multi-day-simulation.ts": {
+      "@typescript-eslint/no-unused-vars:2": 1
+    },
+    "src/domain/editorial/ipa.ts": {
+      "no-useless-assignment:2": 1,
+      "no-useless-escape:2": 4,
+      "@typescript-eslint/no-unused-vars:2": 1
+    },
+    "tests/cases/b1-contextual-production-sense-disambiguation-gates.ts": {
+      "@typescript-eslint/no-explicit-any:2": 12,
+      "@typescript-eslint/no-unused-vars:2": 1,
+      "@typescript-eslint/no-require-imports:2": 9
+    },
+    "src/app/AppNavigator.tsx": {
+      "@typescript-eslint/no-unused-vars:2": 4
+    },
+    "tests/cases/difficulty-based-new-word-ordering.ts": {
+      "@typescript-eslint/no-explicit-any:2": 2
+    },
+    "src/theme/tokens.ts": {
+      "@typescript-eslint/no-unused-vars:2": 1
+    },
+    "src/domain/editorial/fields/production.ts": {
+      "@typescript-eslint/no-unused-vars:2": 1
+    },
+    "src/features/home/components/PlaceholderTabModal.tsx": {
+      "@typescript-eslint/no-unused-vars:2": 1
+    },
+    "src/app/getMainRoute.tsx": {
+      "no-useless-assignment:2": 2,
+      "@typescript-eslint/no-unused-vars:2": 3
+    },
+    "src/features/home/components/RecommendedWordCard.tsx": {
+      "@typescript-eslint/no-require-imports:2": 1
+    },
+    "src/features/practice/components/PracticeMascot.tsx": {
+      "@typescript-eslint/no-require-imports:2": 1
+    },
+    "tests/cases/storage-schema-migration-safe-recovery.ts": {
+      "@typescript-eslint/no-explicit-any:2": 1
+    },
+    "src/components/Brand.tsx": {
+      "@typescript-eslint/no-require-imports:2": 1
+    },
+    "src/domain/editorial/fields/translation.ts": {
+      "@typescript-eslint/no-unused-vars:2": 1
+    },
+    "src/domain/editorial/fields/options.ts": {
+      "@typescript-eslint/no-unused-vars:2": 1
+    },
+    "tests/cases/screen-consistency.ts": {
+      "@typescript-eslint/no-explicit-any:2": 1,
+      "@typescript-eslint/no-unused-vars:2": 1
+    },
+    "src/screens/PracticeScreen.tsx": {
+      "@typescript-eslint/no-unused-vars:2": 2
+    },
+    "tests/cases/isolated-migration-steps.ts": {
+      "@typescript-eslint/no-explicit-any:2": 2,
+      "@typescript-eslint/no-unused-vars:2": 1
+    },
+    "src/screens/ProfileScreen.styles.ts": {
+      "@typescript-eslint/no-unused-vars:2": 1
+    },
+    "src/features/onboarding/components/GoalStep.tsx": {
+      "@typescript-eslint/no-require-imports:2": 1
+    },
+    "tests/cases/production-ui-attempt-evaluation-gate.ts": {
+      "@typescript-eslint/no-unused-vars:2": 1,
+      "@typescript-eslint/no-require-imports:2": 3
+    },
+    "tests/cases/level-exhausted-terminal-state.ts": {
+      "@typescript-eslint/no-unused-vars:2": 2
+    },
+    "src/features/home/components/LevelPromotionModal.tsx": {
+      "react-hooks/exhaustive-deps:1": 1
+    },
+    "src/domain/editorial/fields/identity.ts": {
+      "@typescript-eslint/no-unused-vars:2": 1
+    },
+    "src/domain/editorial/fields/metadata.ts": {
+      "@typescript-eslint/no-unused-vars:2": 1
+    },
+    "tests/cases/practice-session-resume-schema.ts": {
+      "@typescript-eslint/no-explicit-any:2": 1
+    },
+    "tests/cases/a1-basic-production-collocations-distractor-matching.ts": {
+      "@typescript-eslint/no-explicit-any:2": 10,
+      "@typescript-eslint/no-unused-vars:2": 1,
+      "@typescript-eslint/no-require-imports:2": 8
+    },
+    "tests/cases/editorial-review-queue-release-gating-integrity.ts": {
+      "@typescript-eslint/no-unused-vars:2": 2,
+      "@typescript-eslint/no-require-imports:2": 3
+    },
+    "tests/cases/c1-critical-analysis-synthesis-nuance-gates.ts": {
+      "@typescript-eslint/no-explicit-any:2": 4,
+      "@typescript-eslint/no-unused-vars:2": 2,
+      "@typescript-eslint/no-require-imports:2": 2
+    },
+    "src/features/progress/components/WeeklyActivityCard.tsx": {
+      "@typescript-eslint/no-unused-vars:2": 1
+    },
+    "src/utils/logger.ts": {
+      "@typescript-eslint/no-explicit-any:2": 5,
+      "@typescript-eslint/no-unused-vars:2": 1
+    },
+    "src/features/onboarding/components/LevelStep.tsx": {
+      "@typescript-eslint/no-require-imports:2": 1
+    },
+    "scripts/seedFirestore.ts": {
+      "parse:1": 1,
+      "@typescript-eslint/no-require-imports:2": 1
+    },
+    "tests/cases/migration-schema-versioning.ts": {
+      "@typescript-eslint/no-unused-vars:2": 1
+    },
+    "src/screens/ProgressScreen.tsx": {
+      "@typescript-eslint/no-unused-vars:2": 1
+    },
+    "src/application/progressHydration.ts": {
+      "@typescript-eslint/no-unused-vars:2": 1
+    },
+    "src/context/ToastContext.tsx": {
+      "@typescript-eslint/no-unused-vars:2": 1
+    },
+    "tests/cases/automated-accessibility-scanner-reducemotion-audit.ts": {
+      "@typescript-eslint/no-unused-vars:2": 1
+    },
+    "src/content/productionMetadata.ts": {
+      "@typescript-eslint/no-unused-vars:2": 1
+    },
+    "src/features/progress/components/WordNotebookModal.styles.ts": {
+      "@typescript-eslint/no-unused-vars:2": 1
+    }
+  }
+}

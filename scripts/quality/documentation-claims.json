@@ -1,0 +1,135 @@
+{
+  "version": 1,
+  "claims": [
+    {
+      "id": "typecheck-command",
+      "document": "docs/CLEAN_ARCHITECTURE_VERIFICATION.md",
+      "pattern": "npm run typecheck",
+      "evidenceFile": "package.json",
+      "evidencePattern": "\\\"typecheck\\\"\\s*:\\s*\\\"tsc --noEmit\\\""
+    },
+    {
+      "id": "architecture-check-command",
+      "document": "docs/CLEAN_ARCHITECTURE_VERIFICATION.md",
+      "pattern": "npm run check:architecture",
+      "evidenceFile": "package.json",
+      "evidencePattern": "\\\"check:architecture\\\""
+    },
+    {
+      "id": "application-test-command",
+      "document": "docs/CLEAN_ARCHITECTURE_VERIFICATION.md",
+      "pattern": "npm run test:application",
+      "evidenceFile": "package.json",
+      "evidencePattern": "\\\"test:application\\\""
+    },
+    {
+      "id": "full-test-command",
+      "document": "docs/CLEAN_ARCHITECTURE_VERIFICATION.md",
+      "pattern": "npm test",
+      "evidenceFile": "package.json",
+      "evidencePattern": "\\\"test\\\"\\s*:"
+    },
+    {
+      "id": "lint-gate",
+      "document": "docs/CLEAN_ARCHITECTURE_VERIFICATION.md",
+      "pattern": "npm run lint:check",
+      "evidenceFile": ".github/workflows/ci.yml",
+      "evidencePattern": "npm run lint:check"
+    },
+    {
+      "id": "coverage-gate",
+      "document": "docs/CLEAN_ARCHITECTURE_VERIFICATION.md",
+      "pattern": "npm run coverage",
+      "evidenceFile": ".github/workflows/ci.yml",
+      "evidencePattern": "npm run coverage"
+    },
+    {
+      "id": "rules-gate",
+      "document": "docs/CLEAN_ARCHITECTURE_VERIFICATION.md",
+      "pattern": "npm run test:rules",
+      "evidenceFile": ".github/workflows/ci.yml",
+      "evidencePattern": "npm run test:rules"
+    },
+    {
+      "id": "maestro-gate",
+      "document": "docs/CLEAN_ARCHITECTURE_VERIFICATION.md",
+      "pattern": "npm run test:e2e:smoke",
+      "evidenceFile": "package.json",
+      "evidencePattern": "\\\"test:e2e:smoke\\\""
+    },
+    {
+      "id": "quality-score-command",
+      "document": "docs/CLEAN_ARCHITECTURE_VERIFICATION.md",
+      "pattern": "npm run score:quality",
+      "evidenceFile": "package.json",
+      "evidencePattern": "\\\"score:quality\\\""
+    },
+    {
+      "id": "long-function-review-gate",
+      "document": "docs/CLEAN_ARCHITECTURE_VERIFICATION.md",
+      "pattern": "npm run check:long-function-review",
+      "evidenceFile": ".github/workflows/ci.yml",
+      "evidencePattern": "npm run check:long-function-review"
+    },
+    {
+      "id": "source-files",
+      "document": "docs/CLEAN_ARCHITECTURE_VERIFICATION.md",
+      "measurement": "sourceFiles",
+      "patternTemplate": "{{value}} TS/TSX dosyası"
+    },
+    {
+      "id": "long-functions",
+      "document": "docs/CLEAN_ARCHITECTURE_VERIFICATION.md",
+      "measurement": "longFunctions",
+      "patternTemplate": "{{value}} fonksiyon"
+    },
+    {
+      "id": "full-test-count",
+      "document": "docs/CLEAN_ARCHITECTURE_VERIFICATION.md",
+      "measurement": "fullTestCount",
+      "patternTemplate": "{{value}} geçti, 0 başarısız"
+    },
+    {
+      "id": "domain-line-coverage-target",
+      "document": "docs/CLEAN_ARCHITECTURE_VERIFICATION.md",
+      "measurement": "domainLineTarget",
+      "patternTemplate": "domain satır/branch {{value}}%/"
+    },
+    {
+      "id": "domain-branch-coverage-target",
+      "document": "docs/CLEAN_ARCHITECTURE_VERIFICATION.md",
+      "measurement": "domainBranchTarget",
+      "patternTemplate": "domain satır/branch [0-9.]+%/{{value}}%"
+    },
+    {
+      "id": "application-line-coverage-target",
+      "document": "docs/CLEAN_ARCHITECTURE_VERIFICATION.md",
+      "measurement": "applicationLineTarget",
+      "patternTemplate": "application {{value}}%/"
+    },
+    {
+      "id": "application-branch-coverage-target",
+      "document": "docs/CLEAN_ARCHITECTURE_VERIFICATION.md",
+      "measurement": "applicationBranchTarget",
+      "patternTemplate": "application [0-9.]+%/{{value}}%"
+    },
+    {
+      "id": "lint-clean-rate",
+      "document": "docs/CLEAN_ARCHITECTURE_VERIFICATION.md",
+      "measurement": "lintCleanRate",
+      "patternTemplate": "{{value}}% \\("
+    },
+    {
+      "id": "lint-error-count",
+      "document": "docs/CLEAN_ARCHITECTURE_VERIFICATION.md",
+      "measurement": "lintErrors",
+      "patternTemplate": "{{value}} error,"
+    },
+    {
+      "id": "lint-warning-count",
+      "document": "docs/CLEAN_ARCHITECTURE_VERIFICATION.md",
+      "measurement": "lintWarnings",
+      "patternTemplate": "{{value}} warning\\)"
+    }
+  ]
+}

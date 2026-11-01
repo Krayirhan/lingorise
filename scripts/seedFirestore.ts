@@ -1,11 +1,11 @@
 import fs from "node:fs";
 import path from "node:path";
-import { allQuestions } from "../src/content/questions/index";
-import { LevelCode, MeaningMatchQuestion } from "../src/types/content";
+import { allQuestions, CONTENT_VERSION } from "../src/content/questions/index";
+import { auditEditorialQuestions } from "../src/content/editorialQuality";
+import { createCatalogueIntegritySnapshot } from "../src/content/catalogueIntegrity";
+import { LevelCode, MeaningMatchQuestion } from "../src/domain/models/content";
 
 const PROJECT_ID = "lingorise-65cb1";
-const CONTENT_VERSION = "v1";
-const UNIT_SIZE = 50;
 
 type FirestoreValue = { [key: string]: unknown };
 type Unit = {
@@ -32,33 +32,56 @@ function document(name: string, data: Record<string, unknown>) {
 }
 
 function buildPublishedCatalogue() {
-  const units: Unit[] = [];
+  const unitMap = new Map<string, Unit>();
   const items: MeaningMatchQuestion[] = [];
   const levels: LevelCode[] = ["A1", "A2", "B1", "B2", "C1", "C2"];
 
   for (const level of levels) {
-    const levelItems = allQuestions.filter((question) => question.level === level);
-    for (let start = 0, unitOrder = 1; start < levelItems.length; start += UNIT_SIZE, unitOrder += 1) {
-      const unitItems = levelItems.slice(start, start + UNIT_SIZE);
-      const unitId = `${level.toLowerCase()}-u${String(unitOrder).padStart(2, "0")}`;
-      units.push({ id: unitId, contentVersion: CONTENT_VERSION, level, order: unitOrder, title: `${level} Bölüm ${unitOrder}`, itemCount: unitItems.length, status: "published" });
+    // Draft and editorial-hold content stays in the local authoring bundle but
+    // must never be copied into the learner-facing Firestore catalogue.
+    const levelItems = allQuestions.filter((question) => question.level === level && question.status === "published" && question.editorialStatus === "approved" && Boolean(question.editorialReview?.reviewId && question.editorialReview.reviewerId && question.editorialReview.reviewedAt && question.editorialReview.rubricVersion && question.editorialReview.decision === "approved"));
+    const byUnit = new Map<string, MeaningMatchQuestion[]>();
+    levelItems.forEach((question) => {
+      const unitId = question.unitId || `${level.toLowerCase()}-u01`;
+      byUnit.set(unitId, [...(byUnit.get(unitId) || []), question]);
+    });
+    [...byUnit.entries()].forEach(([unitId, unitItems], unitIndex) => {
+      unitMap.set(unitId, {
+        id: unitId,
+        contentVersion: CONTENT_VERSION,
+        level,
+        order: unitIndex + 1,
+        title: `${level} · ${unitId.split(".").at(-1) || `Ünite ${unitIndex + 1}`}`,
+        itemCount: unitItems.length,
+        status: "published",
+      });
       unitItems.forEach((question, index) => items.push({
         ...question,
         contentVersion: CONTENT_VERSION,
         unitId,
-        order: start + index + 1,
+        order: question.order ?? index,
         status: "published",
         options: question.options ?? [question.meaning, ...question.wrongOptions],
       }));
-    }
+    });
   }
-  return { units, items };
+  return { units: [...unitMap.values()], items };
 }
 
-function getFirebaseCliToken(): string {
+async function getFirebaseCliToken(): Promise<string> {
   const configPath = path.join(process.env.USERPROFILE || "", ".config", "configstore", "firebase-tools.json");
   const config = JSON.parse(fs.readFileSync(configPath, "utf8"));
-  const token = config.tokens?.access_token;
+  // firebase-tools refreshes its OAuth access token for CLI requests, while
+  // this script used to read a possibly-expired value straight from disk.
+  // Reuse its authenticated refresh flow so a signed-in CLI can publish.
+  // `require` keeps this maintenance script independent of firebase-tools'
+  // internal TypeScript declarations.
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const firebaseAuth = require("firebase-tools/lib/auth") as {
+    getAccessToken: (refreshToken?: string, authScopes?: string[]) => Promise<{ access_token?: string }>;
+  };
+  const refreshed = await firebaseAuth.getAccessToken(config.tokens?.refresh_token, []);
+  const token = refreshed?.access_token;
   if (!token) throw new Error("Firebase CLI access token bulunamadı. Önce firebase login çalıştırın.");
   return token;
 }
@@ -76,13 +99,21 @@ async function commitWrites(token: string, writes: unknown[]) {
 }
 
 async function main() {
-  const token = getFirebaseCliToken();
+  const token = await getFirebaseCliToken();
   const root = `projects/${PROJECT_ID}/databases/(default)/documents`;
   const { units, items } = buildPublishedCatalogue();
+  const integrity = createCatalogueIntegritySnapshot(items);
+  const c2Audit = auditEditorialQuestions(allQuestions.filter((question) => question.level === "C2"));
+  if (!c2Audit.approved || c2Audit.errors.length > 0 || c2Audit.warnings.length > 0) {
+    throw new Error("C2 Firestore publication is locked: " + c2Audit.errors.length + " audit errors, " + c2Audit.warnings.length + " editorial warnings.");
+  }
+  if (allQuestions.some((question) => question.level === "C2" && question.status === "published")) {
+    throw new Error("C2 Firestore publication is locked until the complete C2 rewrite receives human approval.");
+  }
   const publishedAt = new Date().toISOString();
   const writes = [
-    { update: document(`${root}/contentMeta/current`, { activeVersion: CONTENT_VERSION, publishedAt, schemaVersion: 1 }) },
-    { update: document(`${root}/contentVersions/${CONTENT_VERSION}`, { id: CONTENT_VERSION, status: "published", publishedAt, itemCount: items.length, unitCount: units.length }) },
+    { update: document(root + "/contentMeta/current", { activeVersion: CONTENT_VERSION, publishedAt, schemaVersion: 1, integrity }) },
+    { update: document(root + "/contentVersions/" + CONTENT_VERSION, { id: CONTENT_VERSION, status: "published", publishedAt, itemCount: items.length, unitCount: units.length, integrity }) },
     ...units.map((unit) => ({ update: document(`${root}/units/${unit.id}`, { ...unit, publishedAt }) })),
     ...items.map((item) => ({ update: document(`${root}/items/${item.id}`, { ...item, publishedAt }) })),
   ];
