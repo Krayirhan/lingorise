@@ -4,6 +4,7 @@ import { Copy } from "../../../i18n/en";
 import { C } from "../../../theme/colors";
 import { fonts, typeScale } from "../../../theme/typography";
 import { HerbariumSlot } from "../hooks/useProgressVisuals";
+import { formatTemplate } from "../../../utils/formatters";
 
 interface Props {
   copy: Copy;
@@ -18,17 +19,14 @@ interface Props {
  */
 export function HerbariumGrid({ copy, unitNumber, slots, onSeeAll }: Props) {
   const learned = slots.filter((slot) => slot.learned).length;
-  const fill = (template: string, values: Record<string, string | number>) =>
-    Object.entries(values).reduce((text, [key, value]) => text.replace(`{${key}}`, String(value)), template);
-
   return (
     <View style={S.sheet}>
       <View style={S.header}>
         <Text accessibilityRole="header" style={S.title}>
-          {fill(copy.progress?.herbariumTitle || "Bölüm {unit} herbaryumu", { unit: unitNumber })}
+          {formatTemplate(copy.progress?.herbariumTitle || "Bölüm {unit} herbaryumu", { unit: unitNumber })}
         </Text>
         <Text style={S.count}>
-          {fill(copy.progress?.herbariumCount || "{learned} / {total} kelime", { learned, total: slots.length })}
+          {formatTemplate(copy.progress?.herbariumCount || "{learned} / {total} kelime", { learned, total: slots.length })}
         </Text>
       </View>
 

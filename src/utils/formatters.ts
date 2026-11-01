@@ -1,5 +1,10 @@
 export type LocaleCode = "en" | "tr";
 
+/** Fills `{key}` placeholders in a copy template; unknown placeholders are left as they are. */
+export function formatTemplate(template: string, values: Record<string, string | number>): string {
+  return template.replace(/\{(\w+)\}/g, (match, key: string) => (key in values ? String(values[key]) : match));
+}
+
 export function formatDays(count: number, locale: LocaleCode): string {
   if (locale === "tr") {
     return `${count} gün`;

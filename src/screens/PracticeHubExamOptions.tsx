@@ -4,9 +4,7 @@ import { C } from "../theme/colors";
 import { Copy } from "../i18n/en";
 import { LevelCode } from "../domain/models/content";
 import { S } from "./PracticeHubScreen.styles";
-
-const fill = (template: string, values: Record<string, string | number>) =>
-  Object.entries(values).reduce((text, [key, value]) => text.replace(`{${key}}`, String(value)), template);
+import { formatTemplate } from "../utils/formatters";
 
 interface Props { copy: Copy; level: LevelCode; isExamPassed: boolean; showExamOptionCard: boolean; onStartExam: () => void }
 export function PracticeHubExamOptions({ copy, level, isExamPassed, showExamOptionCard, onStartExam }: Props) {
@@ -37,7 +35,7 @@ export function PracticeHubExamOptions({ copy, level, isExamPassed, showExamOpti
 
               <View style={S.optionCopy}>
                 <Text style={S.optionTitle}>
-                  {fill(copy.game?.examCardTitle || "{level} tamamlama sınavı", { level })}
+                  {formatTemplate(copy.game?.examCardTitle || "{level} tamamlama sınavı", { level })}
                 </Text>
                 <Text style={S.optionSubtitle}>
                   {isExamPassed

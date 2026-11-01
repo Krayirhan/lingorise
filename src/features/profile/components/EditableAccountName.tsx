@@ -4,9 +4,7 @@ import { Pressable, StyleProp, Text, TextInput, TextStyle, View } from "react-na
 import { Copy } from "../../../i18n/en";
 import { C } from "../../../theme/colors";
 import { S } from "./AccountManagementCard.styles";
-
-const fill = (template: string, values: Record<string, string>) =>
-  template.replace(/\{(\w+)\}/g, (_, key) => values[key] ?? "");
+import { formatTemplate } from "../../../utils/formatters";
 
 /** The name display/inline-edit row — identical interaction in both the guest and signed-in card states (roadmap 18-srs-flow-hardening.md ARCH-003). */
 export function EditableAccountName({
@@ -57,7 +55,7 @@ export function EditableAccountName({
         onPress={onStartEdit}
         style={S.namePressable}
         accessibilityRole="button"
-        accessibilityLabel={fill(copy.profile?.editNameLabel || "İsmi düzenle, mevcut isim: {name}", { name })}
+        accessibilityLabel={formatTemplate(copy.profile?.editNameLabel || "İsmi düzenle, mevcut isim: {name}", { name })}
       >
         <Text style={nameStyle}>{name}</Text>
         <Ionicons name="pencil-outline" size={14} color={C.muted} />
