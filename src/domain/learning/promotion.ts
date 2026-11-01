@@ -1,5 +1,5 @@
-import { LevelCode } from "../../types/content";
-import { getNextLevel, isLevelReady } from "../../content/questions";
+import { LevelCode } from "../models/content";
+
 
 /**
  * A level is complete when its 60-question exam is passed (50+ correct —
@@ -23,15 +23,16 @@ export interface PromotionState {
 export function evaluatePromotion(
   level: LevelCode,
   passedLevelExams: LevelCode[] = [],
-  celebratedLevels: string[] = []
+  celebratedLevels: string[] = [],
+  nextLevel: LevelCode | null = null,
+  isNextLevelReady = false
 ): PromotionState {
   const isEarned = passedLevelExams.includes(level);
-  const nextLevel = getNextLevel(level);
 
   return {
     isEarned,
     nextLevel,
-    isNextLevelReady: nextLevel ? isLevelReady(nextLevel) : false,
+    isNextLevelReady: isNextLevelReady,
     shouldCelebrate: isEarned && !celebratedLevels.includes(level),
   };
 }
@@ -43,12 +44,13 @@ export function evaluatePromotion(
 export function assessLevelChoice(
   target: LevelCode,
   current: LevelCode,
-  passedLevelExams: LevelCode[] = []
+  passedLevelExams: LevelCode[] = [],
+  isTargetReady = false
 ): { isAhead: boolean; isTargetReady: boolean } {
   const order: LevelCode[] = ["A1", "A2", "B1", "B2", "C1", "C2"];
 
   return {
     isAhead: order.indexOf(target) > order.indexOf(current) && !passedLevelExams.includes(current),
-    isTargetReady: isLevelReady(target),
+    isTargetReady,
   };
 }

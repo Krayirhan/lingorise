@@ -1,14 +1,40 @@
-import { MeaningMatchQuestion } from "../../types/content";
-import { UserData } from "../../types/user";
-import { isItemDue } from "../review/spacedRepetition";
 import { evaluateBadges, updateDailyQuests } from "../gamification/badges";
 import { recordLearningOutcome } from "../learning/mastery";
-import { now as clockNow, todayISO } from "../../utils/clock";
+import { MeaningMatchQuestion } from "../models/content";
+import { UserData } from "../models/user";
+import { isItemDue } from "../review/spacedRepetition";
 
-export type PracticeSessionMode = "PRACTICE" | "EXAM";
+
+export type PracticeSessionMode = "PRACTICE" | "EXAM" | "CHECKPOINT";
 
 /** Flat payout for clearing a due review, capped to once per word per day. */
 const REVIEW_XP_REWARD = 5;
+
+/** Calculates the XP delta for one submitted answer using the same rules as the state transition. */
+export function calculatePracticeAnswerXp(
+  previous: Pick<UserData, "learningProgress" | "rewardedQuestionIds" | "dailyReviewXpIds" | "dailyQuests">,
+  question: MeaningMatchQuestion,
+  picked: string,
+  xpReward: number,
+  sessionMode: PracticeSessionMode = "PRACTICE",
+  now: number = Date.now()
+): number {
+  const isCorrect = picked === (question.meaning || question.answer);
+  if (!isCorrect) return 0;
+
+  const existingItem = previous.learningProgress?.[question.id];
+  const isFirstEncounter = !previous.rewardedQuestionIds.includes(question.id);
+  const wordXp = isFirstEncounter
+    ? xpReward
+    : isItemDue(existingItem, now) && !(previous.dailyReviewXpIds || []).includes(question.id)
+      ? REVIEW_XP_REWARD
+      : 0;
+  if (sessionMode === "EXAM" || sessionMode === "CHECKPOINT") return wordXp;
+
+  const questEvent = isFirstEncounter ? "PRACTICE" : "REVIEW";
+  const questResult = updateDailyQuests(previous.dailyQuests, { type: questEvent, isCorrect });
+  return wordXp + questResult.bonusXpEarned;
+}
 
 /** Applies one submitted answer without depending on React or navigation. */
 export function applyPracticeAnswer(
@@ -16,13 +42,14 @@ export function applyPracticeAnswer(
   question: MeaningMatchQuestion,
   picked: string,
   xpReward: number,
-  sessionMode: PracticeSessionMode = "PRACTICE"
+  sessionMode: PracticeSessionMode = "PRACTICE",
+  now: number = Date.now(),
+  today: string = new Date(now).toISOString().slice(0, 10),
+  random: () => number = Math.random
 ): UserData {
   const correctAnswer = question.meaning || question.answer;
   const isCorrect = picked === correctAnswer;
-  const now = clockNow();
 
-  let nextXp = previous.xp;
   let nextSolved = [...previous.solvedQuestionIds];
   let nextRewarded = [...previous.rewardedQuestionIds];
   let nextReviewXpIds = [...(previous.dailyReviewXpIds || [])];
@@ -36,7 +63,6 @@ export function applyPracticeAnswer(
   if (isCorrect) {
     if (isFirstEncounter) {
       nextRewarded.push(question.id);
-      nextXp += xpReward;
       if (!nextSolved.includes(question.id)) {
         nextSolved.push(question.id);
       }
@@ -44,7 +70,6 @@ export function applyPracticeAnswer(
       // One payout per word per day, and only for words that were actually
       // due — otherwise replaying known words would mint XP on demand.
       nextReviewXpIds.push(question.id);
-      nextXp += REVIEW_XP_REWARD;
     }
   }
 
@@ -60,34 +85,35 @@ export function applyPracticeAnswer(
   // session type taught it.
   const questEvent = isFirstEncounter ? "PRACTICE" : "REVIEW";
   const questResult =
-    sessionMode === "EXAM"
+    sessionMode === "EXAM" || sessionMode === "CHECKPOINT"
       ? { updatedQuests: previous.dailyQuests, bonusXpEarned: 0 }
       : updateDailyQuests(previous.dailyQuests, { type: questEvent, isCorrect });
-  nextXp += questResult.bonusXpEarned;
+  // Keep the persisted transition and the UI/session summary on the same
+  // single XP calculation path.
+  const xpEarned = calculatePracticeAnswerXp(previous, question, picked, xpReward, sessionMode, now);
+  const nextXp = previous.xp + xpEarned;
 
-  const today = todayISO();
 
   // The recall record is the single source of truth for both progress and
   // scheduling, so it is updated for every answer.
   const nextLearningProgress = {
     ...(previous.learningProgress || {}),
-    [question.id]: recordLearningOutcome(existingItem, isCorrect, today, now),
+    [question.id]: recordLearningOutcome(existingItem, isCorrect, today, now, random),
   };
 
-  const xpEarned = nextXp - previous.xp;
   const previousHistory = previous.practiceHistory || [];
   const hasTodayEntry = previousHistory.some((entry) => entry.date === today);
   const history = hasTodayEntry
     ? previousHistory.map((entry) =>
-        entry.date === today
-          ? {
-              ...entry,
-              answers: entry.answers + 1,
-              correct: entry.correct + (isCorrect ? 1 : 0),
-              xp: entry.xp + xpEarned,
-            }
-          : entry
-      )
+      entry.date === today
+        ? {
+          ...entry,
+          answers: entry.answers + 1,
+          correct: entry.correct + (isCorrect ? 1 : 0),
+          xp: entry.xp + xpEarned,
+        }
+        : entry
+    )
     : [...previousHistory, { date: today, answers: 1, correct: isCorrect ? 1 : 0, xp: xpEarned }];
 
   const intermediateState: UserData = {

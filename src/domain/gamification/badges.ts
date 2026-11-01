@@ -1,4 +1,4 @@
-import { UserData, DailyQuest, QuestHistoryEntry } from "../../types/user";
+import { DailyQuest, QuestHistoryEntry, UserData } from "../models/user";
 
 export const DAILY_QUEST_PRACTICE_ID = "quest_daily_practice";
 export const DAILY_QUEST_REVIEW_ID = "quest_daily_review";

@@ -1,4 +1,4 @@
-import { MeaningMatchQuestion } from "../../types/content";
+import { MeaningMatchQuestion } from "../models/content";
 
 /**
  * Replaces a question's wrongOptions with a fresh random sample from a wider
@@ -15,9 +15,13 @@ import { MeaningMatchQuestion } from "../../types/content";
  */
 export function randomizeDistractors(
   question: MeaningMatchQuestion,
-  levelPool: MeaningMatchQuestion[]
+  levelPool: MeaningMatchQuestion[],
+  random: () => number = Math.random
 ): MeaningMatchQuestion {
-  if (question.mode === "PICK_THE_WORD") return question;
+  // Approved editorial content has deliberately chosen, learner-confusable
+  // alternatives. Replacing them with arbitrary meanings at session start
+  // would undo that review. Older catalogue rows may still be diversified.
+  if (question.mode === "PICK_THE_WORD" || question.editorialStatus === "approved") return question;
 
   const correctMeaning = question.meaning || question.answer || "";
   const count = question.wrongOptions?.length || 2;
@@ -34,6 +38,6 @@ export function randomizeDistractors(
   // decoys rather than risk duplicates or an emptier-than-authored set.
   if (candidatePool.length < count) return question;
 
-  const shuffled = [...candidatePool].sort(() => Math.random() - 0.5);
+  const shuffled = [...candidatePool].sort(() => random() - 0.5);
   return { ...question, wrongOptions: shuffled.slice(0, count), options: undefined };
 }

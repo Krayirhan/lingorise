@@ -1,5 +1,5 @@
-import { LearningItemProgress, ReviewItem } from "../../types/user";
-import { now as clockNow } from "../../utils/clock";
+import { LearningItemProgress, ReviewItem } from "../models/user";
+
 
 const MINUTE = 60 * 1000;
 const DAY = 24 * 60 * MINUTE;
@@ -57,7 +57,8 @@ export function nextIntervalDays(
 export function scheduleNextReview(
   item: Pick<LearningItemProgress, "repetitions" | "intervalDays" | "easeFactor">,
   isCorrect: boolean,
-  now: number
+  now: number,
+  random: () => number = Math.random
 ): Pick<LearningItemProgress, "intervalDays" | "easeFactor" | "nextReviewAt"> {
   const currentEase = item.easeFactor || DEFAULT_EASE_FACTOR;
 
@@ -70,7 +71,7 @@ export function scheduleNextReview(
   }
 
   const easeFactor = Math.min(MAX_EASE_FACTOR, currentEase + EASE_BONUS);
-  const intervalDays = nextIntervalDays(item.repetitions, item.intervalDays || 0, easeFactor);
+  const intervalDays = nextIntervalDays(item.repetitions, item.intervalDays || 0, easeFactor, random);
 
   return {
     intervalDays,
@@ -80,7 +81,7 @@ export function scheduleNextReview(
 }
 
 /** True when a word has reached its scheduled time. */
-export function isItemDue(item: LearningItemProgress | undefined, now: number = clockNow()): boolean {
+export function isItemDue(item: LearningItemProgress | undefined, now: number = Date.now()): boolean {
   if (!item || item.attempts === 0) return false;
   return item.nextReviewAt <= now;
 }
@@ -91,7 +92,7 @@ export function isItemDue(item: LearningItemProgress | undefined, now: number = 
  */
 export function getDueReviewItems(
   learningProgress: Record<string, LearningItemProgress>,
-  now: number = clockNow()
+  now: number = Date.now()
 ): ReviewItem[] {
   return Object.entries(learningProgress || {})
     .filter(([, item]) => isItemDue(item, now))
@@ -111,7 +112,7 @@ export function getDueReviewItems(
  */
 export function bringForward(
   item: LearningItemProgress,
-  now: number = clockNow()
+  now: number = Date.now()
 ): LearningItemProgress {
   return { ...item, nextReviewAt: Math.min(item.nextReviewAt, now + RELEARN_DELAY_MS) };
 }

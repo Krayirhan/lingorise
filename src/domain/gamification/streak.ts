@@ -1,4 +1,4 @@
-import { nowDate } from "../../utils/clock";
+
 
 export interface StreakUpdateResult {
   newStreak: number;
@@ -8,9 +8,9 @@ export interface StreakUpdateResult {
 
 export function updateDailyStreak(
   lastActiveDate: string | undefined,
-  currentStreak: number
+  currentStreak: number,
+  today: Date = new Date()
 ): StreakUpdateResult {
-  const today = nowDate();
   const todayFormatted = today.toISOString().split("T")[0];
 
   if (!lastActiveDate) {
