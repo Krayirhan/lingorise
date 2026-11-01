@@ -1,5 +1,6 @@
 import { StyleSheet } from "react-native";
 import { C, spacing } from "../../theme/colors";
+import { fonts, typeScale } from "../../theme/typography";
 
 export const homeStyles = StyleSheet.create({
   safe: {
@@ -13,35 +14,52 @@ export const homeStyles = StyleSheet.create({
     alignSelf: "center",
   },
   content: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 18,
     paddingTop: 6,
-    paddingBottom: 40,
-    gap: 16,
+    paddingBottom: 24,
+    gap: 12,
   },
   intro: {
-    marginTop: 6,
-    marginBottom: 6,
+    marginTop: 2,
     gap: 4,
   },
+  introRow: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    justifyContent: "space-between",
+    minHeight: 120,
+  },
+  introCopy: {
+    flex: 1,
+    maxWidth: "72%",
+    minWidth: 0,
+    justifyContent: "center",
+    gap: 6,
+    paddingRight: 4,
+  },
   greeting: {
+    fontFamily: fonts.bodyBold,
     color: C.primary,
     fontSize: 11.5,
-    fontWeight: "700",
     letterSpacing: 1.1,
+    marginBottom: 2,
   },
   title: {
-    color: C.ink,
-    fontSize: 30,
-    fontWeight: "700",
-    marginTop: 2,
+    color: C.primary,
+    fontFamily: fonts.display,
+    fontSize: typeScale.display,
     lineHeight: 34,
-    letterSpacing: -0.4,
+    letterSpacing: -0.6,
   },
   subtitle: {
-    color: C.muted,
+    fontFamily: fonts.body,
+    color: C.ink,
     fontSize: 14.5,
     lineHeight: 20,
-    fontWeight: "400",
+    marginTop: 0,
+  },
+  skills: {
+    gap: 10,
   },
   sectionRow: {
     flexDirection: "row",
@@ -52,8 +70,8 @@ export const homeStyles = StyleSheet.create({
   },
   sectionTitle: {
     color: C.ink,
-    fontSize: 20,
-    fontWeight: "700",
+    fontFamily: fonts.display,
+    fontSize: typeScale.section,
     letterSpacing: -0.2,
   },
   sectionLinkBtn: {
@@ -64,9 +82,24 @@ export const homeStyles = StyleSheet.create({
     paddingHorizontal: 6,
   },
   sectionLink: {
-    color: C.primary,
-    fontWeight: "700",
+    fontFamily: fonts.bodyBold,
+    color: C.attentionText,
     fontSize: 13,
   },
+  gardenTip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 4,
+    paddingBottom: 6,
+  },
+  gardenTipButton: {
+    flex: 1,
+    minHeight: 38,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+  },
+  gardenTipText: { flex: 1, color: C.primary, fontSize: 12, lineHeight: 17 },
 });
 

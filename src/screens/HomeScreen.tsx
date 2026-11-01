@@ -1,13 +1,14 @@
 import { useState } from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { ScrollView, Text, View } from "react-native";
 import { HomeScreenProps, RecommendedWordData } from "../features/home/home.types";
 import { homeStyles as S } from "../features/home/home.styles";
 import { GardenHeroCard } from "../features/home/components/GardenHeroCard";
-import { DailyQuestCard } from "../features/home/components/DailyQuestCard";
 import { RecommendedWordCard } from "../features/home/components/RecommendedWordCard";
 import { GardenProgressCard } from "../features/home/components/GardenProgressCard";
 import { WordDetailModal } from "../features/home/components/WordDetailModal";
 import { QuestHistoryModal } from "../features/home/components/QuestHistoryModal";
+import { HomeGreeting } from "../features/home/components/HomeGreeting";
+import { WordCollectionStrip } from "../features/home/components/WordCollectionStrip";
 
 export function HomeScreen({
   copy,
@@ -17,11 +18,10 @@ export function HomeScreen({
   onWordPress,
   onTabPress,
   reduceMotion,
-  showGardenExplainer,
-  onDismissGardenExplainer,
 }: HomeScreenProps) {
   const [selectedWord, setSelectedWord] = useState<RecommendedWordData | null>(null);
   const [historyVisible, setHistoryVisible] = useState(false);
+  const isNewLearner = viewModel.masteredWords === 0 && viewModel.xp === 0;
 
   return (
     <View style={S.shell}>
@@ -29,24 +29,15 @@ export function HomeScreen({
         contentContainerStyle={S.content}
         showsVerticalScrollIndicator={false}
       >
-        {/* Welcome Greeting Section */}
-        <View style={S.intro}>
-          <Text style={S.greeting}>{copy.home.morning}</Text>
-          <Text style={S.title}>{viewModel.greetingTitle}</Text>
-          <Text style={S.subtitle}>{viewModel.greetingSubtitle}</Text>
-        </View>
+        <HomeGreeting copy={copy} viewModel={viewModel} isNewLearner={isNewLearner} />
 
-        {/* Primary Daily Action: Hero Card */}
+        {/* 1. Primary Action Card (Center Deep Plum Card) */}
         <GardenHeroCard
           copy={copy}
           level={viewModel.level}
-          masteredWords={viewModel.masteredWords}
-          stageName={viewModel.stageName}
-          gardenProgress={viewModel.gardenProgress}
+          streak={viewModel.streak}
           unitNumber={viewModel.unitNumber}
           unitCount={viewModel.unitCount}
-          unitLearned={viewModel.unitLearned}
-          unitTotal={viewModel.unitTotal}
           practiceState={viewModel.practiceState}
           practiceCompletedCount={viewModel.practiceCompletedCount}
           practiceTargetCount={viewModel.practiceTargetCount}
@@ -58,48 +49,33 @@ export function HomeScreen({
           onViewProgress={() => onTabPress("progress")}
           onPracticeAgain={onQuestPress}
           onGoToPracticeHub={() => onTabPress("practice")}
-          showGardenExplainer={showGardenExplainer}
-          onDismissGardenExplainer={onDismissGardenExplainer}
         />
 
-        {/* Daily Quests Area — moved above the Garden progress link (was
-            buried below it, off the first viewport per consumer reaudit's
-            "first 3 seconds" finding). Same today's-state content the hero
-            card already sits above; no new section. */}
-        <DailyQuestCard
+        {/* 2. Recently learned words */}
+        <WordCollectionStrip
           copy={copy}
-          dailyQuests={viewModel.dailyQuests}
-          onHistoryPress={() => setHistoryVisible(true)}
+          words={viewModel.collection}
+          onWordPress={setSelectedWord}
+          onSeeAll={() => onTabPress("progress")}
         />
 
-        {/* Recommended Word of the Day -> Opens Word Detail Modal */}
+        {/* 3. Skills */}
+        <View style={S.skills}>
+          <Text accessibilityRole="header" style={S.sectionTitle}>{copy.home.skillsTitle}</Text>
+          <GardenProgressCard
+            copy={copy}
+            skillProgress={viewModel.skillProgress}
+            practiceTargetCount={viewModel.practiceTargetCount}
+            onTilePress={() => onTabPress("practice")}
+          />
+        </View>
+
+        {/* 4. Contextual Bottom Card: Word of the Day */}
         <RecommendedWordCard
           copy={copy}
           recommendedWord={viewModel.recommendedWord}
           onPress={() => setSelectedWord(viewModel.recommendedWord)}
         />
-
-        {/* Garden Skills Progress Section — a link-out to the Progress tab,
-            not today's-state content, so it now sits after the daily items. */}
-        <View style={S.sectionRow}>
-          <Text style={S.sectionTitle}>{copy.home.yourGarden}</Text>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={copy.home?.seeAll || copy.home.progress}
-            style={S.sectionLinkBtn}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            onPress={() => onTabPress("progress")}
-          >
-            <Text style={S.sectionLink}>{copy.home?.seeAll || copy.home.progress}</Text>
-          </Pressable>
-        </View>
-
-        <GardenProgressCard
-          copy={copy}
-          skillProgress={viewModel.skillProgress}
-          onViewProgress={() => onTabPress("progress")}
-        />
-
       </ScrollView>
 
       <QuestHistoryModal

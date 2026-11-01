@@ -1,11 +1,13 @@
+import { PromotionState } from "../../../domain/learning/promotion";
+import { useApplication } from "../../../context/ApplicationContext";
 import { useEffect, useRef } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import { C, radius, spacing } from "../../../theme/colors";
 import { Copy } from "../../../i18n/en";
-import { LevelCode } from "../../../types/content";
-import { PromotionState } from "../../../domain/learning/promotion";
-import { track } from "../../../services/telemetry";
+import { LevelCode } from "../../../domain/models/content";
+
+
 
 interface Props {
   copy: Copy;
@@ -29,6 +31,10 @@ const fill = (template: string, values: Record<string, string | number>) =>
  * catalogue.
  */
 export function LevelPromotionModal({ copy, level, promotion, visible, onAdvance, onDismiss, reduceMotion }: Props) {
+  const application = useApplication();
+
+  const { track } = application;
+
   const shownForLevelRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -67,7 +73,7 @@ export function LevelPromotionModal({ copy, level, promotion, visible, onAdvance
           accessibilityLiveRegion="assertive"
         >
           <View style={S.crest} accessible={false} importantForAccessibility="no">
-            <Ionicons name="ribbon" size={30} color={C.reward} />
+            <Ionicons name="ribbon" size={30} color={C.rewardText} />
           </View>
 
           <Text style={S.eyebrow}>{copy.home?.promotionEyebrow || "SEVİYE TAMAMLANDI"}</Text>
@@ -188,11 +194,11 @@ const S = StyleSheet.create({
     width: "100%",
     minHeight: 52,
     borderRadius: radius.button || 16,
-    backgroundColor: C.reward,
+    backgroundColor: C.attentionStrong,
     alignItems: "center",
     justifyContent: "center",
   },
-  primaryTxt: { color: C.ink, fontWeight: "800", fontSize: 15.5 },
+  primaryTxt: { color: C.surface, fontWeight: "800", fontSize: 15.5 },
   ghostBtn: { minHeight: 44, justifyContent: "center", paddingHorizontal: 12 },
   ghostTxt: { color: C.muted, fontWeight: "700", fontSize: 13.5 },
   pressed: { opacity: 0.9, transform: [{ scale: 0.99 }] },

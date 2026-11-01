@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { C, radius } from "../../../theme/colors";
 import { Copy } from "../../../i18n/en";
 import { HomeTab } from "../home.types";
+import { fonts } from "../../../theme/typography";
 
 interface Props {
   copy: Copy;
@@ -17,10 +18,10 @@ const TABS: {
   iconInactive: keyof typeof Ionicons.glyphMap;
   labelKey: "tabGarden" | "tabPractice" | "tabProgress" | "tabProfile";
 }[] = [
-  { id: "garden", iconActive: "leaf", iconInactive: "leaf-outline", labelKey: "tabGarden" },
-  { id: "practice", iconActive: "flash", iconInactive: "flash-outline", labelKey: "tabPractice" },
+  { id: "garden", iconActive: "home", iconInactive: "home-outline", labelKey: "tabGarden" },
+  { id: "practice", iconActive: "compass", iconInactive: "compass-outline", labelKey: "tabPractice" },
   { id: "progress", iconActive: "stats-chart", iconInactive: "stats-chart-outline", labelKey: "tabProgress" },
-  { id: "profile", iconActive: "person", iconInactive: "person-outline", labelKey: "tabProfile" },
+  { id: "profile", iconActive: "book", iconInactive: "book-outline", labelKey: "tabProfile" },
 ];
 
 export function HomeBottomNav({
@@ -29,9 +30,6 @@ export function HomeBottomNav({
   onTabPress,
 }: Props) {
   const insets = useSafeAreaInsets();
-  // The bar owns its own clearance from the system gesture area — a fixed
-  // floor guards against devices that under-report (or zero out) the inset
-  // despite drawing a home indicator, so it never looks flush against it.
   const bottomPadding = Math.max(insets.bottom, 10);
 
   return (
@@ -49,12 +47,13 @@ export function HomeBottomNav({
             style={S.item}
             onPress={() => onTabPress(tab.id)}
           >
-            <View style={[S.tabPill, isSel && S.tabPillActive]}>
+            {isSel ? <View style={S.topIndicator} /> : <View style={S.topIndicatorSpacer} />}
+            <View style={S.tabContent}>
               <View style={S.iconWrap}>
                 <Ionicons
                   name={isSel ? tab.iconActive : tab.iconInactive}
-                  size={22}
-                  color={isSel ? C.primary : "#8D8883"}
+                  size={23}
+                  color={isSel ? C.attention : C.primary}
                 />
               </View>
               <Text style={isSel ? S.lblActive : S.lbl}>{label}</Text>
@@ -68,56 +67,55 @@ export function HomeBottomNav({
 
 const S = StyleSheet.create({
   nav: {
-    minHeight: 64,
-    paddingTop: 6,
-    backgroundColor: "#FFFFFF",
+    minHeight: 66,
+    paddingTop: 0,
+    backgroundColor: C.surface,
     borderTopWidth: 1,
-    borderTopColor: "#E7E1D7",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    borderTopColor: C.primaryBorder,
     flexDirection: "row",
     justifyContent: "space-around",
     alignItems: "center",
-    elevation: 4,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
   },
   item: {
     flex: 1,
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "flex-start",
     minWidth: 60,
-    minHeight: 48,
+    minHeight: 54,
   },
-  tabPill: {
+  topIndicator: {
+    width: 42,
+    height: 3.5,
+    borderRadius: 2,
+    backgroundColor: C.attention,
+    marginBottom: 6,
+  },
+  topIndicatorSpacer: {
+    width: 42,
+    height: 3.5,
+    marginBottom: 6,
+  },
+  tabContent: {
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 12,
-    height: 48,
-    borderRadius: 24,
+    paddingHorizontal: 10,
     gap: 3,
   },
-  tabPillActive: {
-    backgroundColor: C.primarySoft,
-  },
   iconWrap: {
-    position: "relative",
     width: 24,
     height: 24,
     alignItems: "center",
     justifyContent: "center",
   },
   lblActive: {
-    color: C.primary,
-    fontSize: 11,
-    fontWeight: "800",
+    color: C.attention,
+    fontFamily: fonts.bodyBold,
+    fontSize: 11.5,
   },
   lbl: {
-    color: "#8D8883",
-    fontSize: 11,
-    fontWeight: "600",
+    color: C.primary,
+    fontFamily: fonts.bodyMedium,
+    fontSize: 11.5,
   },
 });
 

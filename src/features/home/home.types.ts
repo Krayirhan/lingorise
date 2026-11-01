@@ -1,6 +1,7 @@
 import { Copy, Locale } from "../../i18n/en";
-import { LevelCode } from "../../types/content";
-import { DailyQuest, GardenProgress, QuestHistoryEntry } from "../../types/user";
+import { LevelCode } from "../../domain/models/content";
+import { DailyQuest, GardenProgress, QuestHistoryEntry } from "../../domain/models/user";
+import { WeekStripDay } from "./weekStripModel";
 
 export type HomeTab = "garden" | "practice" | "progress" | "profile";
 
@@ -22,6 +23,11 @@ export interface RecommendedWordData {
   pronunciation?: string;
   exampleSentence?: string;
   exampleTranslation?: string;
+}
+
+/** A learned word shown in the home collection strip. */
+export interface CollectedWord extends RecommendedWordData {
+  id: string;
 }
 
 export type PracticeState = "not_started" | "in_progress" | "completed";
@@ -51,11 +57,17 @@ export interface HomeViewModel {
   /** Words recalled reliably across every level — what the garden grows on. */
   masteredWords: number;
   questHistory: QuestHistoryEntry[];
+  /** Time-of-day salutation (morning / afternoon / evening) read from the app clock. */
+  greetingEyebrow: string;
   greetingTitle: string;
   greetingSubtitle: string;
   practiceRecommendation: string;
   skillProgress: SkillProgress[];
   recommendedWord: RecommendedWordData;
+  /** Monday-to-Sunday practice days for the streak strip. */
+  weekStrip: WeekStripDay[];
+  /** Most recently learned words in the current level, newest first. */
+  collection: CollectedWord[];
   badges: string[];
 }
 

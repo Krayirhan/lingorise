@@ -1,11 +1,13 @@
+import { useApplication } from "../../../context/ApplicationContext";
 import { useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
-import { Pressable, StyleSheet, Text, View } from "react-native";
-import { C, radius, spacing } from "../../../theme/colors";
+import { GestureResponderEvent, Pressable, StyleSheet, Text, View } from "react-native";
+import { C } from "../../../theme/colors";
 import { Copy } from "../../../i18n/en";
 import { RecommendedWordData } from "../home.types";
-import { speechService } from "../../../services/speechService";
-import { getTopicLabel } from "../topicLabel";
+import { fonts, typeScale } from "../../../theme/typography";
+import { englishSpeechText } from "../../../domain/speech/voice";
+
 
 interface Props {
   copy: Copy;
@@ -14,237 +16,129 @@ interface Props {
 }
 
 export function RecommendedWordCard({ copy, recommendedWord, onPress }: Props) {
+  const application = useApplication();
+  const { speechService } = application;
+
   const [isPlaying, setIsPlaying] = useState(false);
 
   if (!recommendedWord) return null;
 
-  const handleAudio = (e: any) => {
-    e?.stopPropagation?.();
+  const accessibilityLabel = (copy.home?.recommendedWordAccessibility || "{word}: {meaning}")
+    .replace("{word}", recommendedWord.word)
+    .replace("{meaning}", recommendedWord.meaning);
+  const handleAudio = (event: GestureResponderEvent) => {
+    event?.stopPropagation?.();
     setIsPlaying(true);
-    speechService.speak(
-      recommendedWord.pronunciation || recommendedWord.word,
-      { language: "en-US", rate: 0.85 }
-    );
-    setTimeout(() => {
-      setIsPlaying(false);
-    }, 1400);
+    speechService.speak(englishSpeechText(recommendedWord.word, recommendedWord.pronunciation), {
+      language: "en-US",
+      rate: 0.9,
+    });
+    setTimeout(() => setIsPlaying(false), 1400);
   };
 
+  const contextLine = recommendedWord.exampleTranslation
+    ? `${recommendedWord.meaning} · ${recommendedWord.exampleTranslation}`
+    : recommendedWord.meaning;
+
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={`Günün kelimesi: ${recommendedWord.word}, Anlamı: ${recommendedWord.meaning}`}
-      accessibilityHint="Bu kelimeyle pratik başlatır"
-      style={({ pressed }) => [S.card, pressed && S.pressed]}
-      onPress={onPress}
-    >
-      {/* Header with Word of Day & Badges */}
-      <View style={S.hdr}>
-        <View style={S.tag}>
-          <Text style={S.tagTxt}>
-            {copy.home?.recommendedHeader || "GÜNÜN KELİMESİ"}
-          </Text>
-        </View>
-        <View style={S.metaRow}>
-          <View style={S.typeTag}>
-            <Text style={S.typeTxt}>
-              {getTopicLabel(copy, recommendedWord.topic)}
-            </Text>
-          </View>
-          <View style={S.lvlTag}>
-            <Text style={S.lvlTxt}>{recommendedWord.level}</Text>
-          </View>
-        </View>
+    <View style={S.section}>
+      <View style={S.headerRow}>
+        <Text style={S.header}>
+          {copy.home?.recommendedHeader === "GÜNÜN KELİMESİ"
+            ? "Günün Kelimesi"
+            : copy.home?.recommendedHeader || "Günün Kelimesi"}
+        </Text>
       </View>
 
-      {/* Word & Phonetic Details */}
-      <View style={S.body}>
-        <View style={S.textGrp}>
-          <View style={S.wordRow}>
-            <Text style={S.word}>{recommendedWord.word}</Text>
-            {recommendedWord.phonetic && (
-              <Text style={S.pho}>{recommendedWord.phonetic}</Text>
-            )}
-          </View>
-          <Text style={S.mean}>{recommendedWord.meaning}</Text>
-        </View>
-
-        {/* Example Sentence Section if Available */}
-        {recommendedWord.exampleSentence ? (
-          <View style={S.exampleBox}>
-            {recommendedWord.exampleTranslation && (
-              <Text style={S.exampleTr}>{recommendedWord.exampleTranslation}</Text>
-            )}
-            <Text style={S.exampleEn}>{recommendedWord.exampleSentence}</Text>
-          </View>
-        ) : (
-          <View style={S.exampleBox}>
-            <Text style={S.exampleTr}>“{recommendedWord.word}” kelimesini basit bir cümlede öğren ve kullan.</Text>
-            <Text style={S.exampleEn}>Learn and use the word “{recommendedWord.word}” in a simple sentence.</Text>
-          </View>
-        )}
-      </View>
-
-      {/* Labeled Audio Playback Button */}
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={copy.home?.listenAudioBtn || "Telaffuzu dinle"}
-        style={({ pressed }) => [
-          S.audioBtn,
-          isPlaying && S.audioBtnPlaying,
-          pressed && S.audioBtnPressed,
-        ]}
-        onPress={handleAudio}
+        accessibilityLabel={accessibilityLabel}
+        accessibilityHint={copy.home?.recommendedWordDetailsHint || ""}
+        style={({ pressed }) => [S.card, pressed && S.pressed]}
+        onPress={onPress}
       >
-        <Ionicons
-          name={isPlaying ? "volume-high" : "volume-medium"}
-          size={18}
-          color={isPlaying ? C.attentionText : C.primary}
-        />
-        <Text style={[S.audioBtnTxt, isPlaying && S.audioBtnTxtPlaying]}>
-          {isPlaying
-            ? copy.home?.playingAudio || "Çalınıyor..."
+        <View style={S.glyph}>
+          <Ionicons name="leaf" size={26} color={C.success} />
+        </View>
+
+        <View style={S.wordCopy}>
+          <Text style={S.eyebrow}>
+            {recommendedWord.level} · {copy.home?.vocabulary ? copy.home.vocabulary.split(" ")[0].toUpperCase() : "KELİME"}
+          </Text>
+          <View style={S.wordLine}>
+            <Text numberOfLines={1} style={S.word}>{recommendedWord.word}</Text>
+            {recommendedWord.phonetic ? <Text style={S.phonetic}>{recommendedWord.phonetic}</Text> : null}
+          </View>
+          <Text numberOfLines={1} style={S.meaning}>{contextLine}</Text>
+        </View>
+
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={isPlaying
+            ? copy.home?.playingAudio || "Çalınıyor"
             : copy.home?.listenAudioBtn || "Telaffuzu dinle"}
-        </Text>
+          style={({ pressed }) => [S.audioBtn, isPlaying && S.audioPlaying, pressed && S.audioPressed]}
+          onPress={handleAudio}
+        >
+          <Ionicons name={isPlaying ? "volume-high-outline" : "volume-medium-outline"} size={22} color={C.primary} />
+        </Pressable>
       </Pressable>
-    </Pressable>
+    </View>
   );
 }
 
 const S = StyleSheet.create({
-  card: {
-    backgroundColor: C.surface,
-    borderRadius: 20,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: C.line,
-    gap: 14,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 2,
+  section: {
+    gap: 10,
+    marginTop: 2,
   },
-  pressed: {
-    opacity: 0.95,
-    transform: [{ scale: 0.99 }],
-  },
-  hdr: {
+  headerRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    paddingHorizontal: 2,
   },
-  tag: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-  },
-  tagTxt: {
+  header: {
     color: C.primary,
-    fontSize: 11,
-    fontWeight: "700",
-    letterSpacing: 1.1,
+    fontFamily: fonts.display,
+    fontSize: typeScale.section,
   },
-  metaRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  typeTag: {
-    backgroundColor: C.canvas,
-    paddingHorizontal: 8,
-    paddingVertical: 2.5,
-    borderRadius: radius.xs,
-  },
-  typeTxt: {
-    color: C.muted,
-    fontSize: 10.5,
-    fontWeight: "700",
-  },
-  lvlTag: {
-    backgroundColor: C.primarySoft,
-    paddingHorizontal: 7,
-    paddingVertical: 2.5,
-    borderRadius: radius.xs,
-  },
-  lvlTxt: {
-    color: C.primary,
-    fontSize: 10.5,
-    fontWeight: "700",
-  },
-  body: {
-    gap: 10,
-  },
-  textGrp: {
-    gap: 2,
-  },
-  wordRow: {
-    flexDirection: "row",
-    alignItems: "baseline",
-    gap: 8,
-    flexWrap: "wrap",
-  },
-  word: {
-    color: C.ink,
-    fontSize: 28,
-    fontWeight: "700",
-    letterSpacing: -0.4,
-  },
-  pho: {
-    color: C.muted,
-    fontSize: 13.5,
-    fontStyle: "italic",
-  },
-  mean: {
-    color: C.primary,
-    fontSize: 16,
+  seeAll: {
+    color: C.attention,
+    fontSize: 14,
     fontWeight: "600",
   },
-  exampleBox: {
-    backgroundColor: C.canvas,
-    padding: 12,
-    borderRadius: radius.sm,
-    borderLeftWidth: 3,
-    borderLeftColor: C.primary,
-    gap: 4,
-  },
-  exampleEn: {
-    color: C.muted,
-    fontSize: 13,
-    fontStyle: "italic",
-    lineHeight: 17,
-  },
-  exampleTr: {
-    color: C.ink,
-    fontSize: 14,
-    fontWeight: "500",
-    lineHeight: 19,
-  },
-  audioBtn: {
-    minHeight: 46,
-    borderRadius: radius.button || 16,
-    backgroundColor: C.primarySoft,
+  card: {
+    backgroundColor: C.surface,
+    borderWidth: 1,
+    borderColor: C.line,
+    borderRadius: 12,
+    padding: 13,
     flexDirection: "row",
     alignItems: "center",
+    gap: 13,
+  },
+  pressed: { opacity: 0.92 },
+  glyph: { width: 56, height: 56, borderRadius: 28, backgroundColor: C.successSoft, alignItems: "center", justifyContent: "center" },
+  wordCopy: { flex: 1, minWidth: 0, justifyContent: "center", gap: 2 },
+  eyebrow: {
+    color: C.attention,
+    fontFamily: fonts.bodyBold,
+    fontSize: 11,
+    letterSpacing: 0.6,
+  },
+  wordLine: { flexDirection: "row", alignItems: "baseline", flexWrap: "wrap", columnGap: 6 },
+  word: { color: C.primary, fontFamily: fonts.display, fontSize: 22, lineHeight: 27 },
+  phonetic: { color: C.muted, fontSize: 14.5 },
+  meaning: { color: C.ink, fontFamily: fonts.body, fontSize: 13.5, lineHeight: 18 },
+  audioBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: C.rewardSoft,
+    alignItems: "center",
     justifyContent: "center",
-    gap: 8,
-    paddingHorizontal: 16,
-    marginTop: 2,
   },
-  audioBtnPlaying: {
-    backgroundColor: "#FCE1DC",
-  },
-  audioBtnPressed: {
-    opacity: 0.85,
-    transform: [{ scale: 0.98 }],
-  },
-  audioBtnTxt: {
-    color: C.primary,
-    fontSize: 13.5,
-    fontWeight: "700",
-  },
-  audioBtnTxtPlaying: {
-    color: C.attentionText,
-  },
+  audioPlaying: { backgroundColor: C.attentionSoft },
+  audioPressed: { opacity: 0.8, transform: [{ scale: 0.96 }] },
 });
-

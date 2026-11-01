@@ -1,13 +1,22 @@
+import { useApplication } from "../../../context/ApplicationContext";
 import { useMemo } from "react";
-import { UserData } from "../../../types/user";
+import { UserData } from "../../../domain/models/user";
 import { Copy, Locale } from "../../../i18n/en";
-import { HomeViewModel, SkillProgress } from "../home.types";
+import { CollectedWord, HomeViewModel, SkillProgress } from "../home.types";
+import { buildWeekStrip } from "../weekStripModel";
 import { calculateGardenProgress } from "../../../domain/gamification/xp";
-import { getQuestionsByLevel, getLevelUnitInfo } from "../../../content/questions";
-import { getRecommendedWord } from "../../../services/contentService";
-import { todayISO } from "../../../utils/clock";
+
+
+
+const COLLECTION_SIZE = 8;
 
 export function useHomeViewModel(userData: UserData, copy: Copy, locale: Locale): HomeViewModel {
+  const application = useApplication();
+  const { todayISO, nowDate } = application.clock;
+  const { getQuestionsByLevel } = application.catalogue;
+  const { getLevelUnitInfo } = application.catalogue;
+  const { getRecommendedWord } = application.content;
+
   return useMemo(() => {
     const levelQuestions = getQuestionsByLevel(userData.level);
     const levelQuestionIds = new Set(levelQuestions.map((question) => question.id));
@@ -85,19 +94,57 @@ export function useHomeViewModel(userData: UserData, copy: Copy, locale: Locale)
     const dailyXpEarned =
       (userData.practiceHistory || []).find((entry) => entry.date === today)?.xp || 0;
 
+    const weekStrip = buildWeekStrip(
+      today,
+      (userData.practiceHistory || []).filter((entry) => entry.answers > 0).map((entry) => entry.date),
+      copy.home.weekdayShort.split("|"),
+    );
+
+    // rewardedQuestionIds grows in the order words were learned, so the tail
+    // is the newest; only words from the current level are shown.
+    const questionsById = new Map(levelQuestions.map((question) => [question.id, question]));
+    const collection: CollectedWord[] = [];
+    for (let i = rewardedIds.length - 1; i >= 0 && collection.length < COLLECTION_SIZE; i--) {
+      const question = questionsById.get(rewardedIds[i]);
+      if (!question) continue;
+      collection.push({
+        id: question.id,
+        word: question.word || question.prompt || "",
+        meaning: question.meaning || question.answer || "",
+        level: question.level,
+        topic: question.topic,
+        phonetic: question.phonetic,
+        pronunciation: question.pronunciation,
+        exampleSentence: question.exampleSentence,
+        exampleTranslation: question.exampleTranslation,
+      });
+    }
+
     // Units turn an amorphous 320-word level into finishable chunks.
     const unitInfo = getLevelUnitInfo(userData.level, userData.solvedQuestionIds);
 
+    const hour = nowDate().getHours();
+    const greetingEyebrow = hour >= 5 && hour < 12
+      ? copy.home.morning
+      : hour >= 12 && hour < 18
+        ? copy.home.afternoon
+        : copy.home.evening;
+
     // Context-aware dynamic greetings
-    let greetingTitle = copy.home.title || "Günün pratiğine başlamaya hazırsın.";
+    let greetingTitle = copy.home.title || "Bugünün pratiğine hazır mısın?";
     let greetingSubtitle = copy.home.subtitle || "Bugünün kelimeleri seni bekliyor.";
 
     if (solvedInLevel === 0 && userData.xp === 0) {
-      greetingTitle = "Öğrenmeye hazır mısın?";
-      greetingSubtitle = `İlk ${practiceTargetCount} kelimeni öğrenerek başla.`;
+      greetingTitle = locale === "tr"
+        ? "Öğrenmeye hazır mısın?"
+        : "Ready to learn?";
+      greetingSubtitle = locale === "tr"
+        ? `İlk ${practiceTargetCount} kelimeni öğrenerek başla.`
+        : `Start by learning your first ${practiceTargetCount} words.`;
     } else if (practiceState === "in_progress") {
-      greetingTitle = "Pratiğin devam ediyor.";
-      greetingSubtitle = `${practiceCompletedCount} / ${practiceTargetCount} kelime tamamlandı.`;
+      // The hero card already says "continue"; the greeting says how much is left instead.
+      greetingTitle = copy.home.wordsLeftTitle.replace("{count}", String(Math.max(0, practiceTargetCount - practiceCompletedCount)));
+      greetingSubtitle = copy.home.wordsLeftSubtitle;
     } else if (isLevelFullyLearned) {
       // Checked before practiceState === "completed" on purpose (CORE-004):
       // that branch's "yarın yeni kelimelerle devam edeceksin" promise is
@@ -133,11 +180,14 @@ export function useHomeViewModel(userData: UserData, copy: Copy, locale: Locale)
       isLevelFullyLearned,
       masteredWords: learnedWordsGlobal,
       questHistory: userData.questHistory || [],
+      greetingEyebrow,
       greetingTitle,
       greetingSubtitle,
       practiceRecommendation,
       skillProgress,
       recommendedWord: recommended,
+      weekStrip,
+      collection,
       badges: userData.unlockedBadges || [],
     };
   }, [userData, copy, locale]);

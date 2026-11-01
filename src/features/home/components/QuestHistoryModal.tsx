@@ -2,7 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { C, radius, spacing } from "../../../theme/colors";
 import { Copy, Locale } from "../../../i18n/en";
-import { QuestHistoryEntry } from "../../../types/user";
+import { QuestHistoryEntry } from "../../../domain/models/user";
 
 interface Props {
   copy: Copy;
