@@ -1,4 +1,4 @@
-import { LearningItemProgress, LearningStatus } from "../../types/user";
+import { LearningItemProgress, LearningStatus } from "../models/user";
 import { DEFAULT_EASE_FACTOR, scheduleNextReview } from "../review/spacedRepetition";
 
 /** Consecutive correct recalls needed before a word counts as consolidated. */
@@ -61,7 +61,8 @@ export function recordLearningOutcome(
   previous: LearningItemProgress | undefined,
   isCorrect: boolean,
   todayDate: string,
-  answeredAt: number
+  answeredAt: number,
+  random: () => number = Math.random
 ): LearningItemProgress {
   const base = previous || createLearningItem();
 
@@ -74,7 +75,8 @@ export function recordLearningOutcome(
   const schedule = scheduleNextReview(
     { repetitions, intervalDays: base.intervalDays, easeFactor: base.easeFactor },
     isCorrect,
-    answeredAt
+    answeredAt,
+    random
   );
 
   const next: LearningItemProgress = {

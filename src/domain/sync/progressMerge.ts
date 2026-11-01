@@ -1,7 +1,11 @@
-import { DailyQuest, PracticeHistoryEntry, QuestHistoryEntry, UserData } from "../../types/user";
-import { LevelCode } from "../../types/content";
 import { mergeLearningProgress } from "../learning/mastery";
-import { updateDailyStreak } from "../gamification/streak";
+import { UserData } from "../models/user";
+import {
+  laterDateString, mergeDailyQuestsSameDay, mergeDailyScopedValue, mergePracticeHistory,
+  mergeProductionAttempts, mergeQuestHistory, mergeTopicAssessments, normalizedStreak,
+  pickLevelByRecency, unionValues,
+} from "./progressMergeFields";
+export { mergeTopicAssessments } from "./progressMergeFields";
 
 /**
  * Every merge strategy this app's persisted progress fields actually need.
@@ -16,9 +20,11 @@ export type FieldStrategy =
   | "UNION_STRING_ARRAY"
   | "DAILY_SCOPED_UNION_STRING_ARRAY"
   | "RICHER_LEARNING_PROGRESS"
+  | "MERGE_TOPIC_ASSESSMENTS"
   | "MERGE_DAILY_QUESTS"
   | "MERGE_QUEST_HISTORY"
   | "MERGE_PRACTICE_HISTORY"
+  | "MERGE_PRODUCTION_ATTEMPTS"
   | "OR_TRUE_BOOLEAN"
   | "LATEST_TIMESTAMP_NUMBER"
   | "DEVICE_LOCAL"
@@ -94,9 +100,11 @@ export const PROGRESS_FIELD_STRATEGY: Record<keyof UserData, FieldStrategy> = {
   dailyQuests: "MERGE_DAILY_QUESTS",
   dailyReviewXpIds: "DAILY_SCOPED_UNION_STRING_ARRAY",
   learningProgress: "RICHER_LEARNING_PROGRESS",
+  topicAssessments: "MERGE_TOPIC_ASSESSMENTS",
   celebratedLevels: "UNION_STRING_ARRAY",
   passedLevelExams: "UNION_STRING_ARRAY",
   practiceHistory: "MERGE_PRACTICE_HISTORY",
+  productionAttempts: "MERGE_PRODUCTION_ATTEMPTS",
   questHistory: "MERGE_QUEST_HISTORY",
   activeSession: "DEVICE_LOCAL",
   lastSyncSuccessAt: "LATEST_TIMESTAMP_NUMBER",
@@ -106,140 +114,6 @@ export const PROGRESS_FIELD_STRATEGY: Record<keyof UserData, FieldStrategy> = {
   lastCompletedWord: "DEVICE_LOCAL",
 };
 
-const LEVEL_ORDER: LevelCode[] = ["A1", "A2", "B1", "B2", "C1", "C2"];
-
-function higherLevel(a: LevelCode, b: LevelCode): LevelCode {
-  return LEVEL_ORDER.indexOf(a) >= LEVEL_ORDER.indexOf(b) ? a : b;
-}
-
-/**
- * `level` is a free content-selection preference, not an achievement
- * (DATA-QA-005) — whichever side set it more recently wins, even if that
- * means moving to a numerically lower level (an intentional "review an
- * earlier level" choice must survive a merge, not be silently overridden by
- * a stale-but-higher value). Only when neither side has ever stamped
- * `levelSetAt` (data from before this field existed) does this fall back to
- * the old higher-level heuristic, which is a safe, non-regressing default
- * for that transitional case.
- */
-function pickLevelByRecency(
-  localLevel: LevelCode,
-  remoteLevel: LevelCode,
-  localSetAt: number | undefined,
-  remoteSetAt: number | undefined
-): LevelCode {
-  if (localSetAt !== undefined && remoteSetAt !== undefined) {
-    return localSetAt >= remoteSetAt ? localLevel : remoteLevel;
-  }
-  if (localSetAt !== undefined) return localLevel;
-  if (remoteSetAt !== undefined) return remoteLevel;
-  return higherLevel(localLevel, remoteLevel);
-}
-
-function laterDateString(a: string, b: string): string {
-  if (!a) return b;
-  if (!b) return a;
-  return a >= b ? a : b;
-}
-
-function unionValues<T>(a: T[] = [], b: T[] = []): T[] {
-  return Array.from(new Set([...a, ...b]));
-}
-
-/**
- * Returns what a side's `streak` WOULD actually be if that side were opened
- * right now — i.e. its own gap since `lastActiveDate` applied against the
- * real current date, without changing `lastActiveDate` itself. Merging raw
- * `streak` values with `Math.max` is only safe once each side's OWN
- * staleness has been accounted for — otherwise a long-unopened device's
- * frozen-high streak can survive a merge against a correctly-decayed side
- * (DATA-QA-006). The caller (`AppBootstrap`) already rolls the LOCAL side
- * over to today before merging (which also correctly refreshes local's
- * daily-scoped fields via `applyDailyRollover`); this normalizes the
- * REMOTE side too, so the fix holds even when the fetched remote document
- * itself is the stale one — the case a real device pairing can produce that
- * a local-only rollover cannot fix by itself.
- */
-function normalizedStreak(streak: number, lastActiveDate: string): number {
-  return updateDailyStreak(lastActiveDate, streak).newStreak;
-}
-
-/**
- * A quest-id-keyed richer-progress merge, valid ONLY when both sides
- * genuinely represent the same calendar day. `DailyQuest` carries no date of
- * its own — `applyDailyRollover()` regenerates the list from scratch every
- * day under the same fixed ids (`DAILY_QUEST_PRACTICE_ID`/`DAILY_QUEST_REVIEW_ID`).
- * Applying this merge across a day boundary would let yesterday's remote
- * `completed: true` silently mark today's freshly-rolled-over quest complete
- * by id, blocking the learner from ever earning that day's quest XP again.
- * `mergeDailyScopedValue` (below) is what actually decides which side to use.
- */
-function mergeDailyQuestsSameDay(local: DailyQuest[] = [], remote: DailyQuest[] = []): DailyQuest[] {
-  const byId = new Map<string, DailyQuest>();
-  for (const quest of remote) byId.set(quest.id, quest);
-  for (const quest of local) {
-    const existing = byId.get(quest.id);
-    byId.set(
-      quest.id,
-      existing
-        ? { ...existing, current: Math.max(existing.current, quest.current), completed: existing.completed || quest.completed }
-        : quest
-    );
-  }
-  return Array.from(byId.values());
-}
-
-/**
- * Applies `sameDayMerge` only when `local`/`remote` are dated to the same
- * calendar day (via `localDate`/`remoteDate`, both `lastActiveDate` values).
- * Otherwise, whichever side owns the later (more current) date wins outright
- * — the other side's daily-scoped value belongs to an already-rolled-over
- * day and must not be merged into today's, only replaced by it.
- */
-function mergeDailyScopedValue<T>(
-  localDate: string,
-  remoteDate: string,
-  localValue: T,
-  remoteValue: T,
-  sameDayMerge: (local: T, remote: T) => T
-): T {
-  if (localDate === remoteDate) {
-    return sameDayMerge(localValue, remoteValue);
-  }
-  return laterDateString(localDate, remoteDate) === localDate ? localValue : remoteValue;
-}
-
-/** Unions quest-history entries by (date, questId) identity — an append-only log, never overwritten. */
-function mergeQuestHistory(local: QuestHistoryEntry[] = [], remote: QuestHistoryEntry[] = []): QuestHistoryEntry[] {
-  const identity = (entry: QuestHistoryEntry) => `${entry.date}::${entry.questId}`;
-  const seen = new Map<string, QuestHistoryEntry>();
-  for (const entry of [...remote, ...local]) {
-    if (!seen.has(identity(entry))) seen.set(identity(entry), entry);
-  }
-  return Array.from(seen.values());
-}
-
-/** Merges per-day practice-history summaries: same-day entries take the richer counts, distinct days are unioned. */
-function mergePracticeHistory(local: PracticeHistoryEntry[] = [], remote: PracticeHistoryEntry[] = []): PracticeHistoryEntry[] {
-  const byDate = new Map<string, PracticeHistoryEntry>();
-  for (const entry of remote) byDate.set(entry.date, entry);
-  for (const entry of local) {
-    const existing = byDate.get(entry.date);
-    byDate.set(
-      entry.date,
-      existing
-        ? {
-            date: entry.date,
-            answers: Math.max(existing.answers, entry.answers),
-            correct: Math.max(existing.correct, entry.correct),
-            xp: Math.max(existing.xp, entry.xp),
-          }
-        : entry
-    );
-  }
-  return Array.from(byDate.values());
-}
-
 /**
  * The single production merge function for signed-in cold-start/login
  * synchronization. Both `mergeAndSyncUserData` (production) and the merge
@@ -248,13 +122,13 @@ function mergePracticeHistory(local: PracticeHistoryEntry[] = [], remote: Practi
  *
  * Applies every field's strategy from `PROGRESS_FIELD_STRATEGY` above.
  */
-export function mergeUserData(local: UserData, remote: UserData): UserData {
+export function mergeUserData(local: UserData, remote: UserData, today: Date = new Date()): UserData {
   return {
     ...remote, // REMOTE_AUTHORITATIVE baseline for account-setting fields
     xp: Math.max(local.xp || 0, remote.xp || 0),
     streak: Math.max(
-      normalizedStreak(local.streak || 0, local.lastActiveDate),
-      normalizedStreak(remote.streak || 0, remote.lastActiveDate)
+      normalizedStreak(local.streak || 0, local.lastActiveDate, today),
+      normalizedStreak(remote.streak || 0, remote.lastActiveDate, today)
     ),
     lastActiveDate: laterDateString(local.lastActiveDate, remote.lastActiveDate),
     level: pickLevelByRecency(local.level, remote.level, local.levelSetAt, remote.levelSetAt),
@@ -273,6 +147,7 @@ export function mergeUserData(local: UserData, remote: UserData): UserData {
     celebratedLevels: unionValues(local.celebratedLevels, remote.celebratedLevels),
     passedLevelExams: unionValues(local.passedLevelExams, remote.passedLevelExams),
     learningProgress: mergeLearningProgress(local.learningProgress || {}, remote.learningProgress || {}),
+    topicAssessments: mergeTopicAssessments(local.topicAssessments || {}, remote.topicAssessments || {}),
     dailyQuests: mergeDailyScopedValue(
       local.lastActiveDate,
       remote.lastActiveDate,
@@ -282,6 +157,7 @@ export function mergeUserData(local: UserData, remote: UserData): UserData {
     ),
     questHistory: mergeQuestHistory(local.questHistory, remote.questHistory),
     practiceHistory: mergePracticeHistory(local.practiceHistory, remote.practiceHistory),
+    productionAttempts: mergeProductionAttempts(local.productionAttempts, remote.productionAttempts),
     onboardingCompleted: Boolean(local.onboardingCompleted) || Boolean(remote.onboardingCompleted),
     hasSeenGardenExplainer: Boolean(local.hasSeenGardenExplainer) || Boolean(remote.hasSeenGardenExplainer),
     lastSyncSuccessAt: Math.max(local.lastSyncSuccessAt || 0, remote.lastSyncSuccessAt || 0) || undefined,

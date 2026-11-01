@@ -1,5 +1,5 @@
-import { GardenProgress, GardenStage } from "../../types/user";
-import { CONTENT_UNIT_SIZE } from "../../content/questions";
+import { CONTENT_UNIT_SIZE } from "../learning/constants";
+import { GardenProgress, GardenStage } from "../models/user";
 
 interface StageBand {
   stage: GardenStage;

@@ -1,5 +1,4 @@
-import { UserData } from "../../types/user";
-import { normalizeUserData } from "../../services/storage";
+import { UserData } from "../models/user";
 import { mergeUserData } from "./progressMerge";
 
 /**
@@ -9,7 +8,7 @@ import { mergeUserData } from "./progressMerge";
  * authorize overwriting real remote progress with incomplete local state.
  *
  * Deliberately kept free of any Firebase SDK import (unlike
- * `src/services/firestore.ts`, which owns the actual I/O) so it — and the
+ * `src/infrastructure/firestore.ts`, which owns the actual I/O) so it — and the
  * pure decision logic below — can be unit-tested directly, without a live or
  * mocked Firestore SDK.
  */
@@ -32,20 +31,13 @@ export type MergeDecision =
   | { action: "first-sync"; data: UserData }
   | { action: "merge"; data: UserData };
 
-/**
- * The pure decision behind `mergeAndSyncUserData` (src/services/firestore.ts)
- * — split out so it can be unit-tested with a synthetic `RemoteUserDataResult`,
- * no live/mocked Firestore SDK required. A failed remote read must never be
- * treated like an absent document; this function is what that guarantee
- * actually rests on, and what `mergeAndSyncUserData` merely executes.
- */
-export function decideMergeAction(remoteResult: RemoteUserDataResult, localData: UserData): MergeDecision {
+/** Failed reads cannot authorize overwriting remote progress. Repositories provide normalized data. */
+export function decideMergeAction(remoteResult: RemoteUserDataResult, localData: UserData, today: Date = new Date()): MergeDecision {
   if (remoteResult.status === "failed") {
     return { action: "unknown-remote-state", error: remoteResult.error };
   }
   if (remoteResult.status === "absent") {
     return { action: "first-sync", data: localData };
   }
-  const remote = normalizeUserData(remoteResult.data);
-  return { action: "merge", data: mergeUserData(localData, remote) };
+  return { action: "merge", data: mergeUserData(localData, remoteResult.data, today) };
 }

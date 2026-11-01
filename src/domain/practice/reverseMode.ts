@@ -1,4 +1,4 @@
-import { MeaningMatchQuestion } from "../../types/content";
+import { MeaningMatchQuestion } from "../models/content";
 
 /**
  * Turns a normal English-word→Turkish-meaning session into "Pick the Word":
@@ -13,7 +13,7 @@ import { MeaningMatchQuestion } from "../../types/content";
  * The question id is untouched, so mastery tracking for a word answered in
  * either direction accumulates on the same learningProgress entry.
  */
-export function toPickTheWordSession(questions: MeaningMatchQuestion[]): MeaningMatchQuestion[] {
+export function toPickTheWordSession(questions: MeaningMatchQuestion[], random: () => number = Math.random): MeaningMatchQuestion[] {
   const allWords = questions.map((q) => q.word || q.prompt || "").filter(Boolean);
 
   return questions.map((question) => {
@@ -21,7 +21,7 @@ export function toPickTheWordSession(questions: MeaningMatchQuestion[]): Meaning
     const correctMeaning = question.meaning || question.answer || "";
 
     const decoyPool = Array.from(new Set(allWords)).filter((w) => w !== correctWord);
-    const decoys = [...decoyPool].sort(() => Math.random() - 0.5).slice(0, 2);
+    const decoys = [...decoyPool].sort(() => random() - 0.5).slice(0, 2);
 
     return {
       ...question,
@@ -31,7 +31,7 @@ export function toPickTheWordSession(questions: MeaningMatchQuestion[]): Meaning
       meaning: correctWord,
       answer: correctWord,
       wrongOptions: decoys,
-      options: [correctWord, ...decoys].sort(() => Math.random() - 0.5),
+      options: [correctWord, ...decoys].sort(() => random() - 0.5),
     };
   });
 }
