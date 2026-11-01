@@ -1,4 +1,4 @@
-import { useApplication } from "../../../context/ApplicationContext";
+import { useSpeakWord } from "../../../state/useSpeakWord";
 import { Ionicons } from "@expo/vector-icons";
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import { C, radius, spacing } from "../../../theme/colors";
@@ -7,7 +7,6 @@ import { RecommendedWordData } from "../home.types";
 
 import { PrimaryButton } from "../../../components/PrimaryButton";
 import { getTopicLabel } from "../topicLabel";
-import { englishSpeechText } from "../../../domain/speech/voice";
 
 interface Props {
   copy: Copy;
@@ -19,13 +18,12 @@ interface Props {
 }
 
 export function WordDetailModal({ copy, wordData, visible, onPracticeWord, onClose, reduceMotion }: Props) {
-  const application = useApplication();
-  const { speechService } = application;
+  const speakWord = useSpeakWord();
 
   if (!visible || !wordData) return null;
 
   const handleAudio = () => {
-    speechService.speak(englishSpeechText(wordData.word, wordData.pronunciation), { language: "en-US", rate: 0.9 });
+    speakWord(wordData.word, wordData.pronunciation);
   };
 
   return (
@@ -36,7 +34,7 @@ export function WordDetailModal({ copy, wordData, visible, onPracticeWord, onClo
             <View style={S.badge}><Text style={S.badgeTxt}>{wordData.level} · {getTopicLabel(copy, wordData.topic)}</Text></View>
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={copy.home?.wordDetailClose || "Kapat"}
+              accessibilityLabel={copy.home.wordDetailClose}
               style={S.closeBtn}
               onPress={onClose}
             >
@@ -51,7 +49,7 @@ export function WordDetailModal({ copy, wordData, visible, onPracticeWord, onClo
             </View>
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={copy.home?.wordDetailListen || "Dinle"}
+              accessibilityLabel={copy.home.wordDetailListen}
               style={({ pressed }) => [S.audioBtn, pressed && S.audioBtnPre]}
               onPress={handleAudio}
             >
@@ -66,14 +64,14 @@ export function WordDetailModal({ copy, wordData, visible, onPracticeWord, onClo
 
           {wordData.exampleSentence && (
             <View style={S.exampleBox}>
-              <Text style={S.exampleTitle}>{copy.home?.wordDetailExample || "Cümle içi kullanım"}</Text>
+              <Text style={S.exampleTitle}>{copy.home.wordDetailExample}</Text>
               {wordData.exampleTranslation && <Text style={S.exampleTr}>{wordData.exampleTranslation}</Text>}
               <Text style={S.exampleEn}>{wordData.exampleSentence}</Text>
             </View>
           )}
 
           <View style={S.actions}>
-            <PrimaryButton label={copy.home?.wordDetailPracticeBtn || "Bu Kelimeyi Çalış"} onPress={() => { onClose(); onPracticeWord(wordData); }} />
+            <PrimaryButton label={copy.home.wordDetailPracticeBtn} onPress={() => { onClose(); onPracticeWord(wordData); }} />
           </View>
         </View>
       </View>
