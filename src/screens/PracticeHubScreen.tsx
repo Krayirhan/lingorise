@@ -6,8 +6,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { C } from "../theme/colors";
 import { Copy, Locale } from "../i18n/en";
 import { LevelCode } from "../domain/models/content";
-import { HomeBottomNav } from "../features/home/components/HomeBottomNav";
 import { HomeTab } from "../features/home/home.types";
+import { formatTemplate } from "../utils/formatters";
 
 
 interface Props {
@@ -80,13 +80,10 @@ export function PracticeHubScreen({
     : practiceSessionSize;
   const estimatedMinutes = Math.max(1, Math.round(effectiveSessionSize * 0.15));
 
-  const fill = (template: string, values: Record<string, string | number>) =>
-    Object.entries(values).reduce((text, [key, value]) => text.replace(`{${key}}`, String(value)), template);
-
   const heroIsExamCta = isLevelFullyLearned && isExamAvailable && !isExamPassed;
   const showExamOptionCard = isExamAvailable && !heroIsExamCta;
 
-  const sessionSummary = fill(copy.home?.practiceCardNewOnly || "{level} seviyesinden {fresh} yeni kelime", {
+  const sessionSummary = formatTemplate(copy.home?.practiceCardNewOnly || "{level} seviyesinden {fresh} yeni kelime", {
     level,
     fresh: effectiveSessionSize,
   });
@@ -128,7 +125,7 @@ export function PracticeHubScreen({
               accessibilityRole="button"
               disabled={!heroIsExamCta}
               accessibilityState={{ disabled: !heroIsExamCta }}
-              accessibilityLabel={`${fill(copy.game?.hubLevelDoneTitle || "{level} tamamlandı", { level })}. ${
+              accessibilityLabel={`${formatTemplate(copy.game?.hubLevelDoneTitle || "{level} tamamlandı", { level })}. ${
                 heroIsExamCta
                   ? copy.game?.examCardCta || "Sınava gir"
                   : isExamPassed
@@ -147,7 +144,7 @@ export function PracticeHubScreen({
                     </Text>
                   </View>
                   <Text style={S.heroTitle}>
-                    {fill(copy.game?.hubLevelDoneTitle || "{level} tamamlandı!", { level })}
+                    {formatTemplate(copy.game?.hubLevelDoneTitle || "{level} tamamlandı!", { level })}
                   </Text>
                   <Text style={S.heroReason}>
                     {isExamPassed
@@ -196,7 +193,7 @@ export function PracticeHubScreen({
                   </Text>
                   <Text style={S.heroReason}>{pendingCheckpoint ? checkpointReason : curriculumNext ? curriculumNext.objective : sessionSummary}</Text>
                   <Text style={S.heroMeta}>
-                    {pendingCheckpoint ? checkpointMeta : curriculumNext ? curriculumMeta : `${level} · ${fill(copy.home?.practiceMetaEstimate || "{count} kelime · yaklaşık {minutes} dk", {
+                    {pendingCheckpoint ? checkpointMeta : curriculumNext ? curriculumMeta : `${level} · ${formatTemplate(copy.home?.practiceMetaEstimate || "{count} kelime · yaklaşık {minutes} dk", {
                       count: practiceSessionSize,
                       minutes: estimatedMinutes,
                     })}`}
@@ -225,7 +222,7 @@ export function PracticeHubScreen({
                 </View>
                 <View style={S.settingCopy}>
                   <Text style={S.settingTitle}>{copy.game?.hubSessionLength || "Oturum uzunluğu"}</Text>
-                  <Text style={S.settingHint}>{fill(copy.game?.hubSessionLengthHint || "Her pratikte {count} kelime gelir.", { count: practiceSessionSize })}</Text>
+                  <Text style={S.settingHint}>{formatTemplate(copy.game?.hubSessionLengthHint || "Her pratikte {count} kelime gelir.", { count: practiceSessionSize })}</Text>
                 </View>
               </View>
               <View style={S.segment}>

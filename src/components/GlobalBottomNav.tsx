@@ -1,3 +1,3 @@
-import { HomeBottomNav } from "../features/home/components/HomeBottomNav";
+import { HomeBottomNav } from "./HomeBottomNav";
 
 export const GlobalBottomNav = HomeBottomNav;

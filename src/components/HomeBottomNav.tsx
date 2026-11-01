@@ -1,10 +1,10 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { C, radius } from "../../../theme/colors";
-import { Copy } from "../../../i18n/en";
-import { HomeTab } from "../home.types";
-import { fonts } from "../../../theme/typography";
+import { C } from "../theme/colors";
+import { Copy } from "../i18n/en";
+import { HomeTab } from "./navigation";
+import { fonts } from "../theme/typography";
 
 interface Props {
   copy: Copy;
