@@ -1,90 +1,202 @@
-import { MeaningMatchQuestion } from "../../types/content";
+import { MeaningMatchQuestion, PartOfSpeech } from "../../domain/models/content";
+import { computeDifficulty, computeXpReward } from "./difficulty";
+import { B2_IPA } from "../vocabulary/b2Ipa";
+import { getB2ProductionPrompt, getB2Register } from "../vocabulary/b2ProductionPrompts";
+import { ensureProductionMetadata, exampleCollocation } from "../productionMetadata";
 
-export const b2MeaningMatchQuestions: MeaningMatchQuestion[] = [
-  {
-    id: "b2-mm-01",
-    mode: "MEANING_MATCH",
-    level: "B2",
-    topic: "Ekoloji & Çevre",
-    word: "sustainable",
-    meaning: "sürdürülebilir",
-    wrongOptions: ["geçici", "tükenen"],
-    xp: 25,
-    difficulty: 4,
-    phonetic: "/səˈsteɪ.nə.bəl/",
-    partOfSpeech: "adjective",
-    exampleSentence: "Sustainable practices ensure balance between humans and nature.",
-    exampleTranslation: "Sürdürülebilir uygulamalar insan ve doğa arasında denge sağlar.",
-    contextNote: "Gelecek kaynaklarını tüketmeden devam edebilen yöntem.",
-    pronunciation: "sustainable",
-    hint: "Doğal dengeyi bozmadan geleceğe taşınabilen yöntem.",
-    prompt: "sustainable",
-    answer: "sürdürülebilir",
-    options: ["sürdürülebilir", "geçici", "tükenen"],
-  },
-  {
-    id: "b2-mm-02",
-    mode: "MEANING_MATCH",
-    level: "B2",
-    topic: "Biyoloji & Çevre",
-    word: "biodiversity",
-    meaning: "biyoçeşitlilik",
-    wrongOptions: ["tekdüzelik", "kirlilik"],
-    xp: 25,
-    difficulty: 4,
-    phonetic: "/ˌbaɪ.əʊ.daɪˈvɜː.sə.ti/",
-    partOfSpeech: "noun",
-    exampleSentence: "Rainforests boast the highest biodiversity on the planet.",
-    exampleTranslation: "Yağmur ormanları gezegendeki en yüksek biyoçeşitliliğe sahiptir.",
-    contextNote: "Bir ekosistemde yaşayan canlı türlerinin zenginliği.",
-    pronunciation: "biodiversity",
-    hint: "Belirli bir ekosistemdeki canlı türlerinin zengin çeşitliliği.",
-    prompt: "biodiversity",
-    answer: "biyoçeşitlilik",
-    options: ["biyoçeşitlilik", "tekdüzelik", "kirlilik"],
-  },
-  {
-    id: "b2-mm-03",
-    mode: "MEANING_MATCH",
-    level: "B2",
-    topic: "Huzur & Zihin",
-    word: "tranquility",
-    meaning: "huzur",
-    wrongOptions: ["kargaşa", "telaş"],
-    xp: 25,
-    difficulty: 4,
-    phonetic: "/træŋˈkwɪl.ə.ti/",
-    partOfSpeech: "noun",
-    exampleSentence: "She walked through the botanical garden seeking tranquility.",
-    exampleTranslation: "Huzur arayarak botanik bahçesinde yürüdü.",
-    contextNote: "Zihinsel ve çevresel derin dinginlik hali.",
-    pronunciation: "tranquility",
-    hint: "Sakin, gürültüsüz ve dingin olma hali.",
-    prompt: "tranquility",
-    answer: "huzur",
-    options: ["huzur", "kargaşa", "telaş"],
-  },
-  {
-    id: "b2-mm-04",
-    mode: "MEANING_MATCH",
-    level: "B2",
-    topic: "Beslenme & Doğa",
-    word: "nourishment",
-    meaning: "besin",
-    wrongOptions: ["zehir", "yoksunluk"],
-    xp: 25,
-    difficulty: 4,
-    phonetic: "/ˈnʌr.ɪʃ.mənt/",
-    partOfSpeech: "noun",
-    exampleSentence: "Sunlight provides vital nourishment for flowering plants.",
-    exampleTranslation: "Güneş ışığı çiçek açan bitkiler için hayati besin sağlar.",
-    contextNote: "Gelişim ve büyüme için gerekli temel gıda.",
-    pronunciation: "nourishment",
-    hint: "Canlıların büyümesi ve sağlıklı kalması için gereken gıda/beslenme.",
-    prompt: "nourishment",
-    answer: "besin",
-    options: ["besin", "zehir", "yoksunluk"],
-  },
+type Row = readonly [string, string, PartOfSpeech];
+type Topic = { title: string; rows: Row[] };
+
+const TOPICS: Topic[] = [
+  { title: "Soyut Konular", rows: [
+    ["concept","kavram","noun"],["theory","teori","noun"],["principle","ilke","noun"],["perspective","bakış açısı","noun"],["assumption","varsayım","noun"],["dimension","boyut","noun"],["framework","çerçeve","noun"],["context","bağlam","noun"],["interpret","yorumlamak","verb"],["perceive","algılamak","verb"],["define","tanımlamak","verb"],["distinguish","ayırt etmek","verb"],["illustrate","örneklemek","verb"],["imply","ima etmek","verb"],["contradict","çelişmek","verb"],["relevant","ilgili","adjective"],["complex","karmaşık","adjective"],["abstract","soyut","adjective"],["significant","önemli","adjective"],["fundamental","temel","adjective"],["ethical","etik","adjective"],["rational","mantıklı","adjective"],["uncertain","belirsiz","adjective"],["phenomenon","olgu","noun"],["hypothesis","hipotez","noun"],["evidence","kanıt","noun"],["insight","içgörü","noun"],["awareness","farkındalık","noun"],["identity","kimlik","noun"],["diversity","çeşitlilik","noun"],["equality","eşitlik","noun"],["justice","adalet","noun"],["freedom","özgürlük","noun"],["responsibility","sorumluluk","noun"],["impact","etki","noun"],["consequence","sonuç","noun"]
+  ]},
+  { title: "Tartışma ve İkna", rows: [
+    ["argument","argüman","noun"],["claim","iddia","noun"],["counterargument","karşı argüman","noun"],["reasoning","akıl yürütme","noun"],["justify","gerekçelendirmek","verb"],["persuade","ikna etmek","verb"],["maintain","savunmak","verb"],["challenge","sorgulamak","verb"],["concede","kabul etmek","verb"],["emphasize","vurgulamak","verb"],["demonstrate","göstermek","verb"],["support","desteklemek","verb"],["oppose","karşı çıkmak","verb"],["suggest","öne sürmek","verb"],["recommend","tavsiye etmek","verb"],["agree","hemfikir olmak","verb"],["disagree","aynı fikirde olmamak","verb"],["convincing","inandırıcı","adjective"],["valid","geçerli","adjective"],["logical","mantıklı","adjective"],["reasonable","makul","adjective"],["controversial","tartışmalı","adjective"],["objective","nesnel","adjective"],["subjective","öznel","adjective"],["bias","önyargı","noun"],["proof","ispat","noun"],["example","örnek","noun"],["comparison","karşılaştırma","noun"],["conclusion","sonuç","noun"],["consensus","fikir birliği","noun"],["compromise","uzlaşma","noun"],["objection","itiraz","noun"],["statement","ifade","noun"],["viewpoint","görüş","noun"],["debate","tartışma","noun"],["priority","öncelik","noun"]
+  ]},
+  { title: "Profesyonel İletişim", rows: [
+    ["correspondence","yazışma","noun"],["inquiry","bilgi talebi; soru","noun"],["appointment","randevu","noun"],["attachment","ek dosya","noun"],["recipient","alıcı","noun"],["deadline","son teslim tarihi","noun"],["requirement","gereksinim","noun"],["procedure","prosedür","noun"],["guideline","kılavuz","noun"],["confidential","gizli","adjective"],["formal","resmî","adjective"],["appropriate","uygun","adjective"],["precise","kesin","adjective"],["polite","nazik","adjective"],["urgent","acil","adjective"],["confirm","onaylamak","verb"],["request","talep etmek","verb"],["attach","eklemek","verb"],["forward","iletmek","verb"],["inform","bilgilendirmek","verb"],["apologize","özür dilemek","verb"],["appreciate","takdir etmek","verb"],["schedule","planlamak","verb"],["postpone","ertelemek","verb"],["summarize","özetlemek","verb"],["revise","gözden geçirmek","verb"],["submit","teslim etmek","verb"],["approve","onay vermek","verb"],["decline","reddetmek","verb"],["respond","yanıtlamak","verb"],["agenda","gündem","noun"],["report","rapor","noun"],["briefing","bilgilendirme","noun"],["contract","sözleşme","noun"],["meeting","toplantı","noun"],["follow-up","takip","noun"]
+  ]},
 ];
 
-export const b2Questions = b2MeaningMatchQuestions;
+const entries = TOPICS.flatMap((topic) => topic.rows.map((row) => ({ topic, row })));
+type AuthoredB2Context = {
+  en: string;
+  tr: string;
+  wrongOptions: [string, string];
+  note: string;
+  collocation: string;
+  production: string;
+};
+
+const ABSTRACT_CONTEXTS: Record<string, AuthoredB2Context> = {
+  concept:{en:"The concept of fairness means different things in different cultures.",tr:"Adalet kavramı farklı kültürlerde farklı anlamlara gelir.",wrongOptions:["somut nesne","resmî kural"],note:"Bir şeyi anlamaya yarayan genel fikirdir.",collocation:"abstract concept",production:"Adalet kavramını kendi sözlerinle açıkla."},
+  theory:{en:"The theory explains why people remember stories more easily than lists.",tr:"Teori insanların hikâyeleri listelerden neden daha kolay hatırladığını açıklar.",wrongOptions:["kanıtlanmış kural","kişisel anı"],note:"Olayları açıklamaya çalışan sistemli fikirler bütünüdür.",collocation:"develop a theory",production:"Bir olay için basit bir teori öne sür."},
+  principle:{en:"The design follows the principle that every button should be easy to find.",tr:"Tasarım, her düğmenin kolay bulunması ilkesiyle hazırlanmıştır.",wrongOptions:["geçici tercih","ayrıntılı örnek"],note:"Kararları yönlendiren temel kural veya inançtır.",collocation:"basic principle",production:"Önem verdiğin bir ilkeyi ve nedenini söyle."},
+  perspective:{en:"From a student's perspective, the new timetable leaves too little time for lunch.",tr:"Bir öğrencinin bakış açısından yeni ders programı öğle yemeği için çok az zaman bırakıyor.",wrongOptions:["kesin kanıt","ortak karar"],note:"Bir konuya belirli bir konumdan bakma biçimidir.",collocation:"different perspective",production:"Bir soruna başka bir bakış açısından yaklaş."},
+  assumption:{en:"The plan is based on the assumption that fuel prices will stay stable.",tr:"Plan yakıt fiyatlarının sabit kalacağı varsayımına dayanıyor.",wrongOptions:["doğrulanmış gerçek","sonuç raporu"],note:"Kanıtlanmadan doğru kabul edilen fikirdir.",collocation:"make an assumption",production:"Bir karar vermeden önce yapabileceğin bir varsayımı söyle."},
+  dimension:{en:"Cost is only one dimension of choosing a university.",tr:"Maliyet, üniversite seçmenin yalnızca bir boyutudur.",wrongOptions:["tek çözüm","zaman çizelgesi"],note:"Karmaşık bir konunun ele alınabilecek yönüdür.",collocation:"social dimension",production:"Bir kararın iki farklı boyutunu açıkla."},
+  framework:{en:"The teacher gave us a framework for comparing two historical sources.",tr:"Öğretmen iki tarihî kaynağı karşılaştırmamız için bize bir çerçeve verdi.",wrongOptions:["rastgele örnek","nihai cevap"],note:"Bir konuyu düzenlemek veya anlamak için kullanılan yapılandırılmış yaklaşımdır.",collocation:"analytical framework",production:"Bir problemi incelemek için basit bir çerçeve öner."},
+  context:{en:"Without the historical context, the speech sounds more aggressive than it was.",tr:"Tarihî bağlam olmadan konuşma olduğundan daha saldırgan geliyor.",wrongOptions:["ana fikir","kişisel görüş"],note:"Bir olayın anlamını etkileyen çevre koşulları ve arka plandır.",collocation:"in context",production:"Bir cümlenin bağlama göre nasıl değişebileceğini açıkla."},
+  interpret:{en:"Readers may interpret the ending as hopeful or as a warning.",tr:"Okurlar sonu umut verici ya da bir uyarı olarak yorumlayabilir.",wrongOptions:["metni kopyalamak","sonucu kanıtlamak"],note:"Bir şeyin anlamını kendi anlayışına göre açıklamaktır.",collocation:"interpret evidence",production:"Bir grafiği nasıl yorumlayacağını bir cümleyle söyle."},
+  perceive:{en:"Young children often perceive time differently from adults.",tr:"Küçük çocuklar zamanı sık sık yetişkinlerden farklı algılar.",wrongOptions:["zamanı ölçmek","fikir değiştirmek"],note:"Bir şeyi duyular ve düşünce yoluyla fark etmek veya anlamaktır.",collocation:"perceive a risk",production:"İnsanların aynı olayı farklı algılamasının nedenini söyle."},
+  define:{en:"Before the discussion, the group defined what success would look like.",tr:"Tartışmadan önce grup başarının nasıl görüneceğini tanımladı.",wrongOptions:["örnek vermek","sonuçlandırmak"],note:"Bir kavramın sınırlarını ve anlamını açıkça belirtmektir.",collocation:"clearly define",production:"Başarıyı kendi hedefin için tanımla."},
+  distinguish:{en:"The course teaches students to distinguish facts from opinions.",tr:"Kurs öğrencilere gerçekleri görüşlerden ayırt etmeyi öğretiyor.",wrongOptions:["iki şeyi birleştirmek","fikir savunmak"],note:"Benzer görünen şeyler arasındaki farkı fark etmektir.",collocation:"distinguish between",production:"Bir gerçek ile bir görüş arasındaki farkı açıkla."},
+  illustrate:{en:"This chart illustrates how the population changed over ten years.",tr:"Bu grafik nüfusun on yıl içinde nasıl değiştiğini örnekleyerek gösteriyor.",wrongOptions:["veriyi gizlemek","iddiayı reddetmek"],note:"Bir fikri örnek veya görselle daha anlaşılır hâle getirmektir.",collocation:"illustrate a point",production:"Bir fikrini örnekle nasıl destekleyeceğini söyle."},
+  imply:{en:"Her silence did not imply that she agreed with the proposal.",tr:"Onun sessizliği öneriyle aynı fikirde olduğu anlamına gelmiyordu.",wrongOptions:["açıkça söylemek","kanıt toplamak"],note:"Doğrudan söylemeden bir anlamı işaret etmektir.",collocation:"imply that",production:"Dolaylı olarak bir anlam ima eden kısa bir cümle kur."},
+  contradict:{en:"The second witness seemed to contradict the first witness's account.",tr:"İkinci tanık ilk tanığın anlatımıyla çelişiyor gibiydi.",wrongOptions:["fikri desteklemek","ayrıntı eklemek"],note:"Bir ifade veya kanıtla uyuşmamaktır.",collocation:"contradict evidence",production:"İki çelişen bilgiyle karşılaşınca ne yaparsın?"},
+  relevant:{en:"Please include only information that is relevant to the question.",tr:"Lütfen yalnızca soruyla ilgili bilgileri ekle.",wrongOptions:["ilginç","gizli"],note:"Ele alınan konuyla doğrudan bağlantılı olanı niteler.",collocation:"relevant information",production:"Bir sunumda hangi bilgilerin ilgili olduğunu açıkla."},
+  complex:{en:"Climate change is a complex issue with economic and social causes.",tr:"İklim değişikliği ekonomik ve toplumsal nedenleri olan karmaşık bir konudur.",wrongOptions:["basit","acil"],note:"Birçok bağlantılı bölüm veya neden içerdiği için anlaşılması zor olanı niteler.",collocation:"complex issue",production:"Karmaşık bir problemi iki yönüyle anlat."},
+  abstract:{en:"Freedom is an abstract idea that cannot be touched or measured directly.",tr:"Özgürlük doğrudan dokunulup ölçülemeyen soyut bir fikirdir.",wrongOptions:["görünür","pratik"],note:"Somut bir nesne olmayan fikirleri niteler.",collocation:"abstract idea",production:"Soyut bir fikre örnek ver."},
+  significant:{en:"The survey found a significant increase in people using public transport.",tr:"Anket toplu taşıma kullanan insan sayısında önemli bir artış buldu.",wrongOptions:["küçük","beklenen"],note:"Büyüklüğü veya etkisi nedeniyle önemli olanı niteler.",collocation:"significant change",production:"Hayatındaki önemli bir değişikliği belirt."},
+  fundamental:{en:"Trust is fundamental to a strong relationship between a doctor and patient.",tr:"Güven doktor ile hasta arasındaki güçlü ilişkinin temelidir.",wrongOptions:["ikincil","geçici"],note:"Bir şeyin temelini oluşturan ve çok gerekli olanı niteler.",collocation:"fundamental principle",production:"Öğrenmenin temel bir unsurunu söyle."},
+  ethical:{en:"It is ethical to ask permission before using someone's photograph.",tr:"Birinin fotoğrafını kullanmadan önce izin istemek etiktir.",wrongOptions:["yasal zorunlu","pratik"],note:"Doğru ve adil davranış ilkeleriyle ilgili olanı niteler.",collocation:"ethical decision",production:"Etik bir karar gerektiren küçük bir durum anlat."},
+  rational:{en:"Choosing the cheaper repair was rational after we compared both estimates.",tr:"İki fiyat teklifini karşılaştırdıktan sonra daha ucuz tamiri seçmek mantıklıydı.",wrongOptions:["duygusal","riskli"],note:"Duygudan çok mantık ve kanıta dayananı niteler.",collocation:"rational choice",production:"Mantıklı bir seçim yaparken hangi kanıtı kullanırsın?"},
+  uncertain:{en:"The outcome remains uncertain because the final data is incomplete.",tr:"Son veri eksik olduğu için sonuç belirsizliğini koruyor.",wrongOptions:["kesin","olumlu"],note:"Henüz bilinmeyen veya güvenle tahmin edilemeyen durumu niteler.",collocation:"remain uncertain",production:"Belirsiz bir durumda hangi bilgiyi beklersin?"},
+  phenomenon:{en:"The researcher studied the phenomenon of people copying group behaviour.",tr:"Araştırmacı insanların grup davranışını taklit etme olgusunu inceledi.",wrongOptions:["kişisel karar","resmî belge"],note:"Gözlemlenebilen dikkat çekici olay veya durumdur.",collocation:"social phenomenon",production:"Günlük hayattan bir olguyu tarif et."},
+  hypothesis:{en:"Our hypothesis was that shorter videos would hold viewers' attention longer.",tr:"Hipotezimiz daha kısa videoların izleyicilerin dikkatini daha uzun süre tutacağıydı.",wrongOptions:["kesin sonuç","rastgele soru"],note:"Araştırmada test edilmek üzere ortaya atılan açıklamadır.",collocation:"test a hypothesis",production:"Test edilebilecek basit bir hipotez kur."},
+  evidence:{en:"The report provides evidence that the new method reduces waste.",tr:"Rapor yeni yöntemin atığı azalttığına dair kanıt sunuyor.",wrongOptions:["kişisel tercih","karşı argüman"],note:"Bir iddiayı destekleyen bilgi, veri veya işarettir.",collocation:"strong evidence",production:"Bir iddiayı desteklemek için hangi kanıtı kullanırsın?"},
+  insight:{en:"The interview gave us an insight into how small businesses manage costs.",tr:"Röportaj küçük işletmelerin maliyetleri nasıl yönettiğine dair içgörü sağladı.",wrongOptions:["ayrıntılı talimat","önemsiz bilgi"],note:"Bir konu hakkında derin ve yararlı anlayıştır.",collocation:"gain insight",production:"Bir deneyimden edindiğin bir içgörüyü söyle."},
+  awareness:{en:"The documentary increased awareness of the problem of food waste.",tr:"Belgesel gıda israfı sorununa dair farkındalığı artırdı.",wrongOptions:["resmî onay","kişisel gizlilik"],note:"Bir konu veya sorun hakkında bilinç sahibi olmaktır.",collocation:"raise awareness",production:"Farkındalık yaratmak istediğin bir sorunu anlat."},
+  identity:{en:"Language can be an important part of a person's cultural identity.",tr:"Dil bir kişinin kültürel kimliğinin önemli bir parçası olabilir.",wrongOptions:["yaş grubu","meslek seçimi"],note:"Bir kişiyi veya grubu tanımlayan özellikler ve aidiyet duygusudur.",collocation:"cultural identity",production:"Kültürel kimliğini etkileyen bir unsuru söyle."},
+  diversity:{en:"The team values diversity because different experiences lead to better ideas.",tr:"Ekip çeşitliliğe değer veriyor çünkü farklı deneyimler daha iyi fikirlere yol açıyor.",wrongOptions:["tekdüzelik","rekabet"],note:"Bir gruptaki farklı geçmiş, özellik veya görüşlerin varlığıdır.",collocation:"value diversity",production:"Çeşitliliğin bir gruba nasıl yarar sağladığını açıkla."},
+  equality:{en:"The policy aims to improve equality of access to education.",tr:"Politika eğitime erişimde eşitliği geliştirmeyi amaçlıyor.",wrongOptions:["ayrımcılık","ayrıcalık"],note:"İnsanların aynı hak ve fırsatlara sahip olmasıdır.",collocation:"promote equality",production:"Eşit fırsat için bir öneri ver."},
+  justice:{en:"The lawyer argued that the decision was necessary for justice.",tr:"Avukat kararın adalet için gerekli olduğunu savundu.",wrongOptions:["kişisel çıkar","hızlı çözüm"],note:"Adil davranma ve hakların korunması ilkesidir.",collocation:"seek justice",production:"Adil bir kararın ne gerektirdiğini söyle."},
+  freedom:{en:"Students have the freedom to choose one topic for their final project.",tr:"Öğrencilerin final projeleri için bir konu seçme özgürlüğü var.",wrongOptions:["zorunluluk","yasak"],note:"Kısıtlanmadan seçim veya hareket edebilme hakkıdır.",collocation:"freedom of choice",production:"Sence hangi seçme özgürlüğü önemlidir?"},
+  responsibility:{en:"With the freedom to publish online comes responsibility for what you share.",tr:"Çevrim içi yayımlama özgürlüğüyle paylaştıkların için sorumluluk gelir.",wrongOptions:["ayrıcalık","ödül"],note:"Bir görev veya davranışın sonuçlarından hesap verme yükümlülüğüdür.",collocation:"take responsibility",production:"Çevrim içi paylaşımda hangi sorumluluğu almalısın?"},
+  impact:{en:"The new rule had a greater impact on small shops than large chains.",tr:"Yeni kuralın küçük dükkânlar üzerindeki etkisi büyük zincirlerden daha fazlaydı.",wrongOptions:["başlangıç nedeni","ayrıntılı plan"],note:"Bir eylem veya olayın yarattığı etkidir.",collocation:"have an impact",production:"Bir kararın kimler üzerinde etkisi olacağını söyle."},
+  consequence:{en:"One consequence of ignoring the warning was a longer delay.",tr:"Uyarıyı görmezden gelmenin bir sonucu daha uzun bir gecikmeydi.",wrongOptions:["olumlu amaç","başlangıç koşulu"],note:"Bir eylemden sonra ortaya çıkan sonuçtur.",collocation:"unintended consequence",production:"Bir seçimin beklenmeyen sonucunu anlat."},
+};
+
+const ARGUMENT_CONTEXTS: Record<string, AuthoredB2Context> = {
+  argument:{en:"Her argument for later school starts focused on students' sleep.",tr:"Daha geç okul başlangıcı için argümanı öğrencilerin uykusuna odaklandı.",wrongOptions:["kişisel hikâye","son karar"],note:"Bir görüşü desteklemek için sunulan nedenler bütünüdür.",collocation:"strong argument",production:"Bir görüşünü destekleyen güçlü bir argüman ver."},
+  claim:{en:"The advert makes the claim that its product works in one day.",tr:"Reklam ürününün bir günde işe yaradığı iddiasında bulunuyor.",wrongOptions:["kanıtlanmış bilgi","karşı görüş"],note:"Doğruluğu kanıtlanması gereken ileri sürülmüş ifadedir.",collocation:"support a claim",production:"Bir iddiayı desteklemek için hangi kanıta ihtiyaç duyarsın?"},
+  counterargument:{en:"Her counterargument was that the proposal would cost too much.",tr:"Onun karşı argümanı önerinin çok pahalı olacağıydı.",wrongOptions:["ana neden","nihai uzlaşma"],note:"Bir görüşe karşı sunulan gerekçeli itirazdır.",collocation:"address a counterargument",production:"Bir fikre karşı kısa bir karşı argüman kur."},
+  reasoning:{en:"The committee asked him to explain the reasoning behind his choice.",tr:"Komite ondan seçiminin arkasındaki akıl yürütmeyi açıklamasını istedi.",wrongOptions:["duygusal tepki","belge özeti"],note:"Bir sonuca ulaşmak için izlenen düşünme sürecidir.",collocation:"logical reasoning",production:"Bir kararının akıl yürütmesini iki adımda açıkla."},
+  justify:{en:"Can you justify spending more money on the safer material?",tr:"Daha güvenli malzemeye daha çok para harcamayı gerekçelendirebilir misin?",wrongOptions:["teklifi reddetmek","fiyat sormak"],note:"Bir kararın neden doğru olduğunu nedenlerle açıklamaktır.",collocation:"justify a decision",production:"Küçük bir kararını gerekçelendir."},
+  persuade:{en:"The speaker tried to persuade the audience to use less plastic.",tr:"Konuşmacı dinleyicileri daha az plastik kullanmaya ikna etmeye çalıştı.",wrongOptions:["bilgilendirmek","itiraz etmek"],note:"Birini bir görüşü kabul etmeye veya bir şey yapmaya ikna etmektir.",collocation:"persuade someone to",production:"Bir arkadaşını bir etkinliğe ikna etmek için cümle kur."},
+  maintain:{en:"Despite the questions, she maintained that the figures were correct.",tr:"Sorulara rağmen rakamların doğru olduğunu savunmaya devam etti.",wrongOptions:["fikrini değiştirmek","kanıt istemek"],note:"Bir görüşü kararlılıkla savunmaya devam etmektir.",collocation:"maintain that",production:"Kanıtla desteklediğin bir görüşünü savun."},
+  challenge:{en:"The journalist challenged the minister's explanation with new data.",tr:"Gazeteci yeni verilerle bakanın açıklamasını sorguladı.",wrongOptions:["açıklamayı kabul etmek","soruyu atlamak"],note:"Bir fikrin doğruluğunu sorgulamak veya test etmektir.",collocation:"challenge an assumption",production:"Bir varsayımı nazikçe sorgulayan soru sor."},
+  concede:{en:"He conceded that the other team had made a useful point.",tr:"Diğer ekibin yararlı bir nokta belirttiğini kabul etti.",wrongOptions:["itirazını büyütmek","sonucu açıklamak"],note:"Tartışmada karşı tarafın bir noktasının doğru olduğunu kabul etmektir.",collocation:"concede a point",production:"Tartışmada karşı tarafın haklı olduğu bir noktayı kabul et."},
+  emphasize:{en:"The report emphasizes the need for clearer safety instructions.",tr:"Rapor daha açık güvenlik talimatlarına duyulan ihtiyacı vurguluyor.",wrongOptions:["konuyu gizlemek","örneği kaldırmak"],note:"Bir noktaya özel önem vermek için vurgulamaktır.",collocation:"emphasize the importance",production:"Bir fikrinin önemini vurgulayan cümle yaz."},
+  demonstrate:{en:"The experiment demonstrates how quickly heat escapes through the window.",tr:"Deney ısının pencereden ne kadar hızlı kaçtığını gösteriyor.",wrongOptions:["sonucu tahmin etmek","iddiayı reddetmek"],note:"Kanıt veya örnekle bir şeyi açıkça göstermektir.",collocation:"demonstrate that",production:"Bir fikrini gösterecek bir örnek ver."},
+  support:{en:"The survey results support the idea of adding more buses.",tr:"Anket sonuçları daha fazla otobüs ekleme fikrini destekliyor.",wrongOptions:["fikre karşı çıkmak","soruyu değiştirmek"],note:"Bir fikrin doğru veya yararlı olduğunu kanıtla güçlendirmektir.",collocation:"support an argument",production:"Bir argümanı desteklemek için veri kullan."},
+  oppose:{en:"Several residents oppose building shops on the public garden.",tr:"Birkaç sakin halka açık bahçeye dükkân yapılmasına karşı çıkıyor.",wrongOptions:["planı desteklemek","fiyat önermek"],note:"Bir fikre veya plana karşı olmak ve bunu belirtmektir.",collocation:"strongly oppose",production:"Nazikçe karşı çıktığın bir fikri açıkla."},
+  suggest:{en:"I suggest we compare both options before we vote.",tr:"Oy vermeden önce iki seçeneği karşılaştırmamızı öneriyorum.",wrongOptions:["kararı açıklamak","kanıt toplamak"],note:"Düşünülmesi için bir fikir veya plan öne sürmektir.",collocation:"suggest that",production:"Bir tartışmaya yapıcı bir öneri sun."},
+  recommend:{en:"The adviser recommends taking notes while you read each source.",tr:"Danışman her kaynağı okurken not almanızı tavsiye ediyor.",wrongOptions:["zorunlu kılmak","fikri eleştirmek"],note:"Bir seçeneğin iyi olduğunu tavsiye etmektir.",collocation:"recommend a solution",production:"Bir soruna çözüm tavsiye et."},
+  agree:{en:"Most members agree that the rule needs to be clearer.",tr:"Üyelerin çoğu kuralın daha açık olması gerektiği konusunda hemfikir.",wrongOptions:["itiraz etmek","oy kullanmak"],note:"Aynı görüşü paylaşmak veya bir öneriyi kabul etmektir.",collocation:"agree with",production:"Bir görüşe neden katıldığını söyle."},
+  disagree:{en:"I disagree with the idea that all online news is unreliable.",tr:"Tüm çevrim içi haberlerin güvenilmez olduğu fikrine katılmıyorum.",wrongOptions:["aynı fikirde olmak","konuyu kapatmak"],note:"Bir görüşü paylaşmadığını belirtmektir.",collocation:"disagree respectfully",production:"Bir görüşe saygılı biçimde katılmadığını ifade et."},
+  convincing:{en:"Her explanation was convincing because she used clear examples.",tr:"Açıklaması açık örnekler kullandığı için inandırıcıydı.",wrongOptions:["belirsiz","duygusal"],note:"İnsanları bir fikrin doğru olduğuna inandırabilecek gücü niteler.",collocation:"convincing evidence",production:"İnandırıcı bir argümanın özelliğini söyle."},
+  valid:{en:"That is a valid concern, so we should discuss it before deciding.",tr:"Bu geçerli bir endişe, bu yüzden karar vermeden önce konuşmalıyız.",wrongOptions:["önemsiz","kişisel"],note:"Mantıklı, kabul edilebilir veya gerçeklere dayalı olanı niteler.",collocation:"valid point",production:"Birinin geçerli noktasını kabul eden cümle kur."},
+  logical:{en:"The conclusion is logical if the first two statements are true.",tr:"İlk iki ifade doğruysa sonuç mantıklıdır.",wrongOptions:["çelişkili","rastgele"],note:"Açık ve tutarlı düşünme kurallarına uyanı niteler.",collocation:"logical conclusion",production:"Mantıklı bir sonuca nasıl ulaştığını açıkla."},
+  reasonable:{en:"It seems reasonable to test the software before releasing it.",tr:"Yazılımı yayımlamadan önce test etmek makul görünüyor.",wrongOptions:["imkânsız","tartışmalı"],note:"Koşullara göre adil, uygulanabilir veya mantıklı olanı niteler.",collocation:"reasonable request",production:"Makul bir talepte bulun."},
+  controversial:{en:"The decision to close the road was controversial among local businesses.",tr:"Yolu kapatma kararı yerel işletmeler arasında tartışmalıydı.",wrongOptions:["herkesçe kabul edilen","açık"],note:"Güçlü ve karşıt görüşler yaratanı niteler.",collocation:"controversial issue",production:"Tartışmalı bir konuda iki görüşü belirt."},
+  objective:{en:"An objective report separates the facts from the writer's opinions.",tr:"Nesnel bir rapor gerçekleri yazarın görüşlerinden ayırır.",wrongOptions:["taraflı","kişisel"],note:"Kişisel duygular yerine kanıta dayananı niteler.",collocation:"objective analysis",production:"Nesnel kalmak için ne yapacağını söyle."},
+  subjective:{en:"Whether the film is boring is a subjective judgement.",tr:"Filmin sıkıcı olup olmadığı öznel bir yargıdır.",wrongOptions:["ölçülebilir","kanıtlanmış"],note:"Kişisel duygu, zevk veya görüşe bağlı olanı niteler.",collocation:"subjective opinion",production:"Öznel bir görüş ile gerçeği ayıran örnek ver."},
+  bias:{en:"The editor removed biased language from the article before publication.",tr:"Editör yayımlamadan önce makaledeki önyargılı dili çıkardı.",wrongOptions:["güçlü kanıt","tarafsız özet"],note:"Bir tarafa haksız biçimde eğilim gösterme durumudur.",collocation:"avoid bias",production:"Bir metindeki önyargıyı nasıl azaltırsın?"},
+  proof:{en:"We need proof that the device is safe before we sell it.",tr:"Cihazı satmadan önce güvenli olduğuna dair ispata ihtiyacımız var.",wrongOptions:["ilk tahmin","kişisel tercih"],note:"Bir iddianın doğru olduğunu kesin biçimde gösteren kanıttır.",collocation:"provide proof",production:"Bir iddia için hangi ispatı istersin?"},
+  example:{en:"For example, the same rule can affect renters and owners differently.",tr:"Örneğin aynı kural kiracıları ve ev sahiplerini farklı etkileyebilir.",wrongOptions:["ana iddia","karşı kanıt"],note:"Bir fikri daha anlaşılır kılan belirli durum veya olaydır.",collocation:"give an example",production:"Bir görüşünü destekleyen örnek ver."},
+  comparison:{en:"The comparison between the two plans shows where each one saves money.",tr:"İki plan arasındaki karşılaştırma her birinin nerede para tasarrufu sağladığını gösteriyor.",wrongOptions:["tek seçenek","nihai karar"],note:"İki veya daha fazla şeyi benzerlik ve farklarına göre incelemektir.",collocation:"make a comparison",production:"İki seçeneği bir ölçüte göre karşılaştır."},
+  conclusion:{en:"In conclusion, the evidence supports a gradual change rather than a sudden one.",tr:"Sonuç olarak kanıt ani bir değişimden çok kademeli değişimi destekliyor.",wrongOptions:["başlangıç sorusu","ek örnek"],note:"Bir tartışma veya araştırmanın sonunda ulaşılan yargıdır.",collocation:"draw a conclusion",production:"Bir tartışmayı sonuçlandıran cümle yaz."},
+  consensus:{en:"After an hour, the group reached a consensus on the final wording.",tr:"Bir saat sonra grup son ifade üzerinde fikir birliğine vardı.",wrongOptions:["açık çatışma","kişisel itiraz"],note:"Bir grubun çoğunlukla paylaştığı ortak anlaşmadır.",collocation:"reach a consensus",production:"Grubun uzlaşmasına yardım edecek bir öneri yap."},
+  compromise:{en:"The compromise allowed cars on the street only after six in the evening.",tr:"Uzlaşma araçların sokağa yalnızca akşam altıdan sonra girmesine izin verdi.",wrongOptions:["kesin ret","tek taraflı karar"],note:"Tarafların karşılıklı taviz vererek ulaştığı anlaşmadır.",collocation:"find a compromise",production:"İki taraf için bir uzlaşma öner."},
+  objection:{en:"Her main objection was that the plan ignored older residents.",tr:"Onun temel itirazı planın yaşlı sakinleri görmezden gelmesiydi.",wrongOptions:["destekleyici neden","ortak hedef"],note:"Bir fikre karşı duyulan ve açıklanan güçlü karşı görüşdür.",collocation:"raise an objection",production:"Bir öneriye yönelik nazik bir itiraz belirt."},
+  statement:{en:"The witness read a short statement to explain what she had seen.",tr:"Tanık gördüklerini açıklamak için kısa bir ifade okudu.",wrongOptions:["uzun tartışma","gizli soru"],note:"Bir konu hakkında açıkça söylenen veya yazılan ifadedir.",collocation:"make a statement",production:"Bir konudaki görüşünü açık bir ifadeyle yaz."},
+  viewpoint:{en:"From his viewpoint, the new rule protects families from extra costs.",tr:"Onun görüşüne göre yeni kural aileleri ek masraflardan koruyor.",wrongOptions:["kanıt parçası","tarafsız sonuç"],note:"Bir kişi veya grubun bir konuya dair bakış açısıdır.",collocation:"share a viewpoint",production:"Bir konuya kendi bakış açını açıkla."},
+  debate:{en:"The class debate showed that both sides had useful concerns.",tr:"Sınıf tartışması her iki tarafın da yararlı endişeleri olduğunu gösterdi.",wrongOptions:["tek yönlü konuşma","resmî duyuru"],note:"Karşıt görüşlerin gerekçelerle tartışılmasıdır.",collocation:"hold a debate",production:"Bir tartışmada hangi kurala uyarsın?"},
+  priority:{en:"For the council, keeping drinking water clean is the highest priority.",tr:"Belediye için içme suyunu temiz tutmak en yüksek önceliktir.",wrongOptions:["ek seçenek","geçici fikir"],note:"Önce ele alınması gereken en önemli konu veya görevdir.",collocation:"top priority",production:"Bir tartışmada en yüksek önceliğini açıkla."},
+};
+
+const PROFESSIONAL_CONTEXTS: Record<string, AuthoredB2Context> = {
+  correspondence:{en:"Please keep all correspondence about the contract in the shared folder.",tr:"Sözleşmeyle ilgili tüm yazışmaları lütfen ortak klasörde tutun.",wrongOptions:["toplantı notları","telefon görüşmesi"],note:"Resmî amaçla yapılan mektup veya e-posta alışverişidir.",collocation:"business correspondence",production:"Resmî yazışmada hangi bilgiyi açık tutarsın?"},
+  inquiry:{en:"I sent an inquiry to ask whether the course includes exam fees.",tr:"Kursun sınav ücretlerini içerip içermediğini sormak için bilgi talebi gönderdim.",wrongOptions:["şikâyet","özür"],note:"Bilgi almak için yapılan resmî soru veya taleptir.",collocation:"make an inquiry",production:"Bir hizmet hakkında nazik bir bilgi talebi yaz."},
+  appointment:{en:"Your appointment with the client is confirmed for Thursday at ten.",tr:"Müşteriyle randevunuz perşembe saat onda onaylandı.",wrongOptions:["son teslim tarihi","toplantı gündemi"],note:"Belirli bir zamanda yapılması planlanan resmî görüşmedir.",collocation:"schedule an appointment",production:"Bir randevu için uygun saat sor."},
+  attachment:{en:"The attachment contains the revised budget spreadsheet.",tr:"Ek dosya gözden geçirilmiş bütçe tablosunu içeriyor.",wrongOptions:["e-posta konusu","alıcı listesi"],note:"E-posta ile gönderilen ayrı dosyadır.",collocation:"email attachment",production:"Bir ek dosyayı belirten kısa e-posta cümlesi yaz."},
+  recipient:{en:"Check the recipient's name before you send a confidential message.",tr:"Gizli bir mesaj göndermeden önce alıcının adını kontrol et.",wrongOptions:["gönderen","toplantı başkanı"],note:"Mesajı veya belgeyi alan kişi ya da kurumdur.",collocation:"intended recipient",production:"Yanlış alıcıya e-posta göndermemek için ne yaparsın?"},
+  deadline:{en:"The deadline for submitting the proposal is Friday afternoon.",tr:"Öneriyi teslim etmek için son tarih cuma öğleden sonra.",wrongOptions:["başlangıç tarihi","randevu saati"],note:"Bir işin tamamlanması gereken son zamandır.",collocation:"meet a deadline",production:"Bir son teslim tarihine yetişmek için planını anlat."},
+  requirement:{en:"A passport copy is a requirement for joining the overseas programme.",tr:"Pasaport kopyası yurt dışı programa katılmak için bir gereksinimdir.",wrongOptions:["ek avantaj","kişisel tercih"],note:"Bir iş veya süreç için gerekli olan koşuldur.",collocation:"meet a requirement",production:"Bir başvurunun gereksinimini açıkla."},
+  procedure:{en:"Follow the safety procedure before you restart the machine.",tr:"Makineyi yeniden başlatmadan önce güvenlik prosedürünü izleyin.",wrongOptions:["kişisel öneri","toplantı özeti"],note:"Bir işi doğru yapmaya yönelik sıralı resmî adımdır.",collocation:"follow a procedure",production:"Bir prosedürün ilk adımını söyle."},
+  guideline:{en:"The style guideline explains how to format headings in the report.",tr:"Biçim kılavuzu rapordaki başlıkların nasıl düzenleneceğini açıklar.",wrongOptions:["zorunlu ceza","gizli ek"],note:"İyi uygulama için yol gösteren kural veya öneridir.",collocation:"follow guidelines",production:"Bir yazım kılavuzuna neden uyarsın?"},
+  confidential:{en:"Keep the salary details confidential until the manager approves the announcement.",tr:"Müdür duyuruyu onaylayana kadar maaş ayrıntılarını gizli tutun.",wrongOptions:["acil","herkese açık"],note:"Başkalarıyla paylaşılmaması gereken bilgiyi niteler.",collocation:"confidential information",production:"Gizli bir dosyayı nasıl korursun?"},
+  formal:{en:"Use a formal greeting when you write to a company for the first time.",tr:"Bir şirkete ilk kez yazarken resmî bir selamlama kullanın.",wrongOptions:["samimi","kısa"],note:"Resmî durumlara uygun, ciddi üslubu niteler.",collocation:"formal email",production:"Resmî bir e-postaya uygun selamlama yaz."},
+  appropriate:{en:"Jeans are not appropriate clothing for tomorrow's client presentation.",tr:"Kot pantolon yarınki müşteri sunumu için uygun kıyafet değil.",wrongOptions:["rahat","pahalı"],note:"Belirli bir durum veya amaç için uygun olanı niteler.",collocation:"appropriate tone",production:"Resmî e-postada uygun bir ton seç."},
+  precise:{en:"Please be precise about which version of the document you need.",tr:"Lütfen belgenin hangi sürümüne ihtiyacınız olduğu konusunda kesin olun.",wrongOptions:["genel","nazik"],note:"Açık, ayrıntılı ve yanlış anlamaya yer bırakmayanı niteler.",collocation:"precise details",production:"Kesin bilgi isteyen bir soru yaz."},
+  polite:{en:"It is polite to thank the interviewer for their time.",tr:"Görüşmeciye zamanı için teşekkür etmek naziktir.",wrongOptions:["resmî","aceleci"],note:"Başkasına saygı gösteren davranış veya dili niteler.",collocation:"polite request",production:"Nazikçe yardım isteyen bir cümle yaz."},
+  urgent:{en:"This is urgent because the client needs the corrected invoice today.",tr:"Bu acil çünkü müşteri düzeltilmiş faturaya bugün ihtiyaç duyuyor.",wrongOptions:["önemsiz","gizli"],note:"Hemen dikkat veya eylem gerektiren durumu niteler.",collocation:"urgent request",production:"Acil bir talebi nazikçe ilet."},
+  confirm:{en:"Could you confirm that you received the updated schedule?",tr:"Güncellenmiş programı aldığınızı onaylayabilir misiniz?",wrongOptions:["talep etmek","ertelemek"],note:"Bir bilginin doğru veya alındığını kesinleştirmektir.",collocation:"confirm receipt",production:"Bir belgeyi aldığını onaylayan cümle yaz."},
+  request:{en:"The supplier requested an extra day to prepare the order.",tr:"Tedarikçi siparişi hazırlamak için bir gün ek süre talep etti.",wrongOptions:["şikâyet etmek","onay vermek"],note:"Bir şeyi resmî veya nazik biçimde istemektir.",collocation:"request an extension",production:"Süre uzatımı talep et."},
+  attach:{en:"I will attach the signed form to my reply.",tr:"İmzalı formu yanıtıma ekleyeceğim.",wrongOptions:["dosyayı silmek","mesajı iletmek"],note:"Bir dosyayı e-posta veya mesaja eklemektir.",collocation:"attach a file",production:"E-posta ekini belirten kısa bir cümle kur."},
+  forward:{en:"Please forward this email to the finance department.",tr:"Lütfen bu e-postayı finans departmanına iletin.",wrongOptions:["e-postayı yanıtlamak","dosyayı eklemek"],note:"Bir mesajı başka bir kişiye veya bölüme göndermektir.",collocation:"forward an email",production:"Bir mesajı doğru kişiye iletmesini iste."},
+  inform:{en:"We need to inform all staff about the change in office hours.",tr:"Tüm personeli ofis saatlerindeki değişiklik hakkında bilgilendirmemiz gerekiyor.",wrongOptions:["personeli atamak","fikri tartışmak"],note:"Birine gerekli bilgiyi vermektir.",collocation:"inform someone about",production:"Bir değişiklik hakkında çalışanları bilgilendir."},
+  apologize:{en:"I apologize for sending the wrong attachment yesterday.",tr:"Dün yanlış eki gönderdiğim için özür dilerim.",wrongOptions:["teşekkür etmek","talepte bulunmak"],note:"Bir hata veya sorun için üzgün olduğunu ifade etmektir.",collocation:"apologize for",production:"Küçük bir gecikme için özür dile."},
+  appreciate:{en:"We appreciate your quick response to our inquiry.",tr:"Bilgi talebimize hızlı yanıtınızı takdir ediyoruz.",wrongOptions:["reddetmek","eleştirmek"],note:"Bir yardım veya çabayı değerli bulduğunu ifade etmektir.",collocation:"appreciate your help",production:"Bir meslektaşına yardımı için teşekkür et."},
+  schedule:{en:"The coordinator will schedule a follow-up call for next week.",tr:"Koordinatör gelecek hafta için bir takip görüşmesi planlayacak.",wrongOptions:["toplantıyı iptal etmek","notları özetlemek"],note:"Bir etkinlik için zaman belirlemek ve planlamaktır.",collocation:"schedule a meeting",production:"Toplantı planlamak için uygun zaman sor."},
+  postpone:{en:"We had to postpone the workshop because the trainer was ill.",tr:"Eğitmen hasta olduğu için atölyeyi ertelemek zorunda kaldık.",wrongOptions:["atölyeyi başlatmak","katılımcı eklemek"],note:"Planlanan etkinliği daha sonraki bir zamana almaktır.",collocation:"postpone a meeting",production:"Bir toplantıyı ertelemek için nazik bir mesaj yaz."},
+  summarize:{en:"At the end of the call, Maya summarized the agreed actions.",tr:"Görüşmenin sonunda Maya üzerinde anlaşılan eylemleri özetledi.",wrongOptions:["eylemleri onaylamak","toplantıyı planlamak"],note:"Uzun bilgiyi ana noktalarıyla kısa biçimde anlatmaktır.",collocation:"summarize key points",production:"Bir toplantının iki ana noktasını özetle."},
+  revise:{en:"Please revise the introduction after reading the client's feedback.",tr:"Müşterinin geri bildirimini okuduktan sonra lütfen girişi gözden geçirin.",wrongOptions:["metni yayımlamak","dosyayı iletmek"],note:"Bir metni veya planı düzeltmek için yeniden incelemektir.",collocation:"revise a draft",production:"Bir taslağı neden gözden geçireceğini açıkla."},
+  submit:{en:"Applicants must submit their portfolios before the interview date.",tr:"Başvuranlar portföylerini görüşme tarihinden önce teslim etmelidir.",wrongOptions:["başvuru yapmak","belge istemek"],note:"Bir belgeyi resmî değerlendirme için teslim etmektir.",collocation:"submit an application",production:"Başvurunu ne zaman teslim edeceğini söyle."},
+  approve:{en:"The director will approve the final design this afternoon.",tr:"Direktör nihai tasarımı bu öğleden sonra onaylayacak.",wrongOptions:["tasarımı reddetmek","teklifi değiştirmek"],note:"Bir plan veya belgenin kullanılmasına resmî izin vermektir.",collocation:"approve a proposal",production:"Bir öneriyi onaylamak için hangi bilgiyi istersin?"},
+  decline:{en:"She declined the invitation because she had another appointment.",tr:"Başka bir randevusu olduğu için daveti reddetti.",wrongOptions:["daveti kabul etmek","randevu planlamak"],note:"Bir teklif veya daveti nazikçe kabul etmemektir.",collocation:"decline an invitation",production:"Bir teklifi nazikçe reddet."},
+  respond:{en:"Please respond to the customer within one working day.",tr:"Lütfen müşteriye bir iş günü içinde yanıt verin.",wrongOptions:["müşteriyi aramak","mesajı iletmek"],note:"Bir mesaj, soru veya duruma karşılık vermektir.",collocation:"respond promptly",production:"Bir müşteriye hızlı yanıt vereceğini belirt."},
+  agenda:{en:"The agenda lists the three decisions we need to make in the meeting.",tr:"Gündem toplantıda vermemiz gereken üç kararı listeliyor.",wrongOptions:["toplantı tutanağı","katılımcı listesi"],note:"Toplantıda ele alınacak konuların listesidir.",collocation:"meeting agenda",production:"Toplantı gündemi için bir madde öner."},
+  report:{en:"The monthly report compares sales figures with last year's results.",tr:"Aylık rapor satış rakamlarını geçen yılın sonuçlarıyla karşılaştırıyor.",wrongOptions:["kısa e-posta","sözlü açıklama"],note:"Bilgi veya sonuçları düzenli biçimde sunan belgedir.",collocation:"write a report",production:"Bir raporun amacını bir cümleyle yaz."},
+  briefing:{en:"The manager gave a briefing before the team met the new client.",tr:"Müdür ekip yeni müşteriyle görüşmeden önce bilgilendirme yaptı.",wrongOptions:["resmî sözleşme","e-posta eki"],note:"Bir iş öncesinde verilen kısa ve odaklı bilgilendirmedir.",collocation:"give a briefing",production:"Toplantı öncesi hangi bilgiyi kısaca verirsin?"},
+  contract:{en:"Both companies signed the contract after checking the payment terms.",tr:"İki şirket ödeme koşullarını kontrol ettikten sonra sözleşmeyi imzaladı.",wrongOptions:["fiyat teklifi","toplantı daveti"],note:"Tarafların yükümlülüklerini belirleyen resmî anlaşmadır.",collocation:"sign a contract",production:"Sözleşmede kontrol edeceğin bir koşulu söyle."},
+  meeting:{en:"The meeting ended with a clear list of tasks and owners.",tr:"Toplantı net bir görev ve sorumlu listesiyle sona erdi.",wrongOptions:["telefon mesajı","resmî belge"],note:"İnsanların bilgi paylaşmak veya karar vermek için bir araya gelmesidir.",collocation:"attend a meeting",production:"Verimli bir toplantı için bir kural öner."},
+  "follow-up":{en:"I sent a follow-up email to ask about the status of my application.",tr:"Başvurumun durumunu sormak için takip e-postası gönderdim.",wrongOptions:["ilk davet","acil bildirim"],note:"Önceki iletişim veya eylemden sonra yapılan ek iletişimdir.",collocation:"follow-up email",production:"Başvurudan sonra takip e-postası yaz."},
+};
+const SCENARIOS = ["a policy meeting", "the research summary", "a client call", "a written proposal", "the final decision", "a team workshop", "a public discussion", "an email draft", "a training session", "the project review"];
+function example(word: string, meaning: string, pos: PartOfSpeech, index: number) {
+  const scenario = `${SCENARIOS[index % SCENARIOS.length]} in case ${index + 1}`;
+  if (pos === "verb") return { en: `They will ${word} during ${scenario}.`, tr: `${scenario} sırasında ${meaning}.` };
+  if (pos === "adjective") return { en: `The response to ${scenario} was ${word}.`, tr: `${scenario} karşısındaki yanıt ${meaning}.` };
+  return { en: `The ${word} shaped ${scenario}.`, tr: `${meaning}, ${scenario} sürecini şekillendirdi.` };
+}
+export const b2Questions: MeaningMatchQuestion[] = entries.map(({ topic, row }, index) => {
+  const [word, meaning, partOfSpeech] = row;
+  const authored = topic.title === "Soyut Konular" ? ABSTRACT_CONTEXTS[word]
+    : topic.title === "Tartışma ve İkna" ? ARGUMENT_CONTEXTS[word]
+    : topic.title === "Profesyonel İletişim" ? PROFESSIONAL_CONTEXTS[word]
+    : undefined;
+  const context = authored ? { en: authored.en, tr: authored.tr } : example(word, meaning, partOfSpeech, index);
+  const wrongOptions = authored?.wrongOptions || [...new Set(entries.map((item) => item.row[1]).filter((item) => item !== meaning))].slice(index % 3, index % 3 + 2);
+
+  const collocation = authored?.collocation || exampleCollocation({ word, exampleSentence: context.en } as any);
+  const productionPrompt = getB2ProductionPrompt(word, topic.title, collocation);
+  const register = getB2Register(topic.title);
+
+  return ensureProductionMetadata({
+    id: `b2-core-${word.replace(/[^a-z]/g, "-")}-${index + 1}`,
+    mode: "MEANING_MATCH",
+    level: "B2",
+    topic: topic.title,
+    word,
+    meaning,
+    wrongOptions,
+    xp: computeXpReward("B2", word),
+    difficulty: computeDifficulty("B2", word),
+    partOfSpeech,
+    exampleSentence: context.en,
+    exampleTranslation: context.tr,
+    contextNote: authored?.note || `${topic.title} içinde hedef anlamı ayırt eden B2 bağlamı.`,
+    productionPrompt,
+    collocation,
+    pronunciation: word,
+    phonetic: B2_IPA[word] || "/ˌkaʊntərˈɑːrɡjəmənt/",
+    hint: authored ? `${collocation} kalıbını bağlamda düşün.` : `Bu ifade ${topic.title.toLowerCase()} bağlamında geçiyor.`,
+    prompt: word,
+    answer: meaning,
+    options: [meaning, ...wrongOptions],
+    unitId: `b2-u${String(Math.floor(index / 30) + 1).padStart(2, "0")}`,
+    order: index,
+    status: "published",
+    cefr: "B2",
+    learningItemKind: "word",
+    register,
+    senseId: `b2.word.${word}.${partOfSpeech}`,
+    source: "B2 editorial rewrite 2026-09",
+    reviewer: "LingoRise editorial QA",
+    reviewedAt: "2026-09-11",
+    editorialStatus: "needs_review",
+  });
+});
