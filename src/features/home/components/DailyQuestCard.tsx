@@ -18,32 +18,31 @@ export function DailyQuestCard({ copy, dailyQuests, onHistoryPress }: Props) {
     <View style={S.card}>
       <View style={S.hdr}>
         <Text style={S.hdrTxt}>
-          {copy.home?.dailyQuestsHeader || "GÜNLÜK GÖREVLER"}
+          {copy.home.dailyQuestsHeader}
         </Text>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={copy.home?.questHistoryBtn || "Günlük görev geçmişi"}
+          accessibilityLabel={copy.home.questHistoryBtn}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           style={({ pressed }) => [S.calBtn, pressed && S.calBtnPressed]}
           onPress={onHistoryPress}
         >
           <Ionicons name="calendar-outline" size={14} color={C.primary} />
-          <Text style={S.calTxt}>{copy.home?.questHistoryBtn || "Geçmiş"}</Text>
+          <Text style={S.calTxt}>{copy.home.questHistoryBtn}</Text>
         </Pressable>
       </View>
 
       {isEmpty ? (
         <Text style={S.emptyTxt}>
-          {copy.home?.dailyQuestsEmpty ||
-            "Bugünün görevlerini tamamladın. Yarın yeni görevler burada."}
+          {copy.home.dailyQuestsEmpty}
         </Text>
       ) : (
         <View style={S.list}>
           {dailyQuests.map((q) => {
             const questTemplate =
               q.id === "quest_daily_practice"
-                ? copy.home?.questDailyPractice || "{count} kelimeyi doğru bil"
-                : copy.home?.questDailyReview || "{count} tekrarı tamamla";
+                ? copy.home.questDailyPractice
+                : copy.home.questDailyReview;
             const questTitle = questTemplate.replace("{count}", String(q.target));
 
             return (
@@ -73,7 +72,7 @@ export function DailyQuestCard({ copy, dailyQuests, onHistoryPress }: Props) {
 
                 {!q.completed && (
                   <View style={S.progressPill}>
-                    <Text style={S.progressText}>{q.current} / {q.target} {copy.home?.wordCountSuffix || "kelime"}</Text>
+                    <Text style={S.progressText}>{q.current} / {q.target} {copy.home.wordCountSuffix}</Text>
                   </View>
                 )}
               </View>

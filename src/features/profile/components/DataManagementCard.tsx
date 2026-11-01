@@ -20,7 +20,7 @@ function DataManagementDialogs({ copy, state }: { copy: Copy; state: ReturnType<
     handleConfirmReset, handleCancelReset } = state;
   return (
     <>
-      <AppDialog visible={resetConfirmVisible} title={copy.profile?.resetDataDialogTitle || "Verileri Sıfırla"}
+      <AppDialog visible={resetConfirmVisible} title={copy.profile.resetDataDialogTitle}
         message={resetConfirmMsg} primaryAction={{ label: "İptal", onPress: handleCancelReset }}
         secondaryAction={{ label: "Sıfırla", onPress: handleConfirmReset, destructive: true }}
         onRequestClose={handleCancelReset} />
@@ -51,33 +51,33 @@ export function DataManagementCard({ copy, onDataReset }: Props) {
 
   return (
     <>
-      <SettingsGroup title={copy.profile?.dataHeader || "Veri ve Gizlilik"}>
+      <SettingsGroup title={copy.profile.dataHeader}>
         <View style={S.statusLine}>
           <Ionicons name={isCloudSynced ? "cloud-done-outline" : "phone-portrait-outline"} size={15} color={C.muted} />
           <Text style={S.statusText}>
             {isCloudSynced
-              ? copy.profile?.cloudSynced || "Firebase Buluta Senkronize"
-              : copy.profile?.localMode || "Yerel Cihaz Modu"}
+              ? copy.profile.cloudSynced
+              : copy.profile.localMode}
           </Text>
         </View>
         <SettingsRow
           isFirst
           icon="download-outline"
           tint={C.successSoft}
-          title={copy.profile?.exportDataBtn || "Yedek İndir (JSON)"}
+          title={copy.profile.exportDataBtn}
           onPress={handleExport}
         />
         <SettingsRow
           icon="document-text-outline"
           tint={C.attentionSoft}
-          title={copy.profile?.privacyPolicyBtn || "Gizlilik & Şartlar"}
+          title={copy.profile.privacyPolicyBtn}
           onPress={() => setPrivacyModalVisible(true)}
         />
         <SettingsRow
           destructive
           icon="trash-outline"
           tint={C.attentionSoft}
-          title={copy.profile?.clearDataBtn || "Yerel Verileri Sıfırla"}
+          title={copy.profile.clearDataBtn}
           onPress={handleResetData}
         />
       </SettingsGroup>

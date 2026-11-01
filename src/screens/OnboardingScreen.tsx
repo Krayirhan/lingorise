@@ -38,7 +38,7 @@ export function OnboardingScreen({
     return () => subscription.remove();
   }, [step, onStep, onBack]);
 
-  const backLabel = copy.auth?.backBtn || "Geri";
+  const backLabel = copy.auth.backBtn;
   if (step === 0) return <WelcomeOnboardingPage copy={copy} onStep={onStep} />;
   if (step === 1) return <GoalOnboardingPage copy={copy} goal={dailyGoalMinutes} onStep={onStep}
     onGoalSelect={onGoalSelect} backLabel={backLabel} />;

@@ -8,13 +8,13 @@ export function GardenExplainerTip({ copy, onDismiss }: { copy: Copy; onDismiss?
   return (
     <View style={S.gardenTip}>
       <Pressable accessibilityRole="button"
-        accessibilityLabel={copy.home?.gardenExplainerShort || "Bahçe ilerlemesi hakkında bilgi"}
+        accessibilityLabel={copy.home.gardenExplainerShort}
         style={S.gardenTipButton}
         onPress={() => Alert.alert(copy.home.gardenStageLabel, copy.home.gardenExplainerTip)}>
         <Ionicons name="information-circle-outline" size={17} color={C.primary} />
         <Text style={S.gardenTipText}>{copy.home.gardenExplainerShort}</Text>
       </Pressable>
-      <Pressable accessibilityRole="button" accessibilityLabel={copy.home?.wordDetailClose || "Kapat"}
+      <Pressable accessibilityRole="button" accessibilityLabel={copy.home.wordDetailClose}
         hitSlop={8} onPress={onDismiss}>
         <Ionicons name="close" size={17} color={C.muted} />
       </Pressable>

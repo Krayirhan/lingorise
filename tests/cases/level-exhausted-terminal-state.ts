@@ -8,6 +8,8 @@ import { DEFAULT_USER_DATA } from "../../src/domain/user/normalization";
 import { UserData } from "../../src/domain/models/user";
 import { useHomeViewModel } from "../../src/features/home/hooks/useHomeViewModel";
 import { createGardenHeroModel } from "../../src/features/home/gardenHeroModel";
+import { buildGreeting } from "../../src/features/home/greetingModel";
+import { copyByLocale } from "../../src/i18n/en";
 import { C } from "../../src/theme/colors";
 import * as fs from "fs";
 import * as path from "path";
@@ -75,18 +77,17 @@ console.log("\n58. Level-Exhausted Terminal State (CORE-004):");
     !viewModelSrc.includes("yarın devam edelim"),
     "The old 'come back tomorrow' copy (misleading once a level is permanently exhausted) is gone from useHomeViewModel"
   );
-  // The greetingTitle/Subtitle branch chain has its own separate
-  // practiceState === "completed" case with the same "yarın yeni
-  // kelimelerle devam edeceksin" (come back tomorrow) promise — it must be
-  // checked AFTER isLevelFullyLearned, or a level finished on the same day
-  // the daily quest completes would show the false promise in the Home
-  // screen's greeting even though practiceRecommendation and GardenHeroCard
-  // both correctly show the level-done state right below it.
-  const levelFullyLearnedGreetingIndex = viewModelSrc.indexOf("} else if (isLevelFullyLearned) {");
-  const completedGreetingIndex = viewModelSrc.indexOf('practiceState === "completed"');
+  // The greeting has its own "completed" case with a come-back-tomorrow
+  // promise. It must lose to isLevelFullyLearned, or a level finished on the
+  // same day the daily quest completes would show that false promise above
+  // the (correct) level-done hero card.
+  const sameDayGreeting = buildGreeting(copyByLocale.tr.home, {
+    level: "A1", isNewLearner: false, practiceState: "completed",
+    practiceTargetCount: 20, practiceCompletedCount: 20, isLevelFullyLearned: true, vocabPercent: 100,
+  });
   assert(
-    levelFullyLearnedGreetingIndex > -1 && completedGreetingIndex > -1 && levelFullyLearnedGreetingIndex < completedGreetingIndex,
-    "useHomeViewModel's greeting text checks isLevelFullyLearned before the daily-quest-completed branch, so the two greeting texts never contradict the (correct) level-done state shown elsewhere on Home"
+    sameDayGreeting.title === "A1 seviyesindeki tüm kelimeleri öğrendin." && sameDayGreeting.subtitle === copyByLocale.tr.home.greetingLevelDoneSubtitle,
+    "The Home greeting shows the level-done text, not the come-back-tomorrow text, when the level is exhausted on the same day the daily quest completes"
   );
 
   // E. PracticeHubScreen.tsx: the hero CTA is gated on isLevelFullyLearned —

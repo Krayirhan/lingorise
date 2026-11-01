@@ -4,6 +4,7 @@ import { UserData } from "../../../domain/models/user";
 import { Copy, Locale } from "../../../i18n/en";
 import { CollectedWord, HomeViewModel, SkillProgress } from "../home.types";
 import { buildWeekStrip } from "../weekStripModel";
+import { buildGreeting } from "../greetingModel";
 import { calculateGardenProgress } from "../../../domain/gamification/xp";
 
 
@@ -41,13 +42,13 @@ export function useHomeViewModel(userData: UserData, copy: Copy, locale: Locale)
 
     const vocabMeta =
       solvedInLevel === 0
-        ? `${userData.level} · ${copy.home?.vocabularyEmptyCta || "İlk kelimeni öğren →"}`
-        : (copy.home?.vocabularyLearnedCount || "{count} kelime öğrenildi").replace("{count}", String(solvedInLevel));
+        ? `${userData.level} · ${copy.home.vocabularyEmptyCta}`
+        : (copy.home.vocabularyLearnedCount).replace("{count}", String(solvedInLevel));
 
     const skillProgress: SkillProgress[] = [
       {
         id: "skill_vocab",
-        title: copy.home?.vocabulary || "Kelime bilgisi",
+        title: copy.home.vocabulary,
         meta: vocabMeta,
         percent: vocabPercent,
         isReady: true,
@@ -55,8 +56,8 @@ export function useHomeViewModel(userData: UserData, copy: Copy, locale: Locale)
       },
       {
         id: "skill_listening",
-        title: copy.home?.listening || "Dinleme",
-        meta: copy.home?.listeningMeta || "Yeni bir filiz yakında",
+        title: copy.home.listening,
+        meta: copy.home.listeningMeta,
         percent: 0,
         isReady: false,
         icon: "headset-outline",
@@ -66,12 +67,6 @@ export function useHomeViewModel(userData: UserData, copy: Copy, locale: Locale)
     const recommended = getRecommendedWord(userData.level, userData.solvedQuestionIds);
     const dailyQuests = userData.dailyQuests || [];
     const isDailyCompleted = dailyQuests.length > 0 && dailyQuests.every((q) => q.completed);
-    const practiceRecommendation = isLevelFullyLearned
-      ? `${userData.level} seviyesindeki tüm kelimeleri öğrendin — sırada tamamlama sınavı var.`
-      : !isDailyCompleted
-        ? "Günlük hedefini tamamlamak için öneriliyor."
-        : `${userData.level} seviyendeki yeni kelimelerden seçildi.`;
-
     const practiceQuest = dailyQuests.find((q) => q.id === "quest_daily_practice");
     const sessionSize = userData.practiceSessionSize || 20;
 
@@ -130,35 +125,15 @@ export function useHomeViewModel(userData: UserData, copy: Copy, locale: Locale)
         ? copy.home.afternoon
         : copy.home.evening;
 
-    // Context-aware dynamic greetings
-    let greetingTitle = copy.home.title || "Bugünün pratiğine hazır mısın?";
-    let greetingSubtitle = copy.home.subtitle || "Bugünün kelimeleri seni bekliyor.";
-
-    if (solvedInLevel === 0 && userData.xp === 0) {
-      greetingTitle = locale === "tr"
-        ? "Öğrenmeye hazır mısın?"
-        : "Ready to learn?";
-      greetingSubtitle = locale === "tr"
-        ? `İlk ${practiceTargetCount} kelimeni öğrenerek başla.`
-        : `Start by learning your first ${practiceTargetCount} words.`;
-    } else if (practiceState === "in_progress") {
-      // The hero card already says "continue"; the greeting says how much is left instead.
-      greetingTitle = copy.home.wordsLeftTitle.replace("{count}", String(Math.max(0, practiceTargetCount - practiceCompletedCount)));
-      greetingSubtitle = copy.home.wordsLeftSubtitle;
-    } else if (isLevelFullyLearned) {
-      // Checked before practiceState === "completed" on purpose (CORE-004):
-      // that branch's "yarın yeni kelimelerle devam edeceksin" promise is
-      // false once the level has no words left, regardless of whether
-      // today's quest also happens to be complete.
-      greetingTitle = `${userData.level} seviyesindeki tüm kelimeleri öğrendin.`;
-      greetingSubtitle = "Sırada tamamlama sınavı var.";
-    } else if (practiceState === "completed") {
-      greetingTitle = "Bugünkü hedefini tamamladın 🌱";
-      greetingSubtitle = "Yarın yeni kelimelerle öğrenmeye devam edeceksin.";
-    } else if (vocabPercent >= 80) {
-      greetingTitle = `${userData.level} seviyesini tamamlamak üzeresin.`;
-      greetingSubtitle = "Bir sonraki seviyeye hazırlan.";
-    }
+    const greeting = buildGreeting(copy.home, {
+      level: userData.level,
+      isNewLearner: solvedInLevel === 0 && userData.xp === 0,
+      practiceState,
+      practiceTargetCount,
+      practiceCompletedCount,
+      isLevelFullyLearned,
+      vocabPercent,
+    });
 
     return {
       level: userData.level,
@@ -181,9 +156,8 @@ export function useHomeViewModel(userData: UserData, copy: Copy, locale: Locale)
       masteredWords: learnedWordsGlobal,
       questHistory: userData.questHistory || [],
       greetingEyebrow,
-      greetingTitle,
-      greetingSubtitle,
-      practiceRecommendation,
+      greetingTitle: greeting.title,
+      greetingSubtitle: greeting.subtitle,
       skillProgress,
       recommendedWord: recommended,
       weekStrip,

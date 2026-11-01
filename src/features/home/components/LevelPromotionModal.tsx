@@ -1,5 +1,5 @@
 import { PromotionState } from "../../../domain/learning/promotion";
-import { useApplication } from "../../../context/ApplicationContext";
+import { useTrack } from "../../../state/useTrack";
 import { useEffect, useRef } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
@@ -26,9 +26,7 @@ interface Props {
  * catalogue.
  */
 export function LevelPromotionModal({ copy, level, promotion, visible, onAdvance, onDismiss, reduceMotion }: Props) {
-  const application = useApplication();
-
-  const { track } = application;
+  const track = useTrack();
 
   const shownForLevelRef = useRef<string | null>(null);
 
@@ -71,12 +69,12 @@ export function LevelPromotionModal({ copy, level, promotion, visible, onAdvance
             <Ionicons name="ribbon" size={30} color={C.rewardText} />
           </View>
 
-          <Text style={S.eyebrow}>{copy.home?.promotionEyebrow || "SEVİYE TAMAMLANDI"}</Text>
+          <Text style={S.eyebrow}>{copy.home.promotionEyebrow}</Text>
           <Text style={S.title}>
-            {formatTemplate(copy.home?.promotionTitle || "{level} seviyesini tamamladın", { level })}
+            {formatTemplate(copy.home.promotionTitle, { level })}
           </Text>
           <Text style={S.body}>
-            {formatTemplate(copy.home?.promotionSubtitleExam || "{level} tamamlama sınavını geçtin — bu seviyeyi artık gerçekten biliyorsun.", {
+            {formatTemplate(copy.home.promotionSubtitleExam, {
               level,
             })}
           </Text>
@@ -84,12 +82,11 @@ export function LevelPromotionModal({ copy, level, promotion, visible, onAdvance
           {!canAdvance && nextLevel && (
             <View style={S.soonBox}>
               <Text style={S.soonTitle}>
-                {formatTemplate(copy.home?.promotionSoonTitle || "{level} henüz hazırlanıyor", { level: nextLevel })}
+                {formatTemplate(copy.home.promotionSoonTitle, { level: nextLevel })}
               </Text>
               <Text style={S.soonBody}>
                 {formatTemplate(
-                  copy.home?.promotionSoonBody ||
-                    "Yeni kelimeler ekleniyor. Bu sırada {current} kelimelerini taze tut — tekrarların devam ediyor.",
+                  copy.home.promotionSoonBody,
                   { current: level }
                 )}
               </Text>
@@ -101,34 +98,34 @@ export function LevelPromotionModal({ copy, level, promotion, visible, onAdvance
               <>
                 <Pressable
                   accessibilityRole="button"
-                  accessibilityLabel={formatTemplate(copy.home?.promotionNextCta || "{level} ile devam et →", { level: nextLevel })}
+                  accessibilityLabel={formatTemplate(copy.home.promotionNextCta, { level: nextLevel })}
                   style={({ pressed }) => [S.primaryBtn, pressed && S.pressed]}
                   onPress={() => handleAdvance(nextLevel)}
                 >
                   <Text style={S.primaryTxt}>
-                    {formatTemplate(copy.home?.promotionNextCta || "{level} ile devam et →", { level: nextLevel })}
+                    {formatTemplate(copy.home.promotionNextCta, { level: nextLevel })}
                   </Text>
                 </Pressable>
                 <Pressable
                   accessibilityRole="button"
-                  accessibilityLabel={formatTemplate(copy.home?.promotionStayCta || "{level} seviyesinde kal", { level })}
+                  accessibilityLabel={formatTemplate(copy.home.promotionStayCta, { level })}
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                   style={({ pressed }) => [S.ghostBtn, pressed && S.pressed]}
                   onPress={onDismiss}
                 >
                   <Text style={S.ghostTxt}>
-                    {formatTemplate(copy.home?.promotionStayCta || "{level} seviyesinde kal", { level })}
+                    {formatTemplate(copy.home.promotionStayCta, { level })}
                   </Text>
                 </Pressable>
               </>
             ) : (
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel={copy.home?.promotionSoonCta || "Anladım"}
+                accessibilityLabel={copy.home.promotionSoonCta}
                 style={({ pressed }) => [S.primaryBtn, pressed && S.pressed]}
                 onPress={onDismiss}
               >
-                <Text style={S.primaryTxt}>{copy.home?.promotionSoonCta || "Anladım"}</Text>
+                <Text style={S.primaryTxt}>{copy.home.promotionSoonCta}</Text>
               </Pressable>
             )}
           </View>

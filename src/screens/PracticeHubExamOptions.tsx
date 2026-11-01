@@ -19,8 +19,8 @@ export function PracticeHubExamOptions({ copy, level, isExamPassed, showExamOpti
               accessibilityRole="button"
               accessibilityLabel={
                 isExamPassed
-                  ? `${level} ${copy.game?.examCardPassedTitle || "tamamlama sınavı geçildi"}`
-                  : `${level} ${copy.game?.examCardTitle || "tamamlama sınavı"}`
+                  ? `${level} ${copy.game.examCardPassedTitle}`
+                  : `${level} ${copy.game.examCardTitle}`
               }
               style={({ pressed }) => [S.optionCard, pressed && S.cardPressed]}
               onPress={onStartExam}
@@ -35,18 +35,18 @@ export function PracticeHubExamOptions({ copy, level, isExamPassed, showExamOpti
 
               <View style={S.optionCopy}>
                 <Text style={S.optionTitle}>
-                  {formatTemplate(copy.game?.examCardTitle || "{level} tamamlama sınavı", { level })}
+                  {formatTemplate(copy.game.examCardTitle, { level })}
                 </Text>
                 <Text style={S.optionSubtitle}>
                   {isExamPassed
-                    ? copy.game?.examCardPassedSubtitle || "Geçtin — istersen tekrar deneyebilirsin."
-                    : copy.game?.examCardSubtitle || "60 soru, seviyenin her yerinden. 50 doğru = seviye tamamlandı."}
+                    ? copy.game.examCardPassedSubtitle
+                    : copy.game.examCardSubtitle}
                 </Text>
                 <View style={S.optionLink}>
                   <Text style={S.optionLinkTxt}>
                     {isExamPassed
-                      ? copy.game?.examCardRetakeCta || "Tekrar dene"
-                      : copy.game?.examCardCta || "Sınava gir"}
+                      ? copy.game.examCardRetakeCta
+                      : copy.game.examCardCta}
                   </Text>
                   <Ionicons name="chevron-forward" size={16} color={C.attentionText} />
                 </View>

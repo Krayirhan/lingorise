@@ -17,8 +17,8 @@ export function PlaceholderTabModal({ copy, tab, visible, onClose }: Props) {
 
   const tabTitle =
     tab === "progress"
-      ? (copy.home?.tabProgress || "İlerleme")
-      : (copy.home?.tabProfile || "Profil");
+      ? (copy.home.tabProgress)
+      : (copy.home.tabProfile);
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
@@ -33,15 +33,14 @@ export function PlaceholderTabModal({ copy, tab, visible, onClose }: Props) {
           </View>
 
           <Text style={S.tabName}>{tabTitle.toUpperCase()}</Text>
-          <Text style={S.title}>{copy.home?.comingSoonTitle || "Yakında Yeşerecek!"}</Text>
+          <Text style={S.title}>{copy.home.comingSoonTitle}</Text>
           <Text style={S.subtitle}>
-            {copy.home?.comingSoonSubtitle ||
-              "Bu özellik seramızda filizleniyor, bir sonraki güncellemeyle bahçende açacak."}
+            {copy.home.comingSoonSubtitle}
           </Text>
 
           <View style={S.btnWrap}>
             <PrimaryButton
-              label={copy.home?.comingSoonClose || "Bahçeye Dön"}
+              label={copy.home.comingSoonClose}
               onPress={onClose}
             />
           </View>

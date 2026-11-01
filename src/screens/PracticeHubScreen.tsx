@@ -83,21 +83,17 @@ export function PracticeHubScreen({
   const heroIsExamCta = isLevelFullyLearned && isExamAvailable && !isExamPassed;
   const showExamOptionCard = isExamAvailable && !heroIsExamCta;
 
-  const sessionSummary = formatTemplate(copy.home?.practiceCardNewOnly || "{level} seviyesinden {fresh} yeni kelime", {
+  const sessionSummary = formatTemplate(copy.home.practiceCardNewOnly, {
     level,
     fresh: effectiveSessionSize,
   });
   const curriculumTitle = curriculumNext?.topicTitle || "";
   const curriculumMeta = curriculumNext
-    ? `${curriculumNext.lessonTitle} · ${effectiveSessionSize} ${locale === "tr" ? "yeni kelime" : "new words"}`
+    ? formatTemplate(copy.game.curriculumMeta, { lesson: curriculumNext.lessonTitle, count: effectiveSessionSize })
     : sessionSummary;
-  const checkpointTitle = locale === "tr"
-    ? `${pendingCheckpoint?.topicTitle || ""} konu kontrolü`
-    : `${pendingCheckpoint?.topicTitle || ""} topic check`;
-  const checkpointReason = locale === "tr"
-    ? "Sonraki konuya geçmeden önce kısa değerlendirmeyi tamamla."
-    : "Complete this short check before moving to the next topic.";
-  const checkpointMeta = `${pendingCheckpoint?.questionCount || 10} ${locale === "tr" ? "soru · geçmek için %80" : "questions · 80% to pass"}`;
+  const checkpointTitle = formatTemplate(copy.game.checkpointTitle, { topic: pendingCheckpoint?.topicTitle || "" });
+  const checkpointReason = copy.game.checkpointReason;
+  const checkpointMeta = formatTemplate(copy.game.checkpointMeta, { count: pendingCheckpoint?.questionCount || 10 });
 
   return (
     <View style={S.shell}>
@@ -108,13 +104,13 @@ export function PracticeHubScreen({
         <View style={S.headerGroup}>
             <BranchSilhouette />
             <Text style={S.eyebrow}>
-              {copy.game?.hubEyebrow || "PRATİK"}
+              {copy.game.hubEyebrow}
             </Text>
             <Text style={S.title}>
-              {copy.game?.hubTitle || "Bugün ne çalışmak istersin?"}
+              {copy.game.hubTitle}
             </Text>
             <Text style={S.subtitle}>
-              {copy.game?.hubSubtitle || "Sana en uygun pratiği seç."}
+              {copy.game.hubSubtitle}
             </Text>
         </View>
 
@@ -125,12 +121,12 @@ export function PracticeHubScreen({
               accessibilityRole="button"
               disabled={!heroIsExamCta}
               accessibilityState={{ disabled: !heroIsExamCta }}
-              accessibilityLabel={`${formatTemplate(copy.game?.hubLevelDoneTitle || "{level} tamamlandı", { level })}. ${
+              accessibilityLabel={`${formatTemplate(copy.game.hubLevelDoneTitle, { level })}. ${
                 heroIsExamCta
-                  ? copy.game?.examCardCta || "Sınava gir"
+                  ? copy.game.examCardCta
                   : isExamPassed
-                    ? copy.game?.hubLevelDoneSubtitleExamPassed || ""
-                    : copy.game?.hubLevelDoneSubtitleNoExam || ""
+                    ? copy.game.hubLevelDoneSubtitleExamPassed
+                    : copy.game.hubLevelDoneSubtitleNoExam
               }`}
               style={({ pressed }) => [S.heroCard, pressed && heroIsExamCta && S.cardPressed]}
               onPress={heroIsExamCta ? onStartExam : undefined}
@@ -140,18 +136,18 @@ export function PracticeHubScreen({
                 <View style={S.heroCopy}>
                   <View style={S.recommendedBadge}>
                     <Text style={S.recommendedBadgeTxt}>
-                      {curriculumNext && !pendingCheckpoint ? copy.game?.hubNextLesson || "SIRADAKİ DERS" : copy.game?.hubBadgeRecommended || "ÖNERİLEN"}
+                      {curriculumNext && !pendingCheckpoint ? copy.game.hubNextLesson : copy.game.hubBadgeRecommended}
                     </Text>
                   </View>
                   <Text style={S.heroTitle}>
-                    {formatTemplate(copy.game?.hubLevelDoneTitle || "{level} tamamlandı!", { level })}
+                    {formatTemplate(copy.game.hubLevelDoneTitle, { level })}
                   </Text>
                   <Text style={S.heroReason}>
                     {isExamPassed
-                      ? copy.game?.hubLevelDoneSubtitleExamPassed || "Bu seviyedeki tüm kelimeleri öğrendin ve sınavını geçtin."
+                      ? copy.game.hubLevelDoneSubtitleExamPassed
                       : isExamAvailable
-                        ? copy.game?.hubLevelDoneSubtitleExamPending || "Bu seviyedeki tüm kelimeleri öğrendin. Şimdi sırada tamamlama sınavı var."
-                        : copy.game?.hubLevelDoneSubtitleNoExam || "Bu seviyedeki tüm kelimeleri öğrendin. Tamamlama sınavı bu seviye için henüz hazır değil."}
+                        ? copy.game.hubLevelDoneSubtitleExamPending
+                        : copy.game.hubLevelDoneSubtitleNoExam}
                   </Text>
                 </View>
 
@@ -161,7 +157,7 @@ export function PracticeHubScreen({
                 <View style={S.heroCtaBtn}>
                   <Ionicons name="school-outline" size={18} color={C.surface} />
                   <Text style={S.heroCtaBtnTxt}>
-                    {copy.game?.examCardCta || "Sınava gir"}
+                    {copy.game.examCardCta}
                   </Text>
                 </View>
               )}
@@ -169,7 +165,7 @@ export function PracticeHubScreen({
           ) : (
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={`${pendingCheckpoint ? checkpointTitle : curriculumNext ? curriculumTitle : copy.game?.hubHeroTitle || "Günün pratiği"}, ${pendingCheckpoint ? checkpointMeta : curriculumNext ? curriculumMeta : `${level}, ${sessionSummary}`}. ${copy.game?.hubHeroCta || "Pratiğe başla"}`}
+              accessibilityLabel={`${pendingCheckpoint ? checkpointTitle : curriculumNext ? curriculumTitle : copy.game.hubHeroTitle}, ${pendingCheckpoint ? checkpointMeta : curriculumNext ? curriculumMeta : `${level}, ${sessionSummary}`}. ${copy.game.hubHeroCta}`}
               style={({ pressed }) => [
                 S.heroCard,
                 pressed && S.cardPressed,
@@ -185,15 +181,15 @@ export function PracticeHubScreen({
                 <View style={S.heroCopy}>
                   <View style={S.recommendedBadge}>
                     <Text style={S.recommendedBadgeTxt}>
-                      {curriculumNext && !pendingCheckpoint ? copy.game?.hubNextLesson || "SIRADAKİ DERS" : copy.game?.hubBadgeRecommended || "ÖNERİLEN"}
+                      {curriculumNext && !pendingCheckpoint ? copy.game.hubNextLesson : copy.game.hubBadgeRecommended}
                     </Text>
                   </View>
                   <Text style={S.heroTitle}>
-                    {pendingCheckpoint ? checkpointTitle : curriculumNext ? curriculumTitle : copy.game?.hubHeroTitle || "Günün pratiği"}
+                    {pendingCheckpoint ? checkpointTitle : curriculumNext ? curriculumTitle : copy.game.hubHeroTitle}
                   </Text>
                   <Text style={S.heroReason}>{pendingCheckpoint ? checkpointReason : curriculumNext ? curriculumNext.objective : sessionSummary}</Text>
                   <Text style={S.heroMeta}>
-                    {pendingCheckpoint ? checkpointMeta : curriculumNext ? curriculumMeta : `${level} · ${formatTemplate(copy.home?.practiceMetaEstimate || "{count} kelime · yaklaşık {minutes} dk", {
+                    {pendingCheckpoint ? checkpointMeta : curriculumNext ? curriculumMeta : `${level} · ${formatTemplate(copy.home.practiceMetaEstimate, {
                       count: practiceSessionSize,
                       minutes: estimatedMinutes,
                     })}`}
@@ -206,7 +202,7 @@ export function PracticeHubScreen({
               <View style={S.heroCtaBtn}>
                 <Ionicons name="play" size={18} color={C.surface} />
                 <Text style={S.heroCtaBtnTxt}>
-                  {(copy.game?.hubHeroCta || "Pratiğe başla").replace(/\s*→\s*$/, "")}
+                  {(copy.game.hubHeroCta).replace(/\s*→\s*$/, "")}
                 </Text>
               </View>
             </Pressable>
@@ -221,8 +217,8 @@ export function PracticeHubScreen({
                   <Ionicons name="time-outline" size={22} color={C.primary} />
                 </View>
                 <View style={S.settingCopy}>
-                  <Text style={S.settingTitle}>{copy.game?.hubSessionLength || "Oturum uzunluğu"}</Text>
-                  <Text style={S.settingHint}>{formatTemplate(copy.game?.hubSessionLengthHint || "Her pratikte {count} kelime gelir.", { count: practiceSessionSize })}</Text>
+                  <Text style={S.settingTitle}>{copy.game.hubSessionLength}</Text>
+                  <Text style={S.settingHint}>{formatTemplate(copy.game.hubSessionLengthHint, { count: practiceSessionSize })}</Text>
                 </View>
               </View>
               <View style={S.segment}>
@@ -248,7 +244,7 @@ export function PracticeHubScreen({
                   <Ionicons name="swap-horizontal" size={22} color={C.primary} />
                 </View>
                 <View style={S.settingCopy}>
-                  <Text style={S.settingTitle}>{copy.game?.hubDirection || "Yön"}</Text>
+                  <Text style={S.settingTitle}>{copy.game.hubDirection}</Text>
                   <Text style={S.settingHint}>{copy.game?.hubDirectionHint}</Text>
                 </View>
               </View>
@@ -260,7 +256,7 @@ export function PracticeHubScreen({
                   onPress={() => setReverseMode(false)}
                 >
                   <Text style={[S.segmentText, !reverseMode && S.segmentTextActive]}>
-                    {copy.game?.hubModePickMeaning || "İngilizce → Türkçe"}
+                    {copy.game.hubModePickMeaning}
                   </Text>
                 </Pressable>
                 <Pressable
@@ -270,7 +266,7 @@ export function PracticeHubScreen({
                   onPress={() => setReverseMode(true)}
                 >
                   <Text style={[S.segmentText, reverseMode && S.segmentTextActive]}>
-                    {copy.game?.hubModePickWord || "Türkçe → İngilizce"}
+                    {copy.game.hubModePickWord}
                   </Text>
                 </Pressable>
               </View>

@@ -1,6 +1,4 @@
 import { C } from "../../../theme/colors";
-import { useApplication } from "../../../context/ApplicationContext";
-import { useState } from "react";
 import { S } from "./LevelSwitcherModal.styles";
 import { Ionicons } from "@expo/vector-icons";
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
@@ -8,6 +6,7 @@ import { Copy } from "../../../i18n/en";
 import { LevelCode } from "../../../domain/models/content";
 import { levels } from "../../../content/levels";
 import { formatTemplate } from "../../../utils/formatters";
+import { useLevelSwitch } from "../hooks/useLevelSwitch";
 
 
 
@@ -39,11 +38,11 @@ function LevelOptionRow({ entry, copy, current, ready, seen, total, earned, onPi
       </View>
       <View style={S.rowCopy}>
         <Text style={S.rowTitle}>{entry.title}</Text>
-        <Text style={S.rowMeta}>{ready ? `${seen} / ${total} ${copy.home?.levelSwitchWordCountSuffix || "kelime öğrenildi"}` : copy.home?.levelSwitchSoon || "Yakında"}</Text>
+        <Text style={S.rowMeta}>{ready ? `${seen} / ${total} ${copy.home.levelSwitchWordCountSuffix}` : copy.home.levelSwitchSoon}</Text>
       </View>
-      {current ? <View style={S.tagCurrent}><Text style={S.tagCurrentTxt}>{copy.home?.levelSwitchCurrent || "Şu anki"}</Text></View>
-        : earned ? <View style={S.tagEarned}><Ionicons name="checkmark" size={12} color={C.successText} /><Text style={S.tagEarnedTxt}>{copy.home?.levelSwitchEarned || "Kazanıldı"}</Text></View>
-          : !ready ? <View style={S.tagSoon}><Text style={S.tagSoonTxt}>{copy.home?.levelSwitchSoon || "Yakında"}</Text></View> : null}
+      {current ? <View style={S.tagCurrent}><Text style={S.tagCurrentTxt}>{copy.home.levelSwitchCurrent}</Text></View>
+        : earned ? <View style={S.tagEarned}><Ionicons name="checkmark" size={12} color={C.successText} /><Text style={S.tagEarnedTxt}>{copy.home.levelSwitchEarned}</Text></View>
+          : !ready ? <View style={S.tagSoon}><Text style={S.tagSoonTxt}>{copy.home.levelSwitchSoon}</Text></View> : null}
     </Pressable>
   );
 }
@@ -64,42 +63,11 @@ export function LevelSwitcherModal({
   onClose,
   reduceMotion,
 }: Props) {
-  const application = useApplication();
-  const { getQuestionsByLevel } = application.catalogue;
-  const { isLevelReady } = application.catalogue;
-  const { assessLevelChoice } = application.learning;
-  const { track } = application;
-
-  const [pendingLevel, setPendingLevel] = useState<LevelCode | null>(null);
+  const { options, pendingLevel, pick, confirmPending, cancelPending } = useLevelSwitch({
+    visible, currentLevel, solvedQuestionIds, passedLevelExams, onSelect, onClose,
+  });
 
   if (!visible) return null;
-
-  const pendingAssessment = pendingLevel
-    ? assessLevelChoice(pendingLevel, currentLevel, passedLevelExams)
-    : null;
-
-  const handlePick = (level: LevelCode) => {
-    if (level === currentLevel) {
-      onClose();
-      return;
-    }
-    const assessment = assessLevelChoice(level, currentLevel, passedLevelExams);
-    if (assessment.isAhead) {
-      track("level_switch_warning_shown", { currentLevel, targetLevel: level });
-      setPendingLevel(level);
-      return;
-    }
-    onSelect(level);
-    onClose();
-  };
-
-  const confirmPending = () => {
-    if (!pendingLevel) return;
-    track("level_switch_confirmed_ahead", { currentLevel, targetLevel: pendingLevel });
-    onSelect(pendingLevel);
-    setPendingLevel(null);
-    onClose();
-  };
 
   return (
     <Modal visible transparent animationType={reduceMotion ? "none" : "slide"} onRequestClose={onClose}>
@@ -107,15 +75,14 @@ export function LevelSwitcherModal({
         <View style={S.sheet}>
           <View style={S.header}>
             <View style={S.headerCopy}>
-              <Text style={S.title}>{copy.home?.levelSwitchTitle || "Seviyeni seç"}</Text>
+              <Text style={S.title}>{copy.home.levelSwitchTitle}</Text>
               <Text style={S.subtitle}>
-                {copy.home?.levelSwitchSubtitle ||
-                  "İstediğin seviyeyi çalışabilirsin. Rozet ise tamamlama sınavını geçince kazanılır."}
+                {copy.home.levelSwitchSubtitle}
               </Text>
             </View>
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={copy.home?.levelSwitchCancel || "Vazgeç"}
+              accessibilityLabel={copy.home.levelSwitchCancel}
               style={S.closeBtn}
               onPress={onClose}
             >
@@ -123,12 +90,11 @@ export function LevelSwitcherModal({
             </Pressable>
           </View>
 
-          {pendingLevel && pendingAssessment ? (
+          {pendingLevel ? (
             <View style={S.warnBox}>
               <Text style={S.warnText}>
                 {formatTemplate(
-                  copy.home?.levelSwitchAheadWarning ||
-                    "{current} tamamlama sınavını henüz geçmedin. {target} şu an zor gelebilir — yine de deneyebilirsin.",
+                  copy.home.levelSwitchAheadWarning,
                   {
                     current: currentLevel,
                     target: pendingLevel,
@@ -139,9 +105,9 @@ export function LevelSwitcherModal({
                 <Pressable
                   accessibilityRole="button"
                   style={({ pressed }) => [S.warnGhost, pressed && S.pressed]}
-                  onPress={() => setPendingLevel(null)}
+                  onPress={cancelPending}
                 >
-                  <Text style={S.warnGhostTxt}>{copy.home?.levelSwitchCancel || "Vazgeç"}</Text>
+                  <Text style={S.warnGhostTxt}>{copy.home.levelSwitchCancel}</Text>
                 </Pressable>
                 <Pressable
                   accessibilityRole="button"
@@ -149,7 +115,7 @@ export function LevelSwitcherModal({
                   onPress={confirmPending}
                 >
                   <Text style={S.warnPrimaryTxt}>
-                    {formatTemplate(copy.home?.levelSwitchConfirm || "{level} seviyesine geç", { level: pendingLevel })}
+                    {formatTemplate(copy.home.levelSwitchConfirm, { level: pendingLevel })}
                   </Text>
                 </Pressable>
               </View>
@@ -157,17 +123,11 @@ export function LevelSwitcherModal({
           ) : null}
 
           <ScrollView style={S.list} contentContainerStyle={S.listContent} showsVerticalScrollIndicator={false}>
-            {levels.map((entry) => {
-              const levelQuestionIds = getQuestionsByLevel(entry.code).map((q) => q.id);
-              const total = levelQuestionIds.length;
-              const ready = isLevelReady(entry.code);
-              const seen = solvedQuestionIds.filter((id) => levelQuestionIds.includes(id)).length;
-              const isCurrent = entry.code === currentLevel;
-              const isEarned = passedLevelExams.includes(entry.code);
-
-              return <LevelOptionRow key={entry.code} entry={entry} copy={copy} current={isCurrent}
-                ready={ready} seen={seen} total={total} earned={isEarned} onPick={() => handlePick(entry.code)} />;
-            })}
+            {options.map((option) => (
+              <LevelOptionRow key={option.entry.code} entry={option.entry} copy={copy} current={option.isCurrent}
+                ready={option.ready} seen={option.seen} total={option.total} earned={option.isEarned}
+                onPick={() => pick(option.entry.code)} />
+            ))}
           </ScrollView>
         </View>
       </View>

@@ -2,6 +2,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useRef } from "react";
 import { Animated, Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import { C, radius } from "../../../theme/colors";
+import { copyByLocale } from "../../../i18n/en";
+import { formatTemplate } from "../../../utils/formatters";
 
 const BADGES: Record<string, { titleTr: string; titleEn: string; icon: keyof typeof Ionicons.glyphMap }> = {
   badge_first_step: { titleTr: "İlk Adım", titleEn: "First Step", icon: "leaf" },
@@ -22,7 +24,7 @@ export function levelCompleteBadgeTitle(badgeId: string, locale: "tr" | "en"): s
   const match = /^badge_level_([a-z0-9]+)_complete$/.exec(badgeId);
   if (!match) return null;
   const level = match[1].toUpperCase();
-  return locale === "tr" ? `${level} Tamamlandı` : `${level} Completed`;
+  return formatTemplate(copyByLocale[locale].game.badgeLevelCompleted, { level });
 }
 
 interface Props {
@@ -57,16 +59,17 @@ export function BadgeUnlockCelebration({ badgeId, locale, reduceMotion = false, 
 
   if (!badge) return null;
   const title = locale === "tr" ? badge.titleTr : badge.titleEn;
+  const copy = copyByLocale[locale].game;
   return (
     <Modal transparent visible animationType="none" statusBarTranslucent>
       <View style={S.backdrop} pointerEvents="box-none">
         <Animated.View style={[S.card, { opacity, transform: [{ scale }] }]}>
           <View style={S.icon}><Ionicons name={badge.icon} size={40} color={C.primary} /></View>
-          <Text style={S.overline}>{locale === "tr" ? "YENİ ROZET!" : "NEW BADGE!"}</Text>
+          <Text style={S.overline}>{copy.badgeNewOverline}</Text>
           <Text style={S.title}>{title}</Text>
-          <Text style={S.copy}>{locale === "tr" ? "Harika iş! Koleksiyonuna eklendi." : "Great work! Added to your collection."}</Text>
-          <Pressable accessibilityRole="button" accessibilityLabel={locale === "tr" ? "Rozeti kapat" : "Dismiss badge"} onPress={onDismiss} style={S.button}>
-            <Text style={S.buttonText}>{locale === "tr" ? "Harika!" : "Nice!"}</Text>
+          <Text style={S.copy}>{copy.badgeNewBody}</Text>
+          <Pressable accessibilityRole="button" accessibilityLabel={copy.badgeDismissLabel} onPress={onDismiss} style={S.button}>
+            <Text style={S.buttonText}>{copy.badgeDismissCta}</Text>
           </Pressable>
         </Animated.View>
       </View>

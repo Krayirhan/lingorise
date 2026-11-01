@@ -37,8 +37,8 @@ export function ProfileScreen({
       <ScrollView contentContainerStyle={S.content} showsVerticalScrollIndicator={false}>
         {/* Page Title */}
         <View style={S.titleRow}>
-          <Text style={S.pageEyebrow}>{copy.profile?.pageEyebrow || "HESAP & AYARLAR"}</Text>
-          <Text style={S.pageTitle}>{copy.profile?.headerTitle || "Profil"}</Text>
+          <Text style={S.pageEyebrow}>{copy.profile.pageEyebrow}</Text>
+          <Text style={S.pageTitle}>{copy.profile.headerTitle}</Text>
         </View>
 
         {/* Identity, level and (for guests) the account-link hero card */}
@@ -55,7 +55,7 @@ export function ProfileScreen({
           onChangeLevel={onChangeLevel}
         />
 
-        <SettingsGroup title={copy.profile?.preferencesSectionTitle || "Tercihler"}>
+        <SettingsGroup title={copy.profile.preferencesSectionTitle}>
           <LanguageSettingsCard
             copy={copy}
             locale={locale}
@@ -81,7 +81,7 @@ export function ProfileScreen({
         {/* About Lingterra */}
         <View style={S.aboutCard}>
           <Text style={S.aboutTitle}>
-            {copy.profile?.aboutTitle || "Lingterra Hakkında"} · {(copy.profile?.versionLabel || "Sürüm {version}").replace("{version}", appConfig.expo.version)}
+            {copy.profile.aboutTitle} · {(copy.profile.versionLabel).replace("{version}", appConfig.expo.version)}
           </Text>
         </View>
       </ScrollView>

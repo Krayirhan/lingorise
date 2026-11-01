@@ -93,7 +93,7 @@ export function PracticeQuestionContent({ copy, question, session, speech, feedb
         isCompactScreen={false} onPick={onPick} />
       {!submitted ? (
         <View style={S.ctaBox}>
-          <PrimaryButton label={copy.game?.checkAnswer || "Cevabı Kontrol Et"} disabled={!picked} onPress={onCheckAnswer} />
+          <PrimaryButton label={copy.game.checkAnswer} disabled={!picked} onPress={onCheckAnswer} />
         </View>
       ) : (
         <FeedbackCard copy={copy} question={question} isCorrect={isCorrect} correctAnswer={correctAnswer}
@@ -102,10 +102,10 @@ export function PracticeQuestionContent({ copy, question, session, speech, feedb
       )}
       {submitted && <PracticeMascot correct={isCorrect} isMotionReduced={feedback.isMotionReduced}
         leafAnim={feedback.leafAnim} mascotBounce={feedback.mascotBounce} />}
-      {onRemindLater && <Pressable accessibilityRole="button" accessibilityLabel={copy.game?.remindLater || "Daha sonra hatırlat"}
+      {onRemindLater && <Pressable accessibilityRole="button" accessibilityLabel={copy.game.remindLater}
         style={S.remindBtn} hitSlop={{ top: 8, bottom: 8, left: 12, right: 12 }} onPress={() => onRemindLater(question)}>
         <Ionicons name="bookmark-outline" size={14} color={C.primary} />
-        <Text style={S.remindBtnTxt}>{copy.game?.remindLater || "Bu kelimeyi tekrar listeme ekle"}</Text>
+        <Text style={S.remindBtnTxt}>{copy.game.remindLater}</Text>
       </Pressable>}
     </>
   );

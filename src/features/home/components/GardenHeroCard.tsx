@@ -49,26 +49,26 @@ export function GardenHeroCard({
   const { isCompleted, isInProgress, isLevelDone, showPracticeAgain, onCtaPress } = createGardenHeroModel({
     practiceState, isDailyCompleted, isLevelFullyLearned, onPress, onViewProgress, onPracticeAgain, onGoToPracticeHub,
   });
-  const unitLabel = (copy.home?.unitLabel || "Bölüm {current}/{total}")
+  const unitLabel = (copy.home.unitLabel)
     .replace("{current}", String(unitNumber))
     .replace("{total}", String(unitCount));
 
   const title = isLevelDone
-    ? copy.home?.heroLevelDoneTitle || "Seviye tamamlandı"
+    ? copy.home.heroLevelDoneTitle
     : isCompleted
-      ? copy.home?.heroCompletedTitle || "Bugünün pratiği tamamlandı"
-      : copy.home?.heroNotStarted || "Günün Pratiği";
+      ? copy.home.heroCompletedTitle
+      : copy.home.heroNotStarted;
   const countLabel = `${practiceTargetCount} ${copy.home.wordCountSuffix}`;
   const reward = isCompleted ? dailyXpEarned : dailyXpTarget;
   const completedCount = isCompleted ? practiceTargetCount : Math.min(practiceCompletedCount, practiceTargetCount);
 
   const ctaLabel = isLevelDone
-    ? copy.home?.heroGoToPracticeHubCta || "Sırada ne var? →"
+    ? copy.home.heroGoToPracticeHubCta
     : isCompleted
-      ? copy.home?.heroCompletedCta || "Bugünkü özeti gör →"
+      ? copy.home.heroCompletedCta
       : isInProgress
-        ? copy.home?.continuePractice || "Derse devam et →"
-        : copy.home?.start || "Pratiğe başla →";
+        ? copy.home.continuePractice
+        : copy.home.start;
   return (
     <View style={S.card}>
       {!isLevelDone && (
@@ -81,15 +81,15 @@ export function GardenHeroCard({
       <View style={S.body}>
         <Text style={S.eyebrow}>
           {isLevelDone
-            ? copy.home?.promotionEyebrow || "LEVEL COMPLETE"
+            ? copy.home.promotionEyebrow
             : isCompleted
-              ? (copy.home?.heroCompletedEarned || "+{xp} XP kazandın").replace("{xp}", String(dailyXpEarned))
+              ? (copy.home.heroCompletedEarned).replace("{xp}", String(dailyXpEarned))
               : `${level} · ${unitLabel.toUpperCase()}`}
         </Text>
         <Text style={S.title}>{title}</Text>
         <Text style={S.subtitle}>
           {isLevelDone
-            ? copy.home?.heroLevelDoneSubtitle || "Bu seviyedeki tüm kelimeleri öğrendin."
+            ? copy.home.heroLevelDoneSubtitle
             : `${countLabel} · +${reward} XP · 5 dk`}
         </Text>
 
@@ -106,12 +106,12 @@ export function GardenHeroCard({
         {showPracticeAgain && (
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={copy.home?.heroPracticeAgain || "Tekrar pratik yap"}
+            accessibilityLabel={copy.home.heroPracticeAgain}
             style={S.againButton}
             onPress={onPracticeAgain || onPress}
           >
             <Ionicons name="refresh" size={14} color={C.surface} />
-            <Text style={S.againText}>{copy.home?.heroPracticeAgain || "Tekrar pratik yap"}</Text>
+            <Text style={S.againText}>{copy.home.heroPracticeAgain}</Text>
           </Pressable>
         )}
       </View>

@@ -23,10 +23,10 @@ export function HerbariumGrid({ copy, unitNumber, slots, onSeeAll }: Props) {
     <View style={S.sheet}>
       <View style={S.header}>
         <Text accessibilityRole="header" style={S.title}>
-          {formatTemplate(copy.progress?.herbariumTitle || "Bölüm {unit} herbaryumu", { unit: unitNumber })}
+          {formatTemplate(copy.progress.herbariumTitle, { unit: unitNumber })}
         </Text>
         <Text style={S.count}>
-          {formatTemplate(copy.progress?.herbariumCount || "{learned} / {total} kelime", { learned, total: slots.length })}
+          {formatTemplate(copy.progress.herbariumCount, { learned, total: slots.length })}
         </Text>
       </View>
 
@@ -47,7 +47,7 @@ export function HerbariumGrid({ copy, unitNumber, slots, onSeeAll }: Props) {
       </View>
 
       <Pressable accessibilityRole="button" style={({ pressed }) => [S.link, pressed && S.pressed]} onPress={onSeeAll}>
-        <Text style={S.linkText}>{copy.progress?.seeAllWords || "Tüm kelimeleri gör"}</Text>
+        <Text style={S.linkText}>{copy.progress.seeAllWords}</Text>
         <Ionicons name="chevron-forward" size={16} color={C.attentionText} />
       </Pressable>
     </View>

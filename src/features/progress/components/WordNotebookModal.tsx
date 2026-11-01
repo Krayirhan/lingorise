@@ -1,6 +1,6 @@
 import { C } from "../../../theme/colors";
-import { useApplication } from "../../../context/ApplicationContext";
-import { englishSpeechText } from "../../../domain/speech/voice";
+import { useSpeakWord } from "../../../state/useSpeakWord";
+import { useNotebookWords } from "../hooks/useNotebookWords";
 import { useState } from "react";
 import {
   FlatList,
@@ -54,7 +54,7 @@ function NotebookWordCard({ item, copy, learned, onSpeak, onPractice }: {
       </View>
       {learned && <View style={S.statusRow}><View style={S.statusPill}>
         <Ionicons name="checkmark-circle" size={12} color={C.successText} />
-        <Text style={S.statusPillTxt}>{copy.progress?.statusLearned || "Öğrenildi"}</Text>
+        <Text style={S.statusPillTxt}>{copy.progress.statusLearned}</Text>
       </View></View>}
       <View style={S.meaningRow}>
         <Text style={S.meaningTxt}>“{meaning}”</Text>
@@ -79,9 +79,8 @@ export function WordNotebookModal({
   onPracticeWord,
   reduceMotion,
 }: Props) {
-  const application = useApplication();
-  const { allQuestions } = application.catalogue;
-  const { speechService } = application;
+  const allQuestions = useNotebookWords();
+  const speakWord = useSpeakWord();
 
   const [query, setQuery] = useState("");
   const [selectedLevel, setSelectedLevel] = useState<LevelCode | "ALL">("ALL");
@@ -99,8 +98,7 @@ export function WordNotebookModal({
   });
 
   const handleSpeak = (q: MeaningMatchQuestion) => {
-    const word = englishSpeechText(q.word || q.prompt || "", q.pronunciation);
-    speechService.speak(word, { language: "en-US", rate: 0.9 });
+    speakWord(q.word || q.prompt || "", q.pronunciation);
   };
 
   return (
@@ -111,14 +109,14 @@ export function WordNotebookModal({
           <View style={S.header}>
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={copy.home?.wordDetailClose || "Kapat"}
+              accessibilityLabel={copy.home.wordDetailClose}
               style={S.closeBtn}
               onPress={onClose}
             >
               <Ionicons name="close" size={22} color={C.ink} />
             </Pressable>
             <Text style={S.headerTitle}>
-              {copy.progress?.wordNotebookTitle || "Kelime Defteri"}
+              {copy.progress.wordNotebookTitle}
             </Text>
             <View style={S.badgeCount}>
               <Text style={S.badgeCountTxt}>{filtered.length}</Text>
@@ -131,8 +129,7 @@ export function WordNotebookModal({
             <TextInput
               style={S.searchInput}
               placeholder={
-                copy.progress?.searchWordPlaceholder ||
-                "Kelime veya Türkçe anlam ara..."
+                copy.progress.searchWordPlaceholder
               }
               placeholderTextColor={C.muted}
               value={query}

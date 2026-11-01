@@ -17,7 +17,7 @@ export function GardenProgressCard({ copy, skillProgress, practiceTargetCount = 
   const vocabSkill = skillProgress.find((s) => s.id === "skill_vocab");
   const vocabTag = vocabSkill && vocabSkill.percent > 0
     ? `%${vocabSkill.percent}`
-    : `${practiceTargetCount} ${copy.home?.wordCountSuffix || "kelime"}`;
+    : `${practiceTargetCount} ${copy.home.wordCountSuffix}`;
 
   const rows: {
     id: string;
@@ -38,7 +38,7 @@ export function GardenProgressCard({ copy, skillProgress, practiceTargetCount = 
       id: "tile_grammar",
       icon: "create-outline",
       title: copy.home.grammar,
-      tag: copy.home?.soon || "Yakında",
+      tag: copy.home.soon,
       tint: C.successSoft,
       isSoon: true,
     },
@@ -46,15 +46,15 @@ export function GardenProgressCard({ copy, skillProgress, practiceTargetCount = 
       id: "tile_speaking",
       icon: "chatbubbles-outline",
       title: copy.home.speaking,
-      tag: copy.home?.soon || "Yakında",
+      tag: copy.home.soon,
       tint: C.rewardSoft,
       isSoon: true,
     },
     {
       id: "tile_listening",
       icon: "headset-outline",
-      title: copy.home?.listening || "Dinleme",
-      tag: copy.home?.soon || "Yakında",
+      title: copy.home.listening,
+      tag: copy.home.soon,
       tint: C.disabledBg,
       isSoon: true,
     },

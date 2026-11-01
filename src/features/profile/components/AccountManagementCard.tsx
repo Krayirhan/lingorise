@@ -41,7 +41,7 @@ export function AccountManagementCard({
     handleSaveName, handleLogout, handleSendVerification, handleResetPassword, handleDeleteAccount, currentAvatarIcon } =
     useAccountManagementActions({ copy, displayName, avatarId, onDisplayNameChange, onLoggedOut });
 
-  const streakSuffix = copy.home?.streakSuffix || "gün";
+  const streakSuffix = copy.home.streakSuffix;
   const identity = (name: string, extra?: React.ReactNode, badge?: React.ReactNode) => (
     <View style={S.card}>
       <View style={S.headerRow}>
@@ -52,7 +52,7 @@ export function AccountManagementCard({
           <View style={S.nameRow}>
             <EditableAccountName
               copy={copy}
-              name={name.trim() || copy.profile?.guestName || "Misafir öğrenci"}
+              name={name.trim() || copy.profile.guestName}
               nameStyle={S.identityName}
               editing={editingName}
               nameInput={nameInput}
@@ -66,11 +66,11 @@ export function AccountManagementCard({
           <Text style={S.identityMeta}>{level} · {xp} XP · {streak} {streakSuffix} seri</Text>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={copy.profile?.changeLevelBtn || "Seviyeyi Değiştir"}
+            accessibilityLabel={copy.profile.changeLevelBtn}
             style={({ pressed }) => [S.changeLevelBtn, pressed && S.pressed]}
             onPress={onChangeLevel}
           >
-            <Text style={S.changeLevelTxt}>{copy.profile?.changeLevelBtn || "Seviyeyi Değiştir"}</Text>
+            <Text style={S.changeLevelTxt}>{copy.profile.changeLevelBtn}</Text>
           </Pressable>
         </View>
       </View>
@@ -86,16 +86,16 @@ export function AccountManagementCard({
         <View style={S.guestCard}>
           <Ionicons name="phone-portrait-outline" size={22} color={C.primary} />
           <View style={S.guestCopy}>
-            <Text style={S.guestTitle}>{copy.profile?.accountGuestBannerTitle || "İlerlemen bu cihazda"}</Text>
+            <Text style={S.guestTitle}>{copy.profile.accountGuestBannerTitle}</Text>
             <Text style={S.guestBody}>{copy.profile?.accountGuestBody}</Text>
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={copy.profile?.loginRegisterBtn || "Giriş Yap veya Kayıt Ol"}
+              accessibilityLabel={copy.profile.loginRegisterBtn}
               style={({ pressed }) => [S.authBtn, pressed && S.pressed]}
               onPress={onOpenAuth}
             >
               <Text style={S.authBtnTxt}>
-                {copy.profile?.loginRegisterBtn || "Giriş Yap veya Kayıt Ol"}
+                {copy.profile.loginRegisterBtn}
               </Text>
             </Pressable>
           </View>
@@ -113,14 +113,14 @@ export function AccountManagementCard({
           <View style={S.verifiedBadge}>
             <Ionicons name="checkmark-circle" size={12} color={C.success} />
             <Text style={S.verifiedBadgeTxt}>
-              {copy.profile?.verifiedBadge || "Doğrulandı"}
+              {copy.profile.verifiedBadge}
             </Text>
           </View>
         ) : (
           <View style={S.unverifiedBadge}>
             <Ionicons name="alert-circle" size={12} color={C.attention} />
             <Text style={S.unverifiedBadgeTxt}>
-              {copy.profile?.unverifiedBadge || "Doğrulanmadı"}
+              {copy.profile.unverifiedBadge}
             </Text>
           </View>
         ),
@@ -139,30 +139,30 @@ export function AccountManagementCard({
         {!user.emailVerified && (
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={copy.profile?.sendVerificationBtn || "Doğrulama Gönder"}
+            accessibilityLabel={copy.profile.sendVerificationBtn}
             style={S.subBtn}
             onPress={handleSendVerification}
             disabled={busy}
           >
             <Text style={S.subBtnTxt}>
-              {copy.profile?.sendVerificationBtn || "E-posta Doğrula"}
+              {copy.profile.sendVerificationBtn}
             </Text>
           </Pressable>
         )}
 
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={copy.profile?.resetPasswordBtn || "Şifremi Sıfırla"}
+          accessibilityLabel={copy.profile.resetPasswordBtn}
           style={S.subBtn}
           onPress={handleResetPassword}
           disabled={busy}
         >
-          <Text style={S.subBtnTxt}>{copy.profile?.resetPasswordBtn || "Şifre Sıfırla"}</Text>
+          <Text style={S.subBtnTxt}>{copy.profile.resetPasswordBtn}</Text>
         </Pressable>
 
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={copy.profile?.logoutBtn || "Çıkış Yap"}
+          accessibilityLabel={copy.profile.logoutBtn}
           style={S.logoutBtn}
           onPress={handleLogout}
           disabled={busy}
@@ -170,7 +170,7 @@ export function AccountManagementCard({
           {busy ? (
             <ActivityIndicator size="small" color={C.primary} />
           ) : (
-            <Text style={S.logoutBtnTxt}>{copy.profile?.logoutBtn || "Çıkış Yap"}</Text>
+            <Text style={S.logoutBtnTxt}>{copy.profile.logoutBtn}</Text>
           )}
         </Pressable>
       </View>
@@ -178,13 +178,13 @@ export function AccountManagementCard({
       {/* Delete Account link */}
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={copy.profile?.deleteAccountBtn || "Hesabı Sil"}
+        accessibilityLabel={copy.profile.deleteAccountBtn}
         style={S.deleteBtn}
         onPress={handleDeleteAccount}
         disabled={busy}
       >
         <Text style={S.deleteBtnTxt}>
-          {copy.profile?.deleteAccountBtn || "Hesabımı Kalıcı Olarak Sil"}
+          {copy.profile.deleteAccountBtn}
         </Text>
       </Pressable>
     </View>

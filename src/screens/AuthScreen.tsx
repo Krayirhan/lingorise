@@ -51,20 +51,20 @@ export function AuthScreen({
     setErrorField(null);
 
     if (mode === "register" && !name.trim()) {
-      setError(copy.auth?.errorNameRequired || "Lütfen adını gir.");
+      setError(copy.auth.errorNameRequired);
       setErrorField("name");
       return false;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!email.trim() || !emailRegex.test(email.trim())) {
-      setError(copy.auth?.errorEmailRequired || "Geçerli bir e-posta adresi gir.");
+      setError(copy.auth.errorEmailRequired);
       setErrorField("email");
       return false;
     }
 
     if (mode !== "forgot" && password.length < 8) {
-      setError(copy.auth?.errorPasswordShort || "Şifre en az 8 karakter olmalı.");
+      setError(copy.auth.errorPasswordShort);
       setErrorField("password");
       return false;
     }
@@ -108,10 +108,10 @@ export function AuthScreen({
 
   const submitLabel =
     mode === "register"
-      ? copy.auth?.submitRegister || "Hesabımı oluştur"
+      ? copy.auth.submitRegister
       : mode === "login"
-        ? copy.auth?.submitLogin || "Giriş yap"
-        : copy.auth?.sendResetEmailBtn || "Sıfırlama Bağlantısı Gönder";
+        ? copy.auth.submitLogin
+        : copy.auth.sendResetEmailBtn;
 
   return (
     <SafeAreaView style={S.safe} edges={["top", "bottom"]}>
@@ -127,13 +127,13 @@ export function AuthScreen({
               {onBack ? (
                 <Pressable
                   accessibilityRole="button"
-                  accessibilityLabel={copy.auth?.backBtn || "Geri"}
+                  accessibilityLabel={copy.auth.backBtn}
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                   style={({ pressed }) => [S.backBtn, pressed && S.btnPressed]}
                   onPress={onBack}
                 >
                   <Ionicons name="chevron-back" size={20} color={C.ink} />
-                  <Text style={S.backBtnTxt}>{copy.auth?.backBtn || "Geri"}</Text>
+                  <Text style={S.backBtnTxt}>{copy.auth.backBtn}</Text>
                 </Pressable>
               ) : (
                 <View style={S.brandHeader}>
@@ -147,17 +147,17 @@ export function AuthScreen({
               <View style={S.introCopy}>
                 <Text style={S.title}>
                   {mode === "register"
-                    ? copy.auth?.titleRegister || "Öğrenme profilini oluşturalım."
+                    ? copy.auth.titleRegister
                     : mode === "login"
-                      ? copy.auth?.titleLogin || "Tekrar hoş geldin."
-                      : copy.auth?.forgotPasswordTitle || "Şifre Sıfırla"}
+                      ? copy.auth.titleLogin
+                      : copy.auth.forgotPasswordTitle}
                 </Text>
                 <Text style={S.subtitle}>
                   {mode === "register"
-                    ? copy.auth?.subtitleRegister || "İlerlemen her cihazında seninle gelsin."
+                    ? copy.auth.subtitleRegister
                     : mode === "login"
-                      ? copy.auth?.subtitleLogin || "Kaldığın yerden öğrenmeye devam et."
-                      : copy.auth?.forgotPasswordSubtitle || "Şifre sıfırlama bağlantısı almak için e-posta adresini gir."}
+                      ? copy.auth.subtitleLogin
+                      : copy.auth.forgotPasswordSubtitle}
                 </Text>
               </View>
               <Image source={sprig} style={S.mascot} resizeMode="contain" />

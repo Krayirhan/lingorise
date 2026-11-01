@@ -30,42 +30,42 @@ export function SoundAndMotionCard({
       <SettingsRow
         icon="notifications-outline"
         tint={C.attentionSoft}
-        title={copy.profile?.remindersTitle || "Günlük Hatırlatıcılar"}
+        title={copy.profile.remindersTitle}
         right={
           <Switch
             value={notificationsEnabled}
             onValueChange={onNotificationToggle}
             trackColor={trackColor}
             thumbColor={C.surface}
-            accessibilityLabel={copy.profile?.remindersTitle || "Günlük Hatırlatıcılar"}
+            accessibilityLabel={copy.profile.remindersTitle}
           />
         }
       />
       <SettingsRow
         icon="volume-medium-outline"
         tint={C.rewardSoft}
-        title={copy.profile?.soundEffectsTitle || "Ses Efektleri"}
+        title={copy.profile.soundEffectsTitle}
         right={
           <Switch
             value={soundEnabled}
             onValueChange={onSoundToggle}
             trackColor={trackColor}
             thumbColor={C.surface}
-            accessibilityLabel={copy.profile?.soundEffectsTitle || "Ses Efektleri"}
+            accessibilityLabel={copy.profile.soundEffectsTitle}
           />
         }
       />
       <SettingsRow
         icon="pulse-outline"
         tint={C.successSoft}
-        title={copy.profile?.reduceMotionTitle || "Hareketi Azalt"}
+        title={copy.profile.reduceMotionTitle}
         right={
           <Switch
             value={reduceMotion}
             onValueChange={onReduceMotionToggle}
             trackColor={trackColor}
             thumbColor={C.surface}
-            accessibilityLabel={copy.profile?.reduceMotionTitle || "Hareketi Azalt"}
+            accessibilityLabel={copy.profile.reduceMotionTitle}
           />
         }
       />

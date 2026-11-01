@@ -1,4 +1,4 @@
-import { useApplication } from "../../../context/ApplicationContext";
+import { useSpeakWord } from "../../../state/useSpeakWord";
 import { useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { GestureResponderEvent, Pressable, StyleSheet, Text, View } from "react-native";
@@ -6,7 +6,6 @@ import { C } from "../../../theme/colors";
 import { Copy } from "../../../i18n/en";
 import { RecommendedWordData } from "../home.types";
 import { fonts, typeScale } from "../../../theme/typography";
-import { englishSpeechText } from "../../../domain/speech/voice";
 
 
 interface Props {
@@ -16,23 +15,19 @@ interface Props {
 }
 
 export function RecommendedWordCard({ copy, recommendedWord, onPress }: Props) {
-  const application = useApplication();
-  const { speechService } = application;
+  const speakWord = useSpeakWord();
 
   const [isPlaying, setIsPlaying] = useState(false);
 
   if (!recommendedWord) return null;
 
-  const accessibilityLabel = (copy.home?.recommendedWordAccessibility || "{word}: {meaning}")
+  const accessibilityLabel = (copy.home.recommendedWordAccessibility)
     .replace("{word}", recommendedWord.word)
     .replace("{meaning}", recommendedWord.meaning);
   const handleAudio = (event: GestureResponderEvent) => {
     event?.stopPropagation?.();
     setIsPlaying(true);
-    speechService.speak(englishSpeechText(recommendedWord.word, recommendedWord.pronunciation), {
-      language: "en-US",
-      rate: 0.9,
-    });
+    speakWord(recommendedWord.word, recommendedWord.pronunciation);
     setTimeout(() => setIsPlaying(false), 1400);
   };
 
@@ -46,14 +41,14 @@ export function RecommendedWordCard({ copy, recommendedWord, onPress }: Props) {
         <Text style={S.header}>
           {copy.home?.recommendedHeader === "GÜNÜN KELİMESİ"
             ? "Günün Kelimesi"
-            : copy.home?.recommendedHeader || "Günün Kelimesi"}
+            : copy.home.recommendedHeader}
         </Text>
       </View>
 
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={accessibilityLabel}
-        accessibilityHint={copy.home?.recommendedWordDetailsHint || ""}
+        accessibilityHint={copy.home.recommendedWordDetailsHint}
         style={({ pressed }) => [S.card, pressed && S.pressed]}
         onPress={onPress}
       >
@@ -75,8 +70,8 @@ export function RecommendedWordCard({ copy, recommendedWord, onPress }: Props) {
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={isPlaying
-            ? copy.home?.playingAudio || "Çalınıyor"
-            : copy.home?.listenAudioBtn || "Telaffuzu dinle"}
+            ? copy.home.playingAudio
+            : copy.home.listenAudioBtn}
           style={({ pressed }) => [S.audioBtn, isPlaying && S.audioPlaying, pressed && S.audioPressed]}
           onPress={handleAudio}
         >

@@ -28,10 +28,8 @@ export function useDataManagement(copy: Copy, onDataReset?: () => void | Promise
   // misleading (DATA-QA-003 / GLOBAL-QA-005): the copy must match what
   // actually happens for each case.
   const resetConfirmMsg = isCloudSynced
-    ? copy.profile?.resetDataConfirmSynced ||
-    "Bu cihazdaki yerel kopyanı sıfırlayacak. Hesabına kayıtlı bulut ilerlemen etkilenmez ve bir sonraki senkronizasyonda geri yüklenir."
-    : copy.profile?.resetDataConfirm ||
-    "Tüm yerel ilerlemeni ve verilerini sıfırlamak istediğinden emin misin? Bu işlem geri alınamaz.";
+    ? copy.profile.resetDataConfirmSynced
+    : copy.profile.resetDataConfirm;
 
   const handleResetData = () => {
     if (Platform.OS === "web") {

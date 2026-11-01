@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Brand } from "./Brand";
 import { C, radius } from "../theme/colors";
 import { LevelCode } from "../domain/models/content";
-import { Locale } from "../i18n/en";
+import { copyByLocale, Locale } from "../i18n/en";
 
 export interface GlobalTopBarProps {
   level: LevelCode;
@@ -27,7 +27,8 @@ export function GlobalTopBar({
 }: GlobalTopBarProps) {
   const [refreshing, setRefreshing] = useState(false);
 
-  const courseName = locale === "tr" ? "İngilizce" : "English";
+  const copy = copyByLocale[locale].home;
+  const courseName = copy.courseName;
 
   return (
     <View style={S.hdr}>
@@ -78,7 +79,7 @@ export function GlobalTopBar({
         {/* Notification Bell Outline Icon */}
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={locale === "tr" ? "Seviye ve bildirimler" : "Level and notifications"}
+          accessibilityLabel={copy.levelAndNotificationsLabel}
           style={({ pressed }) => [S.bellBtn, pressed && S.btnPre]}
           onPress={onLevelPress}
         >

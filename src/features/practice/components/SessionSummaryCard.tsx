@@ -33,18 +33,18 @@ export function SessionSummaryCard({
   const assessmentResult = examResult || checkpointResult;
   const title = examResult
     ? examResult.passed
-      ? copy.game?.examPassedTitle || "Sınavı Geçtin! 🎉"
-      : copy.game?.examFailedTitle || "Bu Sefer Olmadı"
+      ? copy.game.examPassedTitle
+      : copy.game.examFailedTitle
     : checkpointResult
       ? checkpointResult.passed
         ? "Konu Kontrolünü Geçtin! 🎉"
         : "Konu Kontrolünü Tekrarla"
-      : copy.game?.sessionSummaryTitle || "Pratik Tamamlandı!";
+      : copy.game.sessionSummaryTitle;
 
   const subtitle = examResult
     ? examResult.passed
-      ? copy.game?.examPassedSubtitle || "Bu seviyeyi artık gerçekten biliyorsun."
-      : (copy.game?.examFailedSubtitle || "En az {pass} doğru gerekiyor. İstediğin zaman tekrar deneyebilirsin.").replace(
+      ? copy.game.examPassedSubtitle
+      : (copy.game.examFailedSubtitle).replace(
         "{pass}",
         String(examResult.passCount)
       )
@@ -52,7 +52,7 @@ export function SessionSummaryCard({
       ? checkpointResult.passed
         ? "Sıradaki konu artık açıldı."
         : `Sonraki konu için en az ${checkpointResult.passCount} doğru gerekiyor.`
-      : copy.game?.sessionSummarySubtitle || "Tebrikler! Günlük pratiğini başarıyla tamamladın.";
+      : copy.game.sessionSummarySubtitle;
 
   return (
     <View style={S.card}>
@@ -75,18 +75,18 @@ export function SessionSummaryCard({
         <View style={S.statDivider} />
         <View style={S.statBox}>
           <Text style={S.statVal}>{accuracyPercent}%</Text>
-          <Text style={S.statLbl}>{copy.game?.accuracyLabel || "Başarı"}</Text>
+          <Text style={S.statLbl}>{copy.game.accuracyLabel}</Text>
         </View>
         <View style={S.statDivider} />
         <View style={S.statBox}>
           <Text style={S.statVal}>{correctCount}/{totalQuestions}</Text>
-          <Text style={S.statLbl}>{copy.game?.learnedWordsLabel || "Doğru"}</Text>
+          <Text style={S.statLbl}>{copy.game.learnedWordsLabel}</Text>
         </View>
       </View>
 
       <View style={S.btnWrap}>
         <PrimaryButton
-          label={copy.game?.returnHomeBtn || "Bahçeye Dön"}
+          label={copy.game.returnHomeBtn}
           onPress={onReturnHome}
         />
       </View>
