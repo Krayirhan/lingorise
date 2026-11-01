@@ -2,12 +2,11 @@ import { useApplication } from "../../../context/ApplicationContext";
 import { useMemo } from "react";
 import { UserData } from "../../../domain/models/user";
 import { Copy, Locale } from "../../../i18n/en";
-import { CollectedWord, HomeViewModel, SkillProgress } from "../home.types";
+import { HomeViewModel } from "../home.types";
+import { buildCollection, buildSkillProgress } from "../homeViewModelParts";
 import { buildWeekStrip } from "../weekStripModel";
 import { buildGreeting } from "../greetingModel";
 import { calculateGardenProgress } from "../../../domain/gamification/xp";
-
-
 
 const COLLECTION_SIZE = 8;
 
@@ -40,29 +39,7 @@ export function useHomeViewModel(userData: UserData, copy: Copy, locale: Locale)
 
     const stageName = locale === "tr" ? gardenProgress.stageNameTr : gardenProgress.stageNameEn;
 
-    const vocabMeta =
-      solvedInLevel === 0
-        ? `${userData.level} · ${copy.home.vocabularyEmptyCta}`
-        : (copy.home.vocabularyLearnedCount).replace("{count}", String(solvedInLevel));
-
-    const skillProgress: SkillProgress[] = [
-      {
-        id: "skill_vocab",
-        title: copy.home.vocabulary,
-        meta: vocabMeta,
-        percent: vocabPercent,
-        isReady: true,
-        icon: "book-outline",
-      },
-      {
-        id: "skill_listening",
-        title: copy.home.listening,
-        meta: copy.home.listeningMeta,
-        percent: 0,
-        isReady: false,
-        icon: "headset-outline",
-      },
-    ];
+    const skillProgress = buildSkillProgress(copy.home, userData.level, solvedInLevel, vocabPercent);
 
     const recommended = getRecommendedWord(userData.level, userData.solvedQuestionIds);
     const dailyQuests = userData.dailyQuests || [];
@@ -95,25 +72,7 @@ export function useHomeViewModel(userData: UserData, copy: Copy, locale: Locale)
       copy.home.weekdayShort.split("|"),
     );
 
-    // rewardedQuestionIds grows in the order words were learned, so the tail
-    // is the newest; only words from the current level are shown.
-    const questionsById = new Map(levelQuestions.map((question) => [question.id, question]));
-    const collection: CollectedWord[] = [];
-    for (let i = rewardedIds.length - 1; i >= 0 && collection.length < COLLECTION_SIZE; i--) {
-      const question = questionsById.get(rewardedIds[i]);
-      if (!question) continue;
-      collection.push({
-        id: question.id,
-        word: question.word || question.prompt || "",
-        meaning: question.meaning || question.answer || "",
-        level: question.level,
-        topic: question.topic,
-        phonetic: question.phonetic,
-        pronunciation: question.pronunciation,
-        exampleSentence: question.exampleSentence,
-        exampleTranslation: question.exampleTranslation,
-      });
-    }
+    const collection = buildCollection(levelQuestions, rewardedIds, COLLECTION_SIZE);
 
     // Units turn an amorphous 320-word level into finishable chunks.
     const unitInfo = getLevelUnitInfo(userData.level, userData.solvedQuestionIds);
@@ -164,5 +123,5 @@ export function useHomeViewModel(userData: UserData, copy: Copy, locale: Locale)
       collection,
       badges: userData.unlockedBadges || [],
     };
-  }, [userData, copy, locale]);
+  }, [userData, copy, locale, getQuestionsByLevel, getLevelUnitInfo, getRecommendedWord, todayISO, nowDate]);
 }

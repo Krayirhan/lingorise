@@ -52,7 +52,7 @@ export function useSpeech(wordPrompt: string, pronunciationText?: string, enable
       sub.remove();
       speechService.stop();
     };
-  }, []);
+  }, [speechService]);
 
   // Cleanup on word change
   useEffect(() => {
@@ -61,7 +61,7 @@ export function useSpeech(wordPrompt: string, pronunciationText?: string, enable
     return () => {
       speechService.stop();
     };
-  }, [wordPrompt]);
+  }, [wordPrompt, speechService]);
 
   const toggleSpeech = useCallback(async () => {
     if (!enabled) return;
@@ -85,12 +85,12 @@ export function useSpeech(wordPrompt: string, pronunciationText?: string, enable
         setAudioError(true);
       },
     });
-  }, [enabled, isSpeaking, pronunciationText, wordPrompt]);
+  }, [enabled, isSpeaking, pronunciationText, wordPrompt, speechService]);
 
   const stopSpeech = useCallback(async () => {
     await speechService.stop();
     setIsSpeaking(false);
-  }, []);
+  }, [speechService]);
 
   return {
     isSpeaking,

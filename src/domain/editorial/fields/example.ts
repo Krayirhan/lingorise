@@ -6,7 +6,7 @@ import { CatalogueAuditContext } from "../types";
 
 
 import { FindingReporter } from "../types";
-export function validateExample(question: MeaningMatchQuestion, flagFinding: FindingReporter, context?: CatalogueAuditContext, informational: string[] = []) {
+export function validateExample(question: MeaningMatchQuestion, flagFinding: FindingReporter, context?: CatalogueAuditContext, _informational: string[] = []) {
   // 16. exampleSentence
   const example = (question.exampleSentence || "").trim();
   if (!example) {

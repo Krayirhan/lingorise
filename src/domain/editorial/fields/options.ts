@@ -5,7 +5,7 @@ import { CatalogueAuditContext } from "../types";
 
 
 import { FindingReporter } from "../types";
-export function validateOptions(question: MeaningMatchQuestion, flagFinding: FindingReporter, context?: CatalogueAuditContext, informational: string[] = []) {
+export function validateOptions(question: MeaningMatchQuestion, flagFinding: FindingReporter, context?: CatalogueAuditContext, _informational: string[] = []) {
   // 9. wrongOptions
   if (!Array.isArray(question.wrongOptions) || question.wrongOptions.length !== 2) {
     flagFinding("P0", "wrongOptions", "wrongOptions count must be exactly 2 distractors");

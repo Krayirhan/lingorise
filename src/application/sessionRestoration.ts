@@ -1,5 +1,5 @@
 import { MeaningMatchQuestion } from "../domain/models/content";
-import { UserData } from "../domain/models/user";
+import { ActiveSessionState, UserData } from "../domain/models/user";
 import { QuestionCatalogue } from "./catalogue";
 
 export function restoreSession(userData: UserData, catalogue: QuestionCatalogue) {
@@ -14,4 +14,19 @@ export function restoreSession(userData: UserData, catalogue: QuestionCatalogue)
         meaning: question.word, answer: question.word, options, wrongOptions: options.filter((option) => option !== question.word) };
     }) || [];
   return { restored, questions, hasRestorableSession: questions.length > 0 && !!restored };
+}
+
+/**
+ * The in-progress session as it is persisted, so restoreSession can resume it.
+ * Reversed (pick-the-word) questions keep their shuffled options.
+ */
+export function buildActiveSession(state: Omit<ActiveSessionState, "questionIds" | "reversedOptions"> & { questions: MeaningMatchQuestion[] }): ActiveSessionState {
+  const { questions, ...rest } = state;
+  return {
+    ...rest,
+    questionIds: questions.map((question) => question.id),
+    reversedOptions: Object.fromEntries(questions
+      .filter((question) => question.mode === "PICK_THE_WORD" && question.options?.length)
+      .map((question) => [question.id, question.options!])),
+  };
 }

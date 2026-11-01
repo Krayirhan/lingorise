@@ -33,7 +33,7 @@ const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 let authInstance: Auth;
 try {
   if (Platform.OS !== "web") {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { getReactNativePersistence } = require("firebase/auth");
     if (getReactNativePersistence) {
       authInstance = initializeAuth(app, {

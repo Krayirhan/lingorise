@@ -38,7 +38,7 @@ export function LevelPromotionModal({ copy, level, promotion, visible, onAdvance
       level,
       nextLevelReady: promotion.isNextLevelReady,
     });
-  }, [visible, promotion, level]);
+  }, [visible, promotion, level, track]);
 
   if (!visible || !promotion) return null;
 

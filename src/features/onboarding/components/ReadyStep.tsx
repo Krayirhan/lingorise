@@ -5,6 +5,7 @@ import { PrimaryButton } from "../../../components/PrimaryButton";
 import { Copy } from "../../../i18n/en";
 import { C, radius } from "../../../theme/colors";
 
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const mascot = require("../../../../assets/sprig-mascot.png");
 
 interface Props {

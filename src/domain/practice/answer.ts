@@ -50,9 +50,9 @@ export function applyPracticeAnswer(
   const correctAnswer = question.meaning || question.answer;
   const isCorrect = picked === correctAnswer;
 
-  let nextSolved = [...previous.solvedQuestionIds];
-  let nextRewarded = [...previous.rewardedQuestionIds];
-  let nextReviewXpIds = [...(previous.dailyReviewXpIds || [])];
+  const nextSolved = [...previous.solvedQuestionIds];
+  const nextRewarded = [...previous.rewardedQuestionIds];
+  const nextReviewXpIds = [...(previous.dailyReviewXpIds || [])];
 
   // What a word is worth follows the word's own state, not the label on the
   // session it appeared in — a single daily session now mixes both kinds.

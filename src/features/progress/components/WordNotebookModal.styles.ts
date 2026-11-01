@@ -1,5 +1,5 @@
 import { StyleSheet } from "react-native";
-import { C, radius, spacing } from "../../../theme/colors";
+import { C, radius } from "../../../theme/colors";
 
 export const S = StyleSheet.create({
   safe: {

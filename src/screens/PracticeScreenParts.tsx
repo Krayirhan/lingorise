@@ -1,5 +1,5 @@
 import { ReactNode, useEffect } from "react";
-import { BackHandler, Platform, Pressable, ScrollView, StatusBar, Text, View } from "react-native";
+import { Platform, Pressable, ScrollView, StatusBar, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { Copy } from "../i18n/en";

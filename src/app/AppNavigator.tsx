@@ -1,25 +1,22 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { GlobalAppLayout } from "../components/GlobalAppLayout";
 import { GlobalTopBarProps } from "../components/GlobalTopBar";
 import { useApplication } from "../context/ApplicationContext";
 import { copyByLocale } from "../i18n/en";
-import { MeaningMatchQuestion } from "../domain/models/content";
 import { HomeTab } from "../features/home/home.types";
 import { useHomeViewModel } from "../features/home/hooks/useHomeViewModel";
 import { useAppSession } from "../state/useAppSession";
 import { useUserProgress } from "../state/useUserProgress";
-
-
-import { useToast } from "../context/ToastContext";
 import { LevelPromotionModal } from "../features/home/components/LevelPromotionModal";
 import { LevelSwitcherModal } from "../features/home/components/LevelSwitcherModal";
 import { getMainRoute } from "./getMainRoute";
 import { SessionRoute } from "./SessionRoute";
+import { DeepLinkTarget, useDeepLinkNavigation, useFailureNoticeToasts, useSafeSessionStarts } from "./navigatorHooks";
 
 interface Props {
   userProgress: ReturnType<typeof useUserProgress>;
   onAccountPress?: () => void;
-  deepLinkTarget?: "home" | "practice" | "progress" | "profile" | null;
+  deepLinkTarget?: DeepLinkTarget | null;
   onDeepLinkConsumed?: () => void;
 }
 
@@ -31,24 +28,12 @@ export function AppNavigator({ userProgress, onAccountPress, deepLinkTarget, onD
   const { evaluatePromotion } = application.learning;
   const { isExamAvailable } = application.learning;
   const { getTopicProgressSummaries, getNextCurriculumLesson, getPendingTopicCheckpoint } = application.learning;
-  const { track } = application;
 
-  const { userData, recordAnswer, bookmarkQuestion, setLocale, setLevel, markLevelCelebrated, markGardenExplainerSeen, saveFailureNotice, clearSaveFailureNotice, cloudSyncFailureNotice, clearCloudSyncFailureNotice } = userProgress;
+  const { userData, recordAnswer, bookmarkQuestion, setLocale, setLevel, markLevelCelebrated, markGardenExplainerSeen } = userProgress;
   const session = useAppSession(userData, userProgress.setActiveSession);
   const [levelSwitcherOpen, setLevelSwitcherOpen] = useState(false);
-  const { showToast } = useToast();
 
-  useEffect(() => {
-    if (!saveFailureNotice) return;
-    showToast({ message: saveFailureNotice, type: "attention", durationMs: 5000 });
-    clearSaveFailureNotice();
-  }, [saveFailureNotice, showToast, clearSaveFailureNotice]);
-
-  useEffect(() => {
-    if (!cloudSyncFailureNotice) return;
-    showToast({ message: cloudSyncFailureNotice, type: "attention", durationMs: 5000 });
-    clearCloudSyncFailureNotice();
-  }, [cloudSyncFailureNotice, showToast, clearCloudSyncFailureNotice]);
+  useFailureNoticeToasts(userProgress);
 
   const copy = copyByLocale[userData.locale];
   const homeViewModel = useHomeViewModel(userData, copy, userData.locale);
@@ -59,36 +44,7 @@ export function AppNavigator({ userProgress, onAccountPress, deepLinkTarget, onD
     userData.celebratedLevels || []
   );
 
-  // Defensive net for CORE-004: session.startPractice/startExam already
-  // return false instead of silently no-op'ing when there's nothing to build
-  // a session from. The primary fix is the UI never offering that CTA once a
-  // level is fully learned (PracticeHubScreen/GardenHeroCard), but every
-  // entry point is routed through here too so a missed or future call site
-  // still surfaces something instead of going dead and unexplained.
-  const startPracticeSafe = useCallback(
-    (customQuestions?: MeaningMatchQuestion[], reverseMode?: boolean) => {
-      const started = session.startPractice(customQuestions, reverseMode);
-      if (!started) {
-        showToast({
-          message: copy.game.noWordsLeftNotice,
-          type: "attention",
-          durationMs: 4000,
-        });
-      }
-    },
-    [session, showToast, copy]
-  );
-
-  const startExamSafe = useCallback(() => {
-    const started = session.startExam(userData.level);
-    if (!started) {
-      showToast({
-        message: copy.game.noWordsLeftNotice,
-        type: "attention",
-        durationMs: 4000,
-      });
-    }
-  }, [session, showToast, copy, userData.level]);
+  const { startPracticeSafe, startExamSafe } = useSafeSessionStarts(session, copy, userData.level);
 
   // Records a level-completion exam's result exactly once per attempt. The
   // exam is the sole way a level is marked complete now (roadmap
@@ -102,14 +58,7 @@ export function AppNavigator({ userProgress, onAccountPress, deepLinkTarget, onD
     });
   }, [recordSessionResult, session.sessionMode, session.isSessionCompleted, session.sessionQuestions, session.sessionAnswers, userData.level]);
 
-  useEffect(() => {
-    if (!deepLinkTarget) return;
-    if (deepLinkTarget === "practice") session.goToPracticeHome();
-    else if (deepLinkTarget === "progress") session.goToProgress();
-    else if (deepLinkTarget === "profile") session.goToProfile();
-    else session.goToHome();
-    onDeepLinkConsumed?.();
-  }, [deepLinkTarget, onDeepLinkConsumed, session]);
+  useDeepLinkNavigation(session, deepLinkTarget, onDeepLinkConsumed);
 
   if (session.screen === "onboarding" || (session.screen === "practice" && session.currentQuestion)) {
     return <SessionRoute application={application} session={session} userData={userData} userProgress={userProgress} copy={copy} recordAnswer={recordAnswer} bookmarkQuestion={bookmarkQuestion} onAccountPress={onAccountPress} />;
