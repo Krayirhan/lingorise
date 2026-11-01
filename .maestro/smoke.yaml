@@ -1,4 +1,4 @@
-appId: com.lingorise.app
+appId: com.lingterra.app
 ---
 - launchApp:
     clearState: true

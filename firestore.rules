@@ -91,5 +91,38 @@ service cloud.firestore {
       allow read: if true;
       allow write: if false;
     }
+
+    // Reviewer profiles are provisioned by a trusted administrator. A client
+    // cannot self-assign the Editorial Reviewer role.
+    match /editorialReviewers/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if false;
+    }
+
+    function getReviewerData() {
+      return get(/databases/$(database)/documents/editorialReviewers/$(request.auth.uid)).data;
+    }
+
+    function isActiveEditorialReviewer() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/editorialReviewers/$(request.auth.uid))
+        && getReviewerData().active == true
+        && getReviewerData().role == 'EDITORIAL_REVIEWER';
+    }
+
+    match /editorialReviews/{reviewId} {
+      allow read: if isActiveEditorialReviewer();
+      allow create: if isActiveEditorialReviewer()
+        && request.resource.data.reviewerId == request.auth.uid
+        && request.resource.data.reviewId == reviewId
+        && request.resource.data.questionId is string
+        && request.resource.data.level in ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
+        && request.resource.data.level in getReviewerData().assignedLevels
+        && request.resource.data.role in getReviewerData().reviewerRoles
+        && (request.resource.data.role != 'final_decider' || 'review.final_decide' in getReviewerData().permissions)
+        && request.resource.data.rubricVersion is string
+        && request.resource.data.decision in ['approved', 'revision_required', 'rejected'];
+      allow update, delete: if false;
+    }
   }
 }

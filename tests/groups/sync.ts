@@ -1,0 +1,15 @@
+import "../cases/guest-mode-local-storage-integrity";
+import "../cases/guest-to-cloud-merge-simulation";
+import "../cases/error-sanitization-user-friendly-messages";
+import "../cases/async-retry-error-handling";
+import "../cases/storage-schema-migration-safe-recovery";
+import "../cases/practice-session-resume-schema";
+import "../cases/learning-progress-migration";
+import "../cases/learning-record-merge";
+import "../cases/telemetry-event-recording";
+import "../cases/cross-device-merge-clock-skew";
+import "../cases/cross-device-merge-multi-day-offline-gap";
+import "../cases/migration-schema-versioning";
+import "../cases/isolated-migration-steps";
+import "../cases/server-date-anomaly-detection";
+import "../cases/canonical-progress-merge-field-merge-regression-matrix";

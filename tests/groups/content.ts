@@ -1,0 +1,13 @@
+import "../cases/content-database-validation";
+import "../cases/progress-level-breakdown";
+import "../cases/vocabulary-content-search-versioning";
+import "../cases/content-generated-xp-difficulty";
+import "../cases/editorial-reviewer-workflow-rubric-validation";
+import "../cases/item-definition-of-done-delivery-form-calibration";
+import "../cases/c2-p0-full-rewrite-and-pedagogical-quality-gates";
+import "../cases/a1-basic-production-collocations-distractor-matching";
+import "../cases/a2-functional-production-progression-gates";
+import "../cases/b1-contextual-production-sense-disambiguation-gates";
+import "../cases/b2-reasoned-register-aware-production-gates";
+import "../cases/c1-critical-analysis-synthesis-nuance-gates";
+import "../cases/editorial-review-queue-release-gating-integrity";

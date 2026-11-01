@@ -7,6 +7,16 @@ on:
 
 jobs:
   verify:
+    outputs:
+      typecheck: ${{ steps.typecheck.outcome }}
+      architecture: ${{ steps.architecture.outcome }}
+      longFunctionReview: ${{ steps.long-function-review.outcome }}
+      lint: ${{ steps.lint.outcome }}
+      applicationTests: ${{ steps.application-tests.outcome }}
+      fullTests: ${{ steps.full-tests.outcome }}
+      coverage: ${{ steps.coverage.outcome }}
+      firestoreRules: ${{ steps.firestore-rules.outcome }}
+      diffCheck: ${{ steps.diff-check.outcome }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -15,8 +25,30 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
-      - run: npm run typecheck
-      - run: npm test
+      - id: typecheck
+        run: npm run typecheck
+      - id: architecture
+        run: npm run check:architecture
+      - id: long-function-review
+        run: npm run check:long-function-review
+      - id: lint
+        run: npm run lint:check
+      - id: application-tests
+        run: npm run test:application
+      - id: full-tests
+        run: npm test
+      - id: coverage
+        run: npm run coverage
+      - name: Upload coverage summaries
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-reports
+          path: coverage/
+          if-no-files-found: ignore
+          retention-days: 30
+      - id: diff-check
+        run: git diff --check
       # firebase-tools (used by test:rules' emulator) requires JDK 21+; the
       # runner's default Java is older, so this needs its own explicit setup
       # separate from android-build/e2e-smoke's JDK 17 (Gradle's requirement).
@@ -24,7 +56,8 @@ jobs:
         with:
           distribution: temurin
           java-version: "21"
-      - run: npm run test:rules
+      - id: firestore-rules
+        run: npm run test:rules
 
   # roadmap 18-srs-flow-hardening.md DEPLOY-001 — the domain/rules tests above
   # never actually exercised the native Android build. A Gradle/manifest
@@ -69,6 +102,7 @@ jobs:
           distribution: temurin
           java-version: "17"
       - name: Build release APK
+        id: android-build
         working-directory: android
         run: |
           chmod +x ./gradlew
@@ -109,7 +143,7 @@ jobs:
         working-directory: android
         run: |
           chmod +x ./gradlew
-          ./gradlew assembleRelease --no-daemon
+          ./gradlew assembleRelease --no-daemon -PreactNativeArchitectures=x86_64
       # Pinned to a specific released version (matches the version validated
       # locally against this project's own smoke test) instead of piping the
       # installer's floating "latest" into bash — a deterministic version
@@ -161,5 +195,55 @@ jobs:
             ci_debug_maestro_tests
           retention-days: 5
       - name: Fail if Maestro failed
+        id: maestro-result
         if: env.MAESTRO_FAILED == '1'
         run: exit 1
+
+  quality-score:
+    if: always()
+    needs: [verify, android-build, e2e-smoke]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Download coverage summaries
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-reports
+          path: coverage
+        continue-on-error: true
+      - name: Collect verification job outcomes
+        shell: bash
+        run: |
+          mkdir -p .audit/quality
+          cat > .audit/quality/ci-check-results.json <<'JSON'
+          {
+            "typecheck": "${{ needs.verify.outputs.typecheck }}",
+            "architecture": "${{ needs.verify.outputs.architecture }}",
+            "longFunctionReview": "${{ needs.verify.outputs.longFunctionReview }}",
+            "lint": "${{ needs.verify.outputs.lint }}",
+            "applicationTests": "${{ needs.verify.outputs.applicationTests }}",
+            "fullTests": "${{ needs.verify.outputs.fullTests }}",
+            "coverage": "${{ needs.verify.outputs.coverage }}",
+            "androidBuild": "${{ needs.android-build.result }}",
+            "firestoreRules": "${{ needs.verify.outputs.firestoreRules }}",
+            "maestroSmoke": "${{ needs.e2e-smoke.result }}",
+            "diffCheck": "${{ needs.verify.outputs.diffCheck }}"
+          }
+          JSON
+      - name: Generate deterministic quality report
+        env:
+          QUALITY_SCORE_CHECK_RESULTS: .audit/quality/ci-check-results.json
+        run: npm run score:quality
+      - name: Upload quality report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: quality-score
+          path: .audit/quality/latest.json
+          if-no-files-found: error
+          retention-days: 30

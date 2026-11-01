@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "targets": {
+    "domain": {
+      "lines": 83.71,
+      "branches": 75.24
+    },
+    "application": {
+      "lines": 73,
+      "branches": 72.05
+    }
+  }
+}

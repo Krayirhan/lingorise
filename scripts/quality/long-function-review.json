@@ -1,0 +1,71 @@
+{
+  "version": 1,
+  "entries": [
+    {
+      "file": "src/app/AppNavigator.tsx",
+      "name": "AppNavigator",
+      "rationale": "Composes application state, shared navigation effects, top bar, and modal layers; session screens and all main tabs are already delegated to focused route components.",
+      "followUp": "Extract shared navigation effects into a controller when deep-link or session-result behavior changes; keep route props in their route modules."
+    },
+    {
+      "file": "src/application/catalogue.ts",
+      "name": "createQuestionCatalogue",
+      "rationale": "Coordinates remote, cache, and bundled catalogue precedence with integrity checks, enrichment, timeout handling, and instance-local catalogue state.",
+      "followUp": "Split source loading from catalogue assembly when a new source or integrity rule is introduced; preserve precedence with catalogue behavior tests."
+    },
+    {
+      "file": "src/application/progressController.ts",
+      "name": "createProgressController",
+      "rationale": "Owns one application instance's progress snapshot and listener lifecycle while composing hydration, answer transitions, local/remote persistence, and action factories.",
+      "followUp": "Extract persistence coordination when sync ordering or storage policy changes; keep snapshot and subscription lifecycle owned by this controller."
+    },
+    {
+      "file": "src/domain/editorial/fields/production.ts",
+      "name": "validateProduction",
+      "rationale": "Applies related production-response validations and aggregates editorial findings in one pure domain rule.",
+      "followUp": "Separate a validation family when its publication policy changes independently; retain finding parity tests."
+    },
+    {
+      "file": "src/features/home/hooks/useHomeViewModel.ts",
+      "name": "useHomeViewModel",
+      "rationale": "Builds the home screen's presentation model from progress, curriculum, quests, and recommendations; extracted presentation components consume this one coherent snapshot.",
+      "followUp": "Move a calculation into a pure model when it gains an independent rule set or a non-React consumer."
+    },
+    {
+      "file": "src/features/home/hooks/useHomeViewModel.ts",
+      "name": "<callback>",
+      "rationale": "The callback selects and ranks a recommended learning item within the home view-model calculation.",
+      "followUp": "Give the ranking policy a named pure function and focused tests when recommendation rules next change."
+    },
+    {
+      "file": "src/features/profile/components/AccountManagementCard.tsx",
+      "name": "AccountManagementCard",
+      "rationale": "Composes account actions and their visible pending/error states; deletion and account-action hooks have already been extracted from this view.",
+      "followUp": "Extract a subview when another independent account action or state group is added; retain accessibility and partial-deletion behavior tests."
+    },
+    {
+      "file": "src/screens/AuthScreen.tsx",
+      "name": "AuthScreen",
+      "rationale": "Coordinates authentication mode, submission state, validation, and the auth screen's presentation components.",
+      "followUp": "Move form state and validation into a dedicated view-model when authentication modes or validation rules change."
+    },
+    {
+      "file": "src/screens/AuthScreenBody.tsx",
+      "name": "AuthScreenBody",
+      "rationale": "Renders the authentication form's related field, mode, verification, and error states as one screen body.",
+      "followUp": "Extract a focused field group when its layout or accessibility behavior changes independently."
+    },
+    {
+      "file": "src/screens/PracticeHubScreen.tsx",
+      "name": "PracticeHubScreen",
+      "rationale": "Composes practice entry points, curriculum progress, checkpoint availability, and session choices; exam option presentation is already a separate component.",
+      "followUp": "Extract curriculum progress or session selection when that flow receives an independent interaction or policy change."
+    },
+    {
+      "file": "src/state/useAppSession.ts",
+      "name": "useAppSession",
+      "rationale": "Maintains the app's session state machine, persistence restoration, and transition callbacks in one React adapter.",
+      "followUp": "Move transition rules into a pure application session model when new screen states or restoration rules are added."
+    }
+  ]
+}
