@@ -2,28 +2,22 @@ import {
   collection,
   deleteDoc,
   doc,
-  getDoc,
+  getDocFromServer,
   getDocs,
   increment,
   serverTimestamp,
   setDoc,
   writeBatch,
 } from "firebase/firestore";
+import { MeaningMatchQuestion } from "../domain/models/content";
+import { LearningItemProgress, UserData } from "../domain/models/user";
+import { RemoteUserDataResult } from "../domain/sync/remoteSync";
 import { db } from "./firebase";
-import { LearningItemProgress, UserData } from "../types/user";
-import { MeaningMatchQuestion } from "../types/content";
-import { normalizeUserData } from "./storage";
-import {
-  decideMergeAction,
-  RemoteStateUnknownError,
-  RemoteUserDataResult,
-} from "../domain/sync/remoteSync";
 
-import { withRetry } from "./errorReporter";
 import { logger } from "../utils/logger";
+import { withRetry } from "./errorReporter";
 
 export type { RemoteUserDataResult } from "../domain/sync/remoteSync";
-export { decideMergeAction, RemoteStateUnknownError } from "../domain/sync/remoteSync";
 
 /**
  * Firestore returns serverTimestamp() fields as Timestamp objects, not plain
@@ -72,7 +66,9 @@ function resolveServerDate(raw: unknown): string | undefined {
 export async function fetchUserDataResult(userId: string): Promise<RemoteUserDataResult> {
   try {
     return await withRetry(async () => {
-      const snap = await getDoc(doc(db, "users", userId));
+      // A cached snapshot can be stale or absent even though the server has
+      // progress. Never authorize a profile merge from an offline cache.
+      const snap = await getDocFromServer(doc(db, "users", userId));
       if (!snap.exists()) return { status: "absent" as const };
       const data = snap.data() as UserData & { lastKnownServerDate?: unknown };
       return {
@@ -85,7 +81,7 @@ export async function fetchUserDataResult(userId: string): Promise<RemoteUserDat
       };
     }, 2, 400);
   } catch (error) {
-    logger.warn("LingoRise: fetchUserDataResult error", error);
+    logger.warn("Lingterra: fetchUserDataResult error", error);
     return { status: "failed", error };
   }
 }
@@ -141,7 +137,7 @@ export async function deleteUserData(userId: string): Promise<void> {
       await deleteDoc(doc(db, "users", userId));
     }, 2);
   } catch (error) {
-    logger.warn("LingoRise: deleteUserData error", error);
+    logger.warn("Lingterra: deleteUserData error", error);
     throw error;
   }
 }
@@ -150,6 +146,9 @@ export async function deleteUserData(userId: string): Promise<void> {
 export async function syncUserData(userId: string, data: UserData): Promise<void> {
   try {
     await withRetry(async () => {
+      // An in-progress practice belongs to this device and profile. Do not
+      // write it into the account document during ordinary synchronization.
+      const { activeSession: _activeSession, lastCompletedWord: _lastCompletedWord, ...accountData } = data;
       // Every word gets stamped with the server's clock, not this device's,
       // so the next merge can resolve a tie without trusting either device's
       // idea of what time it is.
@@ -162,7 +161,7 @@ export async function syncUserData(userId: string, data: UserData): Promise<void
       await setDoc(
         doc(db, "users", userId),
         {
-          ...data,
+          ...accountData,
           learningProgress,
           userId,
           lastKnownServerDate: serverTimestamp(),
@@ -172,7 +171,7 @@ export async function syncUserData(userId: string, data: UserData): Promise<void
       );
     }, 3, 500);
   } catch (err) {
-    logger.warn("LingoRise: syncUserData failed after retries", err);
+    logger.warn("Lingterra: syncUserData failed after retries", err);
     throw err;
   }
 }
@@ -194,7 +193,7 @@ export async function syncUserProgress(userId: string, data: UserData): Promise<
       );
     }, 3, 500);
   } catch (err) {
-    logger.warn("LingoRise: syncUserProgress failed after retries", err);
+    logger.warn("Lingterra: syncUserProgress failed after retries", err);
     throw err;
   }
 }
@@ -229,31 +228,7 @@ export async function syncLearningItemProgress(
       updatedAt: serverTimestamp(),
     }, { merge: true });
   } catch (err) {
-    logger.warn("LingoRise: per-item progress sync failed", err);
+    logger.warn("Lingterra: per-item progress sync failed", err);
   }
 }
 
-/**
- * Merges local and remote user data upon login and persists the unified
- * record to Firestore.
- *
- * Throws `RemoteStateUnknownError` if the remote state could not be
- * determined (network/service failure) — callers must treat that as "keep
- * local state, try again later," never as authorization to push or persist
- * anything.
- */
-export async function mergeAndSyncUserData(userId: string, localData: UserData): Promise<UserData> {
-  const remoteResult = await fetchUserDataResult(userId);
-  const decision = decideMergeAction(remoteResult, localData);
-
-  if (decision.action === "unknown-remote-state") {
-    throw new RemoteStateUnknownError(decision.error);
-  }
-
-  const mergedData = decision.data;
-
-  await syncUserData(userId, mergedData);
-  await syncUserProgress(userId, mergedData);
-
-  return mergedData;
-}
