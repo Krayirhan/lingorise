@@ -97,6 +97,18 @@ jobs:
           echo "EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET=${{ vars.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET }}" >> .env
           echo "EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=${{ vars.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID }}" >> .env
           echo "EXPO_PUBLIC_FIREBASE_APP_ID=${{ vars.EXPO_PUBLIC_FIREBASE_APP_ID }}" >> .env
+      # The Google Services Gradle plugin (needed by @react-native-firebase)
+      # requires android/app/google-services.json. Like the .env values above
+      # it is a non-secret client config kept as a repository variable.
+      - name: Write google-services.json
+        env:
+          GOOGLE_SERVICES_JSON: ${{ vars.GOOGLE_SERVICES_JSON }}
+        run: |
+          if [ -z "$GOOGLE_SERVICES_JSON" ]; then
+            echo "::error::Repository variable GOOGLE_SERVICES_JSON is not set (contents of android/app/google-services.json)."
+            exit 1
+          fi
+          printf '%s' "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -128,6 +140,18 @@ jobs:
           echo "EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET=${{ vars.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET }}" >> .env
           echo "EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=${{ vars.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID }}" >> .env
           echo "EXPO_PUBLIC_FIREBASE_APP_ID=${{ vars.EXPO_PUBLIC_FIREBASE_APP_ID }}" >> .env
+      # The Google Services Gradle plugin (needed by @react-native-firebase)
+      # requires android/app/google-services.json. Like the .env values above
+      # it is a non-secret client config kept as a repository variable.
+      - name: Write google-services.json
+        env:
+          GOOGLE_SERVICES_JSON: ${{ vars.GOOGLE_SERVICES_JSON }}
+        run: |
+          if [ -z "$GOOGLE_SERVICES_JSON" ]; then
+            echo "::error::Repository variable GOOGLE_SERVICES_JSON is not set (contents of android/app/google-services.json)."
+            exit 1
+          fi
+          printf '%s' "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
