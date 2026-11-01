@@ -36,13 +36,13 @@ export function EditableAccountName({
           onChangeText={onNameInputChange}
           style={S.nameInput}
           autoFocus
-          accessibilityLabel={copy.profile?.nameFieldLabel || "İsim"}
+          accessibilityLabel={copy.profile.nameFieldLabel}
         />
         <Pressable
           onPress={onSave}
           style={S.saveNameBtn}
           accessibilityRole="button"
-          accessibilityLabel={copy.profile?.saveNameLabel || "Kaydet"}
+          accessibilityLabel={copy.profile.saveNameLabel}
         >
           <Ionicons name="checkmark" size={16} color={C.white} />
         </Pressable>
@@ -55,7 +55,7 @@ export function EditableAccountName({
         onPress={onStartEdit}
         style={S.namePressable}
         accessibilityRole="button"
-        accessibilityLabel={formatTemplate(copy.profile?.editNameLabel || "İsmi düzenle, mevcut isim: {name}", { name })}
+        accessibilityLabel={formatTemplate(copy.profile.editNameLabel, { name })}
       >
         <Text style={nameStyle}>{name}</Text>
         <Ionicons name="pencil-outline" size={14} color={C.muted} />

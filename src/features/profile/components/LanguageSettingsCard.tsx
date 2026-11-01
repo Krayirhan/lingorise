@@ -16,7 +16,7 @@ export function LanguageSettingsCard({ copy, locale, onLocaleChange }: Props) {
       isFirst
       icon="globe-outline"
       tint={C.successSoft}
-      title={copy.profile?.languageTitle || "Uygulama Dili"}
+      title={copy.profile.languageTitle}
       right={
         <View style={S.segment}>
           <Pressable

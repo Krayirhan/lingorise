@@ -70,7 +70,7 @@ export function AppNavigator({ userProgress, onAccountPress, deepLinkTarget, onD
       const started = session.startPractice(customQuestions, reverseMode);
       if (!started) {
         showToast({
-          message: copy.game?.noWordsLeftNotice || "Bu seviyede şu anda yeni kelime kalmadı.",
+          message: copy.game.noWordsLeftNotice,
           type: "attention",
           durationMs: 4000,
         });
@@ -83,7 +83,7 @@ export function AppNavigator({ userProgress, onAccountPress, deepLinkTarget, onD
     const started = session.startExam(userData.level);
     if (!started) {
       showToast({
-        message: copy.game?.noWordsLeftNotice || "Bu seviyede şu anda yeni kelime kalmadı.",
+        message: copy.game.noWordsLeftNotice,
         type: "attention",
         durationMs: 4000,
       });
@@ -119,8 +119,8 @@ export function AppNavigator({ userProgress, onAccountPress, deepLinkTarget, onD
     level: userData.level,
     streak: userData.streak,
     locale: userData.locale,
-    levelLabel: copy.home?.levelPrefix || "Seviye",
-    streakLabel: copy.home?.streakAccessibility || "günlük çalışma serisi",
+    levelLabel: copy.home.levelPrefix,
+    streakLabel: copy.home.streakAccessibility,
     onLevelPress: () => setLevelSwitcherOpen(true),
     onRefresh: userProgress.refresh,
   };

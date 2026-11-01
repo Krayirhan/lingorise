@@ -37,11 +37,11 @@ export function WordPrompt({
   const posLabel = formatPartOfSpeech(question.partOfSpeech, "tr");
   const isReversed = question.mode === "PICK_THE_WORD";
   const directionLabel = isReversed
-    ? copy.game?.modeLabelReversed || "TÜRKÇE → İNGİLİZCE"
-    : copy.game?.modeLabel || "İNGİLİZCE → TÜRKÇE";
+    ? copy.game.modeLabelReversed
+    : copy.game.modeLabel;
   const instructionText = isReversed
-    ? copy.game?.instructionReversed || "İngilizce kelimeyi bul."
-    : copy.game?.instruction || "Türkçe karşılığını bul.";
+    ? copy.game.instructionReversed
+    : copy.game.instruction;
 
   return (
     <View style={[S.card, isCompactScreen && S.cardCompact]}>
@@ -57,14 +57,14 @@ export function WordPrompt({
             style={S.hintBtn}
             onPress={onToggleHint}
             accessibilityRole="button"
-            accessibilityLabel={showHint ? (copy.game?.hintActive || "İpucu açık") : (copy.game?.hint || "İpucu")}
+            accessibilityLabel={showHint ? (copy.game.hintActive) : (copy.game.hint)}
             // The visible chip is ~18dp tall — well below platform touch-target
             // guidance (A11Y-QA-002 / GLOBAL-QA-025). hitSlop expands the
             // tappable area without enlarging the compact visual chip.
             hitSlop={{ top: 14, bottom: 14, left: 10, right: 10 }}
           >
             <Ionicons name="bulb-outline" size={13} color={showHint ? C.rewardText : C.muted} />
-            <Text style={[S.hintTxt, showHint && S.hintTxtAct]}>{showHint ? (copy.game?.hintActive || "İpucu açık") : (copy.game?.hint || "İpucu")}</Text>
+            <Text style={[S.hintTxt, showHint && S.hintTxtAct]}>{showHint ? (copy.game.hintActive) : (copy.game.hint)}</Text>
           </Pressable>
         )}
       </View>
@@ -90,7 +90,7 @@ export function WordPrompt({
             style={({ pressed }) => [S.audioBtn, isSpeaking && S.audioBtnAct, pressed && S.audioBtnPre]}
             onPress={onToggleSpeech}
             accessibilityRole="button"
-            accessibilityLabel={isSpeaking ? (copy.game?.playingAudio || "Seslendiriliyor...") : (copy.game?.listenTooltip || "Telaffuzu dinle")}
+            accessibilityLabel={isSpeaking ? (copy.game.playingAudio) : (copy.game.listenTooltip)}
           >
             <Ionicons name={isSpeaking ? "volume-high" : "volume-medium"} size={19} color={isSpeaking ? C.white : C.primary} />
           </Pressable>
@@ -100,14 +100,14 @@ export function WordPrompt({
       {audioError && (
         <View style={S.errBox}>
           <Ionicons name="volume-mute-outline" size={13} color={C.attentionText} />
-          <Text style={S.errTxt}>{copy.game?.audioErrorToast || "Ses servisine ulaşılamadı."}</Text>
+          <Text style={S.errTxt}>{copy.game.audioErrorToast}</Text>
         </View>
       )}
 
       {showHint && question.hint && (
         <View style={S.hintBox}>
           <Text style={S.hintBoxTxt}>{question.hint}</Text>
-          <Text style={S.hintPen}>({copy.game?.hintPenaltyNotice || "İpucu kullanıldığı için -2 XP"})</Text>
+          <Text style={S.hintPen}>({copy.game.hintPenaltyNotice})</Text>
         </View>
       )}
 

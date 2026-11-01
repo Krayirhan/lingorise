@@ -31,8 +31,8 @@ export function getBadgeItems(copy: Copy, unlockedBadges: string[]): BadgeItemDa
       return {
         id,
         icon: "trophy" as keyof typeof Ionicons.glyphMap,
-        name: (copy.home?.badgeLevelCompleteName || "{level} Tamamlandı").replace("{level}", level),
-        condition: (copy.home?.badgeConditionLevelComplete || "{level} seviyesini bitirdin").replace("{level}", level),
+        name: (copy.home.badgeLevelCompleteName).replace("{level}", level),
+        condition: (copy.home.badgeConditionLevelComplete).replace("{level}", level),
       };
     });
   return [...regular, ...levelBadges];

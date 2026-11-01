@@ -19,7 +19,7 @@ export function PracticeHeader({ copy, index, totalQuestions, isExamMode, onBack
     <View style={S.topNav}>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={copy.game?.backButton || "Ana sayfaya dön"}
+        accessibilityLabel={copy.game.backButton}
         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         style={({ pressed }) => [S.backBtn, pressed && S.backBtnPre]}
         onPress={onBack}
@@ -37,12 +37,12 @@ export function PracticeHeader({ copy, index, totalQuestions, isExamMode, onBack
         {isExamMode ? (
           <View style={S.revBadge}>
             <Ionicons name="school-outline" size={11} color={C.attentionText} style={S.icon} />
-            <Text style={S.revText}>{copy.game?.examModeBadge || "Sınav"} · {index + 1}/{totalQuestions}</Text>
+            <Text style={S.revText}>{copy.game.examModeBadge} · {index + 1}/{totalQuestions}</Text>
           </View>
         ) : isSingle ? (
           <View style={S.qBadge}>
             <Ionicons name="play-circle-outline" size={11} color={C.primary} style={S.icon} />
-            <Text style={S.qText}>{copy.game?.quickPractice || "Hızlı Pratik"}</Text>
+            <Text style={S.qText}>{copy.game.quickPractice}</Text>
           </View>
         ) : (
           <View style={S.cntBadge}>

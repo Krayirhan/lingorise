@@ -10,7 +10,7 @@ export function BadgeItem({ badge, unlocked, copy }: { badge: BadgeItemData; unl
     <View
       style={S.badgeItem}
       accessibilityRole="text"
-      accessibilityLabel={`${badge.name}, ${badge.condition}, ${unlocked ? (copy.home?.badgeStatusUnlocked || "Kazandın") : (copy.home?.badgeStatusLocked || "Kilitli")}`}
+      accessibilityLabel={`${badge.name}, ${badge.condition}, ${unlocked ? (copy.home.badgeStatusUnlocked) : (copy.home.badgeStatusLocked)}`}
     >
       <View style={[S.medallion, unlocked ? S.medallionUnlocked : S.medallionLocked]}>
         <View style={[S.innerRing, unlocked ? S.innerRingUnlocked : S.innerRingLocked]} />
@@ -23,7 +23,7 @@ export function BadgeItem({ badge, unlocked, copy }: { badge: BadgeItemData; unl
       </View>
       <Text style={S.badgeItemName} numberOfLines={2}>{badge.name}</Text>
       <Text style={unlocked ? S.badgeUnlockedStatus : S.badgeLockedStatus}>
-        {unlocked ? (copy.home?.badgeStatusUnlocked || "Kazandın") : (copy.home?.badgeStatusLocked || "Kilitli")}
+        {unlocked ? (copy.home.badgeStatusUnlocked) : (copy.home.badgeStatusLocked)}
       </Text>
       <Text style={S.badgeCondition} numberOfLines={2}>{badge.condition}</Text>
     </View>

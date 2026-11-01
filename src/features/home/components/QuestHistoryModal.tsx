@@ -44,14 +44,14 @@ export function QuestHistoryModal({ copy, locale, visible, questHistory, onClose
         <View style={S.sheet}>
           <View style={S.header}>
             <View style={S.headerCopy}>
-              <Text style={S.title}>{copy.home?.questHistoryTitle || "Görev Geçmişi"}</Text>
+              <Text style={S.title}>{copy.home.questHistoryTitle}</Text>
               <Text style={S.subtitle}>
-                {copy.home?.questHistorySubtitle || "Tamamladığın günlük görevlerin kaydı."}
+                {copy.home.questHistorySubtitle}
               </Text>
             </View>
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={copy.home?.wordDetailClose || "Kapat"}
+              accessibilityLabel={copy.home.wordDetailClose}
               style={S.closeBtn}
               onPress={onClose}
             >
@@ -63,8 +63,7 @@ export function QuestHistoryModal({ copy, locale, visible, questHistory, onClose
             <View style={S.emptyBox}>
               <Ionicons name="calendar-outline" size={26} color={C.faint} />
               <Text style={S.emptyText}>
-                {copy.home?.questHistoryEmpty ||
-                  "Henüz kayıt yok. Bugünün görevlerini tamamladığında burada görünecek."}
+                {copy.home.questHistoryEmpty}
               </Text>
             </View>
           ) : (
@@ -76,7 +75,7 @@ export function QuestHistoryModal({ copy, locale, visible, questHistory, onClose
                   </View>
                   <Text style={S.rowDate}>{formatDate(day.date, locale)}</Text>
                   <Text style={S.rowCount}>
-                    {(copy.home?.questHistoryCount || "{count} görev").replace("{count}", String(day.count))}
+                    {(copy.home.questHistoryCount).replace("{count}", String(day.count))}
                   </Text>
                 </View>
               ))}

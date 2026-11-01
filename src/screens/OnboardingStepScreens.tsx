@@ -10,7 +10,7 @@ import { LevelStep } from "../features/onboarding/components/LevelStep";
 import { ReadyStep } from "../features/onboarding/components/ReadyStep";
 
 function StepCounter({ copy, step }: { copy: Copy; step: number }) {
-  return <Text style={S.step} accessibilityLabel={`${copy.onboarding?.stepLabel || "Adım"} ${step} / 4`}>{step} / 4</Text>;
+  return <Text style={S.step} accessibilityLabel={`${copy.onboarding.stepLabel} ${step} / 4`}>{step} / 4</Text>;
 }
 
 function BackButton({ label, onPress }: { label: string; onPress: () => void }) {

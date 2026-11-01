@@ -24,13 +24,13 @@ export function AuthScreenBody(props: Props) {
   return (
             success ? (
               <AuthSuccessPanel
-                title={copy.auth?.successTitle || "Profilin hazırlandı! 🌱"}
-                subtitle={copy.auth?.successSubtitle || "Lingterra'ya hoş geldin"}
+                title={copy.auth.successTitle}
+                subtitle={copy.auth.successSubtitle}
               />
             ) : resetSent ? (
               <AuthResetSentPanel
-                title={copy.auth?.resetEmailSentSuccess || "Sıfırlama bağlantısı gönderildi ✉️"}
-                subtitle={copy.auth?.forgotPasswordSubtitle || "E-postanı kontrol ederek yeni şifreni belirleyebilirsin."}
+                title={copy.auth.resetEmailSentSuccess}
+                subtitle={copy.auth.forgotPasswordSubtitle}
                 backToLoginLabel="Giriş ekranına dön"
                 onBackToLogin={() => {
                   setResetSent(false);
@@ -42,30 +42,30 @@ export function AuthScreenBody(props: Props) {
               <View style={S.form}>
                 {mode === "register" && (
                   <AuthTextField
-                    label={copy.auth?.nameLabel || "Adın"}
+                    label={copy.auth.nameLabel}
                     icon="person-outline"
                     value={name}
                     onChangeText={(txt) => {
                       setName(txt);
                       if (errorField === "name") setError("");
                     }}
-                    placeholder={copy.auth?.namePlaceholder || "Örn. Can"}
-                    accessibilityLabel={copy.auth?.nameLabel || "Adın"}
+                    placeholder={copy.auth.namePlaceholder}
+                    accessibilityLabel={copy.auth.nameLabel}
                     hasError={errorField === "name"}
                     autoCapitalize="words"
                   />
                 )}
 
                 <AuthTextField
-                  label={copy.auth?.emailLabel || "E-posta"}
+                  label={copy.auth.emailLabel}
                   icon="mail-outline"
                   value={email}
                   onChangeText={(txt) => {
                     setEmail(txt);
                     if (errorField === "email") setError("");
                   }}
-                  placeholder={copy.auth?.emailPlaceholder || "ornek@email.com"}
-                  accessibilityLabel={copy.auth?.emailLabel || "E-posta"}
+                  placeholder={copy.auth.emailPlaceholder}
+                  accessibilityLabel={copy.auth.emailLabel}
                   hasError={errorField === "email"}
                   autoCapitalize="none"
                   keyboardType="email-address"
@@ -73,18 +73,18 @@ export function AuthScreenBody(props: Props) {
 
                 {mode !== "forgot" && (
                   <AuthTextField
-                    label={copy.auth?.passwordLabel || "Şifre"}
+                    label={copy.auth.passwordLabel}
                     icon="lock-closed-outline"
                     value={password}
                     onChangeText={(txt) => {
                       setPassword(txt);
                       if (errorField === "password") setError("");
                     }}
-                    placeholder={copy.auth?.passwordPlaceholder || "••••••••"}
-                    accessibilityLabel={copy.auth?.passwordLabel || "Şifre"}
+                    placeholder={copy.auth.passwordPlaceholder}
+                    accessibilityLabel={copy.auth.passwordLabel}
                     hasError={errorField === "password"}
                     secureTextEntry={!showPassword}
-                    hintText={copy.auth?.passwordHint || "En az 8 karakter kullan."}
+                    hintText={copy.auth.passwordHint}
                     labelAccessory={
                       mode === "login" ? (
                         <Pressable
@@ -94,7 +94,7 @@ export function AuthScreenBody(props: Props) {
                             setErrorField(null);
                           }}
                         >
-                          <Text style={S.forgotLink}>{copy.auth?.forgotPasswordLink || "Şifremi unuttum"}</Text>
+                          <Text style={S.forgotLink}>{copy.auth.forgotPasswordLink}</Text>
                         </Pressable>
                       ) : undefined
                     }
@@ -102,8 +102,8 @@ export function AuthScreenBody(props: Props) {
                       <PasswordVisibilityToggle
                         visible={showPassword}
                         onToggle={() => setShowPassword(!showPassword)}
-                        showLabel={copy.auth?.showPassword || "Şifreyi göster"}
-                        hideLabel={copy.auth?.hidePassword || "Şifreyi gizle"}
+                        showLabel={copy.auth.showPassword}
+                        hideLabel={copy.auth.hidePassword}
                       />
                     }
                   />
@@ -128,18 +128,17 @@ export function AuthScreenBody(props: Props) {
                   ) : (
                     <Text style={S.primaryBtnTxt}>
                       {mode === "register"
-                        ? copy.auth?.submitRegister || "Hesabımı oluştur →"
+                        ? copy.auth.submitRegister
                         : mode === "login"
-                          ? copy.auth?.submitLogin || "Giriş yap →"
-                          : copy.auth?.sendResetEmailBtn || "Sıfırlama Bağlantısı Gönder →"}
+                          ? copy.auth.submitLogin
+                          : copy.auth.sendResetEmailBtn}
                     </Text>
                   )}
                 </Pressable>
 
                 {mode === "register" && (
                   <Text style={S.termsText}>
-                    {copy.auth?.termsNotice ||
-                      "Kayıt olarak Kullanım Koşulları ve Gizlilik Politikası’nı kabul etmiş olursun."}
+                    {copy.auth.termsNotice}
                   </Text>
                 )}
 
@@ -157,15 +156,15 @@ export function AuthScreenBody(props: Props) {
                 >
                   <Text style={S.switchRegular}>
                     {mode === "register"
-                      ? copy.auth?.switchHasAccount || "Zaten hesabın var mı? "
+                      ? copy.auth.switchHasAccount
                       : mode === "login"
-                        ? copy.auth?.switchNoAccount || "Hesabın yok mu? "
+                        ? copy.auth.switchNoAccount
                         : "Giriş ekranına dönmek için "}
                     <Text style={S.switchHighlight}>
                       {mode === "register"
-                        ? copy.auth?.switchHasAccountLink || "Giriş yap"
+                        ? copy.auth.switchHasAccountLink
                         : mode === "login"
-                          ? copy.auth?.switchNoAccountLink || "Kayıt ol"
+                          ? copy.auth.switchNoAccountLink
                           : "Giriş yap"}
                     </Text>
                   </Text>
@@ -174,14 +173,14 @@ export function AuthScreenBody(props: Props) {
                 {onContinueAsGuest && (
                   <Pressable
                     accessibilityRole="button"
-                    accessibilityLabel={copy.auth?.continueAsGuest || "Hesap açmadan devam et"}
+                    accessibilityLabel={copy.auth.continueAsGuest}
                     style={S.guestBtn}
                     onPress={async () => {
                       await enableGuestMode();
                       onContinueAsGuest();
                     }}
                   >
-                    <Text style={S.guestTxt}>{copy.auth?.continueAsGuest || "Şimdilik hesap açmadan devam et"}</Text>
+                    <Text style={S.guestTxt}>{copy.auth.continueAsGuest}</Text>
                   </Pressable>
                 )}
               </View>

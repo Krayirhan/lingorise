@@ -12,9 +12,9 @@ export function ProgressAnalyticsCard({ copy, accuracy, answered, streak }: {
   copy: Copy; accuracy: number; answered: number; streak: number;
 }) {
   const tiles: { id: string; icon: keyof typeof Ionicons.glyphMap; tint: string; value: string; label: string }[] = [
-    { id: "accuracy", icon: "locate-outline", tint: C.successSoft, value: answered ? `%${accuracy}` : "—", label: copy.progress?.accuracyLabel || "Doğruluk" },
-    { id: "answers", icon: "chatbubble-outline", tint: C.attentionSoft, value: String(answered), label: copy.progress?.answersLabel || "Toplam cevap" },
-    { id: "streak", icon: "flame-outline", tint: C.rewardSoft, value: String(streak), label: copy.progress?.dayStreakLabel || "Gün seri" },
+    { id: "accuracy", icon: "locate-outline", tint: C.successSoft, value: answered ? `%${accuracy}` : "—", label: copy.progress.accuracyLabel },
+    { id: "answers", icon: "chatbubble-outline", tint: C.attentionSoft, value: String(answered), label: copy.progress.answersLabel },
+    { id: "streak", icon: "flame-outline", tint: C.rewardSoft, value: String(streak), label: copy.progress.dayStreakLabel },
   ];
 
   return (

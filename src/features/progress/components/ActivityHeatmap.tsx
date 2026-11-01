@@ -19,16 +19,16 @@ const SHADES: Record<HeatmapDay["intensity"], string> = {
 
 /** Twelve weeks of practice as a calendar grid, one column per week. */
 export function ActivityHeatmap({ copy, weeks }: Props) {
-  const months = (copy.progress?.monthShort || "").split("|");
-  const weekdays = (copy.progress?.weekdayInitials || "").split("|");
+  const months = (copy.progress.monthShort).split("|");
+  const weekdays = (copy.progress.weekdayInitials).split("|");
   const thisWeek = weeks[weeks.length - 1]?.days.filter((day) => day.intensity > 0).length ?? 0;
   const activeDays = weeks.flatMap((week) => week.days).filter((day) => day.intensity > 0).length;
   return (
     <View style={S.section}>
       <View style={S.header}>
-        <Text accessibilityRole="header" style={S.title}>{copy.progress?.activityTitle || "Son 12 hafta"}</Text>
+        <Text accessibilityRole="header" style={S.title}>{copy.progress.activityTitle}</Text>
         <Text style={S.caption}>
-          {formatTemplate(copy.progress?.activityCaption || "Bu hafta {count} gün pratik yaptın", { count: thisWeek })}
+          {formatTemplate(copy.progress.activityCaption, { count: thisWeek })}
         </Text>
       </View>
       <View style={S.legend} accessibilityLabel={`${copy.progress.activityLess} – ${copy.progress.activityMore}`}>
@@ -41,7 +41,7 @@ export function ActivityHeatmap({ copy, weeks }: Props) {
 
       <View
         accessible
-        accessibilityLabel={formatTemplate(copy.progress?.activityAccessibility || "{count}", { count: activeDays })}
+        accessibilityLabel={formatTemplate(copy.progress.activityAccessibility, { count: activeDays })}
         style={S.body}
       >
         <View style={S.weekdayColumn}>

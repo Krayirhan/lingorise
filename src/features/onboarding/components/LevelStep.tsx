@@ -17,8 +17,8 @@ interface Props {
 
 export function LevelStep({ copy, level, onLevel, onComplete }: Props) {
   const startButtonLabel = level
-    ? `${level} · ${copy.onboarding?.start || "Hemen Başla"}`
-    : (copy.onboarding?.chooseLevel || "Seviye seç");
+    ? `${level} · ${copy.onboarding.start}`
+    : (copy.onboarding.chooseLevel);
 
   return (
     <View style={S.container}>
@@ -28,9 +28,9 @@ export function LevelStep({ copy, level, onLevel, onComplete }: Props) {
         <Image source={mascot} style={S.mascot} resizeMode="contain" accessible={false} importantForAccessibility="no" />
       </View>
 
-      <Text style={S.eyebrow}>{copy.onboarding?.journey || "İNGİLİZCE YOLCULUĞUN"}</Text>
-      <Text style={S.hero}>{copy.onboarding?.levelTitle || "Başlangıç noktanı bul."}</Text>
-      <Text style={S.subtitle}>{copy.onboarding?.levelBody || "Sana uygun seviyeyi seç. İstediğin zaman değiştirebilirsin."}</Text>
+      <Text style={S.eyebrow}>{copy.onboarding.journey}</Text>
+      <Text style={S.hero}>{copy.onboarding.levelTitle}</Text>
+      <Text style={S.subtitle}>{copy.onboarding.levelBody}</Text>
 
       <View style={S.levels}>
         {levels.map((item) => (

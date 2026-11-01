@@ -21,7 +21,7 @@ export function LevelRuler({ copy, level, levelProgressList }: Props) {
   return (
     <View style={S.section}>
       <View style={S.header}>
-        <Text accessibilityRole="header" style={S.title}>{copy.progress?.levelRulerTitle || "Seviye cetveli"}</Text>
+        <Text accessibilityRole="header" style={S.title}>{copy.progress.levelRulerTitle}</Text>
         <Text style={S.caption}>{level} · {percentLabel}</Text>
       </View>
 
@@ -36,7 +36,7 @@ export function LevelRuler({ copy, level, levelProgressList }: Props) {
               accessible
               accessibilityLabel={isReady
                 ? `${item.level}, ${item.seen} / ${item.total}`
-                : `${item.level}, ${copy.progress?.levelComingSoon || "Yakında"}`}
+                : `${item.level}, ${copy.progress.levelComingSoon}`}
               style={S.segmentWrap}
             >
               <View style={[S.segment, !isReady && S.segmentSoon, isCurrent && S.segmentCurrent]}>

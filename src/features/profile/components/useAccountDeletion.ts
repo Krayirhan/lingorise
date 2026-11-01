@@ -8,8 +8,7 @@ export function useAccountDeletion({ copy, deleteAccount, onLoggedOut, setBusy }
 }) {
   const handleDeleteAccount = () => {
     const confirmMsg =
-      copy.profile?.deleteAccountConfirm ||
-      "Hesabını ve buluttaki tüm ilerlemeni kalıcı olarak silmek istediğinden emin misin? Bu işlem geri alınamaz.";
+      copy.profile.deleteAccountConfirm;
 
     if (Platform.OS === "web") {
       if (window.confirm(confirmMsg)) {

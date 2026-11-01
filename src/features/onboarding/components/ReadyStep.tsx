@@ -24,14 +24,13 @@ export function ReadyStep({ copy, notificationsEnabled = true, onStartGuest, onC
       </View>
 
       <Text style={S.eyebrow}>
-        {copy.onboarding?.readyKicker || "BAHÇEN HAZIR"}
+        {copy.onboarding.readyKicker}
       </Text>
       <Text style={S.hero}>
-        {copy.onboarding?.readyTitle || "Hesap açmadan hemen başlayabilirsin."}
+        {copy.onboarding.readyTitle}
       </Text>
       <Text style={S.subtitle}>
-        {copy.onboarding?.readyBody ||
-          "İlerlemen cihazında güvenle tutulur. İstediğin zaman profilinden hesap oluşturup buluta yedekleyebilirsin."}
+        {copy.onboarding.readyBody}
       </Text>
 
       {/* Reminder Toggle Card */}
@@ -41,11 +40,10 @@ export function ReadyStep({ copy, notificationsEnabled = true, onStartGuest, onC
         </View>
         <View style={S.reminderCopy}>
           <Text style={S.reminderTitle}>
-            {copy.onboarding?.remindersTitle || "Bahçeni yeşil tutmak ister misin?"}
+            {copy.onboarding.remindersTitle}
           </Text>
           <Text style={S.reminderBody}>
-            {copy.onboarding?.remindersBody ||
-              "Günde 1 nazik hatırlatıcı alarak serini koru."}
+            {copy.onboarding.remindersBody}
           </Text>
         </View>
         <Switch
@@ -55,23 +53,23 @@ export function ReadyStep({ copy, notificationsEnabled = true, onStartGuest, onC
           thumbColor={C.white}
           accessibilityRole="switch"
           accessibilityState={{ checked: reminders }}
-          accessibilityLabel={copy.onboarding?.remindersTitle || "Bahçeni yeşil tutmak ister misin?"}
+          accessibilityLabel={copy.onboarding.remindersTitle}
         />
       </View>
 
       <View style={S.bottom}>
         <PrimaryButton
-          label={copy.onboarding?.startAsGuest || "Bahçeme Başla (Misafir Olarak) →"}
+          label={copy.onboarding.startAsGuest}
           onPress={() => onStartGuest(reminders)}
         />
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={copy.onboarding?.createAccountNow || "Hesap Oluştur ve Başla"}
+          accessibilityLabel={copy.onboarding.createAccountNow}
           style={S.accountBtn}
           onPress={() => onCreateAccount(reminders)}
         >
           <Text style={S.accountBtnTxt}>
-            {copy.onboarding?.createAccountNow || "Hesap Oluştur ve Başla"}
+            {copy.onboarding.createAccountNow}
           </Text>
         </Pressable>
       </View>

@@ -16,7 +16,7 @@ const TOPIC_COPY_KEY: Record<string, TopicCopyKey> = {
 // Raw topic keys (e.g. "core_verbs") come straight from content data and
 // must never be shown to users as-is; always resolve through this map.
 export function getTopicLabel(copy: Copy, topic?: string): string {
-  if (!topic) return copy.home?.partOfSpeechNoun || "Kelime";
+  if (!topic) return copy.home.partOfSpeechNoun;
 
   const copyKey = TOPIC_COPY_KEY[topic];
   const label = copyKey ? copy.home?.[copyKey] : undefined;

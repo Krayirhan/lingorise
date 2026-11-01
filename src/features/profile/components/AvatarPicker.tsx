@@ -24,7 +24,7 @@ export function AvatarPicker({
 }) {
   return (
     <View style={S.avatarRow}>
-      <Text style={S.avatarLabel}>{copy.profile?.avatarPickerLabel || "Avatar"}</Text>
+      <Text style={S.avatarLabel}>{copy.profile.avatarPickerLabel}</Text>
       <View style={S.avatarList}>
         {AVATARS.map((av) => (
           <Pressable

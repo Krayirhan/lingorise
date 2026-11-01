@@ -36,11 +36,11 @@ export function AnswerList({
           isCorrectOption={item === correctAnswer}
           disabled={submitted || isChecking}
           reduceMotion={isMotionReduced}
-          selectedSuffix={copy.game?.optionSelectedSuffix || ", seçildi"}
-          correctSuffix={copy.game?.optionCorrectSuffix || ", doğru cevap"}
-          wrongSuffix={copy.game?.optionWrongSuffix || ", yanlış seçim"}
-          revealedSuffix={copy.game?.optionRevealedSuffix || ", doğru karşılık bu seçenekti"}
-          accessibilityHint={copy.game?.optionA11yHint || "Cevap seçeneği"}
+          selectedSuffix={copy.game.optionSelectedSuffix}
+          correctSuffix={copy.game.optionCorrectSuffix}
+          wrongSuffix={copy.game.optionWrongSuffix}
+          revealedSuffix={copy.game.optionRevealedSuffix}
+          accessibilityHint={copy.game.optionA11yHint}
           onPress={() => {
             if (!submitted && !isChecking) {
               onPick(item);

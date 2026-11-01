@@ -39,7 +39,7 @@ export function ProgressScreen({
   }, [onBack]);
 
   const { answered, accuracy } = buildProgressAnalytics(practiceHistory);
-  const collected = (copy.progress?.collectedSubtitle || "{seen} / {total} kelime toplandı")
+  const collected = (copy.progress.collectedSubtitle)
     .replace("{seen}", String(seenWordCount))
     .replace("{total}", String(levelWordCount));
 
@@ -47,8 +47,8 @@ export function ProgressScreen({
     <View style={S.root}>
       <ScrollView contentContainerStyle={S.content} showsVerticalScrollIndicator={false}>
         <View style={S.titleRow}>
-          <Text style={S.pageEyebrow}>{copy.progress?.pageEyebrow || "İLERLEME"}</Text>
-          <Text style={S.pageTitle}>{copy.progress?.headerTitle || "Bahçe Gelişimi"}</Text>
+          <Text style={S.pageEyebrow}>{copy.progress.pageEyebrow}</Text>
+          <Text style={S.pageTitle}>{copy.progress.headerTitle}</Text>
           <Text style={S.pageSubtitle}>{collected}</Text>
         </View>
 
@@ -68,7 +68,7 @@ export function ProgressScreen({
         <BadgesCard
           copy={copy}
           unlockedBadges={unlockedBadges}
-          title={copy.progress?.badgeCollectionTitle || "Rozet Koleksiyonu"}
+          title={copy.progress.badgeCollectionTitle}
         />
       </ScrollView>
 

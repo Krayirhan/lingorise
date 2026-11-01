@@ -21,26 +21,26 @@ export function GoalStep({ copy, selectedGoal = 5, onSelectGoal, onNext, onSkip 
   const goals = [
     {
       minutes: 2,
-      title: copy.onboarding?.goal2minTitle || "Küçük Bir Işık",
-      desc: copy.onboarding?.goal2minText || "Günde 2 dakika · +20 XP",
+      title: copy.onboarding.goal2minTitle,
+      desc: copy.onboarding.goal2minText,
       icon: "sunny-outline" as const,
     },
     {
       minutes: 5,
-      title: copy.onboarding?.goal5minTitle || "Düzenli Bir Filiz",
-      desc: copy.onboarding?.goal5minText || "Günde 5 dakika · +40 XP",
+      title: copy.onboarding.goal5minTitle,
+      desc: copy.onboarding.goal5minText,
       icon: "leaf-outline" as const,
     },
     {
       minutes: 10,
-      title: copy.onboarding?.goal10minTitle || "Güçlü Bir Çiçeklenme",
-      desc: copy.onboarding?.goal10minText || "Günde 10 dakika · +80 XP",
+      title: copy.onboarding.goal10minTitle,
+      desc: copy.onboarding.goal10minText,
       icon: "flower-outline" as const,
     },
     {
       minutes: 15,
-      title: copy.onboarding?.goal15minTitle || "Ulu Bir Bahçe",
-      desc: copy.onboarding?.goal15minText || "Günde 15 dakika · +120 XP",
+      title: copy.onboarding.goal15minTitle,
+      desc: copy.onboarding.goal15minText,
       icon: "earth-outline" as const,
     },
   ];
@@ -59,13 +59,13 @@ export function GoalStep({ copy, selectedGoal = 5, onSelectGoal, onNext, onSkip 
       </View>
 
       <Text style={S.eyebrow}>
-        {copy.onboarding?.goalsKicker || "SANA ÖZEL"}
+        {copy.onboarding.goalsKicker}
       </Text>
       <Text style={S.hero}>
-        {copy.onboarding?.dailyGoalTitle || "Günlük hedefini belirle"}
+        {copy.onboarding.dailyGoalTitle}
       </Text>
       <Text style={S.subtitle}>
-        {copy.onboarding?.dailyGoalSubtitle || "Küçük adımlarla kalıcı alışkanlık oluştur."}
+        {copy.onboarding.dailyGoalSubtitle}
       </Text>
 
       <View style={S.goalList}>
@@ -103,16 +103,16 @@ export function GoalStep({ copy, selectedGoal = 5, onSelectGoal, onNext, onSkip 
 
       <View style={S.bottom}>
         <PrimaryButton
-          label={copy.onboarding?.chooseLevel || "Seviyemi seç"}
+          label={copy.onboarding.chooseLevel}
           onPress={onNext}
         />
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={copy.onboarding?.skip || "Şimdilik geç"}
+          accessibilityLabel={copy.onboarding.skip}
           hitSlop={{ top: 8, bottom: 8, left: 12, right: 12 }}
           onPress={onSkip}
         >
-          <Text style={S.skip}>{copy.onboarding?.skip || "Şimdilik geç"}</Text>
+          <Text style={S.skip}>{copy.onboarding.skip}</Text>
         </Pressable>
       </View>
     </View>

@@ -20,7 +20,7 @@ interface Props {
 }
 
 export function FeedbackCard({ copy, question, isCorrect, correctAnswer, xpEarned, isLastQuestion = false, onNext, onRetry, nextDisabled = false, children }: Props) {
-  const nextLabel = isLastQuestion ? (copy.game?.finishSession || "Oturumu Tamamla") : (copy.game?.nextQuestion || "Devam Et →");
+  const nextLabel = isLastQuestion ? (copy.game.finishSession) : (copy.game.nextQuestion);
 
   return (
     <View style={[S.card, isCorrect ? S.cardCor : S.cardWro]}>
@@ -30,10 +30,10 @@ export function FeedbackCard({ copy, question, isCorrect, correctAnswer, xpEarne
         </View>
         <View style={S.copy}>
           <Text style={[S.title, isCorrect ? S.titleCor : S.titleWro]}>
-            {isCorrect ? (copy.game?.correctTitle || "Harika! Doğru cevap.") : (copy.game?.wrongTitle || "Tam olarak değil, ama öğreniyorsun!")}
+            {isCorrect ? (copy.game.correctTitle) : (copy.game.wrongTitle)}
           </Text>
           <Text style={S.sub}>
-            {isCorrect ? `+${xpEarned} XP kazanıldı · Harika ilerliyorsun!` : `${copy.game?.revealedAnswer || "Doğru karşılık:"} "${correctAnswer}"`}
+            {isCorrect ? `+${xpEarned} XP kazanıldı · Harika ilerliyorsun!` : `${copy.game.revealedAnswer} "${correctAnswer}"`}
           </Text>
         </View>
       </View>
@@ -42,7 +42,7 @@ export function FeedbackCard({ copy, question, isCorrect, correctAnswer, xpEarne
         <View style={S.learningBox}>
           {question.exampleSentence && (
             <View style={S.sentenceWrap}>
-              <Text style={S.exampleTitle}>{copy.game?.exampleSentence || "Örnek Cümle"}</Text>
+              <Text style={S.exampleTitle}>{copy.game.exampleSentence}</Text>
               <Text style={S.exampleEn}>{question.exampleSentence}</Text>
               {question.exampleTranslation && <Text style={S.exampleTr}>{question.exampleTranslation}</Text>}
             </View>
@@ -57,7 +57,7 @@ export function FeedbackCard({ copy, question, isCorrect, correctAnswer, xpEarne
       <View style={S.btnRow}>
         {!isCorrect && onRetry && (
           <View style={S.btnFlex}>
-            <PrimaryButton label={copy.game?.retry || "Tekrar Dene"} variant="secondary" onPress={onRetry} />
+            <PrimaryButton label={copy.game.retry} variant="secondary" onPress={onRetry} />
           </View>
         )}
         <View style={S.btnFlex}>

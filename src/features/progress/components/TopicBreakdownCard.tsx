@@ -21,7 +21,7 @@ export function TopicBreakdownCard({ copy, topicBreakdown }: Props) {
 
   return (
     <View style={S.section}>
-      <Text accessibilityRole="header" style={S.title}>{copy.progress?.topicsHeader || "Konu Yetkinliği"}</Text>
+      <Text accessibilityRole="header" style={S.title}>{copy.progress.topicsHeader}</Text>
 
       <View style={S.list}>
         {visibleTopics.map((item, index) => {
@@ -46,7 +46,7 @@ export function TopicBreakdownCard({ copy, topicBreakdown }: Props) {
                 <Text numberOfLines={1} style={[S.topicName, isLocked && S.lockedText]}>{item.topic}</Text>
                 {isCurrent && (
                   <View style={S.currentTag}>
-                    <Text style={S.currentTagText}>{copy.progress?.currentTopicTag || "Şu an"}</Text>
+                    <Text style={S.currentTagText}>{copy.progress.currentTopicTag}</Text>
                   </View>
                 )}
                 <Text style={[S.count, item.state === "assessment_due" && S.countDue]}>{count}</Text>

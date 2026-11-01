@@ -7,7 +7,7 @@ import { HomeMascot } from "./HomeMascot";
 export function HomeGreeting({ copy, viewModel }: {
   copy: Copy; viewModel: HomeViewModel; isNewLearner?: boolean;
 }) {
-  const unitLabel = (copy.home?.unitLabel || "Bölüm {current}/{total}")
+  const unitLabel = (copy.home.unitLabel)
     .replace("{current}", String(viewModel.unitNumber))
     .replace("/{total}", "")
     .toUpperCase();

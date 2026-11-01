@@ -58,8 +58,7 @@ export function useAccountManagementActions({ copy, displayName, avatarId, onDis
       setBusy(true);
       await sendVerificationEmail();
       setNotice(
-        copy.profile?.verificationSent ||
-        "Doğrulama bağlantısı e-posta adresine gönderildi."
+        copy.profile.verificationSent
       );
       setTimeout(() => setNotice(null), 4000);
     } catch (e) {
@@ -75,8 +74,7 @@ export function useAccountManagementActions({ copy, displayName, avatarId, onDis
       setBusy(true);
       await resetPassword(user.email);
       setNotice(
-        copy.auth?.resetEmailSentSuccess ||
-        "Şifre sıfırlama bağlantısı e-posta adresine gönderildi."
+        copy.auth.resetEmailSentSuccess
       );
       setTimeout(() => setNotice(null), 4000);
     } catch (e) {

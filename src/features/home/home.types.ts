@@ -63,7 +63,6 @@ export interface HomeViewModel {
   greetingEyebrow: string;
   greetingTitle: string;
   greetingSubtitle: string;
-  practiceRecommendation: string;
   skillProgress: SkillProgress[];
   recommendedWord: RecommendedWordData;
   /** Monday-to-Sunday practice days for the streak strip. */
