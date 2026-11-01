@@ -64,7 +64,6 @@ function emit(event: StoredEvent): void {
   if (buffer.length > RING_BUFFER_SIZE) buffer = buffer.slice(-RING_BUFFER_SIZE);
   void persist();
   if (typeof console !== "undefined" && (globalThis as { __DEV__?: boolean }).__DEV__) {
-    // eslint-disable-next-line no-console
     console.log(`[telemetry] ${event.name}`, event.params);
   }
 }

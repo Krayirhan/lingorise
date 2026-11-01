@@ -37,7 +37,7 @@ export function AccountManagementCard({
   streak,
   onChangeLevel,
 }: Props) {
-  const { user, isGuest, busy, notice, editingName, nameInput, setNameInput, setEditingName,
+  const { user, busy, notice, editingName, nameInput, setNameInput, setEditingName,
     handleSaveName, handleLogout, handleSendVerification, handleResetPassword, handleDeleteAccount, currentAvatarIcon } =
     useAccountManagementActions({ copy, displayName, avatarId, onDisplayNameChange, onLoggedOut });
 

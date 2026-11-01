@@ -1,4 +1,3 @@
-import { colors } from "./colors";
 
 export const iconSizes = {
   xs: 12,

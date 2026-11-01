@@ -5,7 +5,7 @@ import { CatalogueAuditContext } from "../types";
 
 
 import { FindingReporter } from "../types";
-export function validatePublication(question: MeaningMatchQuestion, flagFinding: FindingReporter, context?: CatalogueAuditContext, informational: string[] = []) {
+export function validatePublication(question: MeaningMatchQuestion, flagFinding: FindingReporter, context?: CatalogueAuditContext, _informational: string[] = []) {
   // 21. source
   if (!question.source || typeof question.source !== "string" || question.source.trim().length === 0) {
     flagFinding("P0", "source", "source provenance missing or empty");

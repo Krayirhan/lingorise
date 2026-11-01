@@ -1,5 +1,5 @@
 import { StyleSheet } from "react-native";
-import { C, spacing } from "../../theme/colors";
+import { C } from "../../theme/colors";
 import { fonts, typeScale } from "../../theme/typography";
 
 export const homeStyles = StyleSheet.create({

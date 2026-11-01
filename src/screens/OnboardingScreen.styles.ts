@@ -1,6 +1,5 @@
 import { StyleSheet } from "react-native";
 import { C } from "../theme/colors";
-import { radius } from "../theme/colors";
 import { spacing } from "../theme/colors";
 
 export const S = StyleSheet.create({

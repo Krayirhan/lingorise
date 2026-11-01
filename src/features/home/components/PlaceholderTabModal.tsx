@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import { Modal, StyleSheet, Text, View } from "react-native";
 import { C, radius, spacing } from "../../../theme/colors";
 import { Copy } from "../../../i18n/en";
 import { PrimaryButton } from "../../../components/PrimaryButton";

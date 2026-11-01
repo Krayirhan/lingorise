@@ -1,4 +1,4 @@
-import { MeaningMatchQuestion, PartOfSpeech } from "../domain/models/content";
+import { MeaningMatchQuestion } from "../domain/models/content";
 
 function normaliseToken(value: string): string {
   return value.replace(/[^a-z' -]/gi, " ").replace(/\s+/g, " ").trim();

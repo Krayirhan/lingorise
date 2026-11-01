@@ -18,7 +18,6 @@ export function auditIpaProvenance(question: MeaningMatchQuestion): IpaProvenanc
 
   // Dialect heuristics
   let dialect: "AmE" | "BrE" | "both" | "unknown" = "unknown";
-  const lowerIpa = rawIpa.toLowerCase();
   const lowerSource = source.toLowerCase();
 
   const hasAmEMarkers = /ɑːr|ɜːr|ɔːr|ɪr|ʊr|eər|ɝ|ɚ/.test(rawIpa) || lowerSource.includes("ame") || lowerSource.includes("american");
@@ -35,8 +34,8 @@ export function auditIpaProvenance(question: MeaningMatchQuestion): IpaProvenanc
   }
 
   // Verification status
-  let verificationStatus: "verified" | "pending" | "failed" = "pending";
-  const isValidIpaSyntax = /^[\/\[]?[a-zA-Z0-9ˈˌːæɑɒɔəɛɪʊʌθðʃʒŋʔɜɡ\u0250-\u02AF\u02B0-\u02FF():. \-,\/\]]+[\/\]]?$/.test(rawIpa);
+  let verificationStatus: "verified" | "pending" | "failed";
+  const isValidIpaSyntax = /^[/[]?[a-zA-Z0-9ˈˌːæɑɒɔəɛɪʊʌθðʃʒŋʔɜɡ\u0250-\u02AF\u02B0-\u02FF():. \-,/\]]+[/\]]?$/.test(rawIpa);
 
   if (!isValidIpaSyntax) {
     verificationStatus = "failed";

@@ -3,7 +3,7 @@ import React, { Component, ErrorInfo, ReactNode } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { PrimaryButton } from "./PrimaryButton";
-import { C, radius, spacing } from "../theme/colors";
+import { C, spacing } from "../theme/colors";
 
 interface Props {
   children: ReactNode;

@@ -9,7 +9,7 @@ import { CatalogueAuditContext } from "../types";
 
 
 import { FindingReporter } from "../types";
-export function validateMetadata(question: MeaningMatchQuestion, flagFinding: FindingReporter, context?: CatalogueAuditContext, informational: string[] = []) {
+export function validateMetadata(question: MeaningMatchQuestion, flagFinding: FindingReporter, context?: CatalogueAuditContext, _informational: string[] = []) {
   const validLevels: LevelCode[] = ["A1", "A2", "B1", "B2", "C1", "C2"];
   // 11. partOfSpeech
   const validPos: PartOfSpeech[] = ["noun", "verb", "adjective", "adverb", "phrase"];

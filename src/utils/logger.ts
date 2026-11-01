@@ -1,33 +1,32 @@
 declare const __DEV__: boolean | undefined;
 
-type LogLevel = "debug" | "info" | "warn" | "error";
-
 class AppLogger {
   private isDev =
     typeof __DEV__ !== "undefined"
       ? !!__DEV__
       : typeof process !== "undefined" && process.env?.NODE_ENV !== "production";
 
-  public debug(message: string, ...args: any[]) {
+  public debug(message: string, ...args: unknown[]) {
     if (this.isDev) {
       console.log(`[Lingterra:DEBUG] ${message}`, ...args);
     }
   }
 
-  public info(message: string, ...args: any[]) {
+  public info(message: string, ...args: unknown[]) {
     if (this.isDev) {
       console.info(`[Lingterra:INFO] ${message}`, ...args);
     }
   }
 
-  public warn(message: string, ...args: any[]) {
+  public warn(message: string, ...args: unknown[]) {
     console.warn(`[Lingterra:WARN] ${message}`, ...args);
   }
 
-  public error(message: string, error?: any, context?: Record<string, any>) {
+  public error(message: string, error?: unknown, context?: Record<string, unknown>) {
+    const details = error as { message?: unknown; code?: unknown } | null | undefined;
     console.error(`[Lingterra:ERROR] ${message}`, {
-      error: error?.message || error,
-      code: error?.code,
+      error: details?.message || error,
+      code: details?.code,
       context,
     });
   }

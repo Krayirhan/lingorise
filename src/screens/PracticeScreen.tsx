@@ -2,7 +2,6 @@ import { useApplication } from "../context/ApplicationContext";
 import { useEffect, useState } from "react";
 import { ScrollView, StatusBar, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { C } from "../theme/colors";
 import { Copy, Locale } from "../i18n/en";
 import { MeaningMatchQuestion } from "../domain/models/content";
 import { SessionMode } from "../state/useAppSession";

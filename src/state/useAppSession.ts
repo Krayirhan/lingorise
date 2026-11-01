@@ -1,10 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
-import { restoreSession } from "../application/sessionRestoration";
+import { buildActiveSession, restoreSession } from "../application/sessionRestoration";
 import { useApplication } from "../context/ApplicationContext";
-import { MeaningMatchQuestion } from "../domain/models/content";
-
-
-import { LevelCode } from "../domain/models/content";
+import { LevelCode, MeaningMatchQuestion } from "../domain/models/content";
 import { ActiveSessionState, UserData } from "../domain/models/user";
 
 export type ScreenType = "onboarding" | "home" | "practiceHome" | "practice" | "progress" | "profile";
@@ -41,19 +38,10 @@ export function useAppSession(userData: UserData, setActiveSession?: (session: A
       setActiveSession(null);
       return;
     }
-    setActiveSession({
-      sessionId,
-      catalogVersion: CONTENT_VERSION,
-      questionIds: sessionQuestions.map((question) => question.id),
-      currentIndex,
-      answers: sessionAnswers,
-      sessionMode,
-      startedAt: restored?.startedAt || now(),
-      pickedAnswer: picked,
-      submitted,
-      writingOffer,
-      reversedOptions: Object.fromEntries(sessionQuestions.filter((question) => question.mode === "PICK_THE_WORD" && question.options?.length).map((question) => [question.id, question.options!])),
-    });
+    setActiveSession(buildActiveSession({
+      sessionId, catalogVersion: CONTENT_VERSION, questions: sessionQuestions, currentIndex, answers: sessionAnswers,
+      sessionMode, startedAt: restored?.startedAt || now(), pickedAnswer: picked, submitted, writingOffer,
+    }));
   }, [screen, isSessionCompleted, sessionQuestions, currentIndex, sessionAnswers, sessionMode, sessionId, picked, submitted, writingOffer, setActiveSession]);
 
   const resetQuestionState = useCallback(() => {
@@ -122,7 +110,6 @@ export function useAppSession(userData: UserData, setActiveSession?: (session: A
   }, [resetQuestionState]);
 
   const goToPracticeHome = useCallback(() => setScreen("practiceHome"), []);
-
   const goToProgress = useCallback(() => setScreen("progress"), []);
   const goToProfile = useCallback(() => setScreen("profile"), []);
   const goToOnboarding = useCallback((step = 0) => {
@@ -135,31 +122,14 @@ export function useAppSession(userData: UserData, setActiveSession?: (session: A
   const currentQuestion: MeaningMatchQuestion | undefined = sessionQuestions[currentIndex];
 
   return {
-    screen,
-    onboardingStep,
-    sessionMode,
-    sessionQuestions,
-    currentIndex,
-    sessionAnswers,
-    isSessionCompleted,
-    currentQuestion,
-    picked,
-    submitted,
-    writingOffer,
-    setWritingOffer,
-    setPicked,
-    setSubmitted,
-    setOnboardingStep,
-    resetQuestionState,
-    recordSessionStep,
-    nextQuestion,
-    startPractice,
-    startExam,
-    startTopicCheckpoint,
-    goToHome,
-    goToPracticeHome,
-    goToProgress,
-    goToProfile,
-    goToOnboarding,
+    // where the app is
+    screen, onboardingStep, setOnboardingStep,
+    // the running session
+    sessionMode, sessionQuestions, currentIndex, sessionAnswers, isSessionCompleted, currentQuestion,
+    picked, submitted, writingOffer, setWritingOffer, setPicked, setSubmitted,
+    resetQuestionState, recordSessionStep, nextQuestion,
+    // starting sessions and moving between screens
+    startPractice, startExam, startTopicCheckpoint,
+    goToHome, goToPracticeHome, goToProgress, goToProfile, goToOnboarding,
   };
 }

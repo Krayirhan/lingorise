@@ -1,7 +1,7 @@
 import { C } from "../../../theme/colors";
 import { S } from "./LevelSwitcherModal.styles";
 import { Ionicons } from "@expo/vector-icons";
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Modal, Pressable, ScrollView, Text, View } from "react-native";
 import { Copy } from "../../../i18n/en";
 import { LevelCode } from "../../../domain/models/content";
 import { levels } from "../../../content/levels";

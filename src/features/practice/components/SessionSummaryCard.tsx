@@ -22,7 +22,7 @@ export function SessionSummaryCard({
   totalXpEarned,
   totalQuestions,
   correctCount,
-  mistakesCount,
+  mistakesCount: _mistakesCount,
   onReturnHome,
   examResult,
   checkpointResult,

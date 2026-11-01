@@ -11,6 +11,7 @@ function getNotifications(): NotificationsModule | null {
   // because the module registers a remote push-token listener. Do not load the
   // module at all in Expo Go; the app remains fully testable through its QR code.
   if (isRunningInExpoGo()) return null;
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   return require("expo-notifications") as NotificationsModule;
 }
 

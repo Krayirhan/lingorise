@@ -1,16 +1,14 @@
-import { errorDetail } from "../domain/account/errorDetails";
-import { useApplication } from "../context/ApplicationContext";
 import { Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { C } from "../theme/colors";
 import { S } from "./AuthScreen.styles";
 import { AuthScreenBody } from "./AuthScreenBody";
-import { useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Brand } from "../components/Brand";
-import { getAuthErrorMessage } from "../domain/account/authErrors";
+import { useAuthForm } from "../features/auth/useAuthForm";
 import { Locale, copyByLocale } from "../i18n/en";
 
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const sprig = require("../../assets/sprig-mascot-idle-transparent.png");
 
 interface AuthScreenProps {
@@ -28,90 +26,9 @@ export function AuthScreen({
   onSuccess,
   onContinueAsGuest,
 }: AuthScreenProps) {
-  const application = useApplication();
-  const { enableGuestMode } = application.account;
-  const { login } = application.account;
-  const { register } = application.account;
-  const { resetPassword } = application.account;
-
   const copy = copyByLocale[locale];
-  const [mode, setMode] = useState<"login" | "register" | "forgot">(initialMode);
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
-  const [errorField, setErrorField] = useState<"name" | "email" | "password" | "general" | null>(null);
-  const [success, setSuccess] = useState(false);
-  const [resetSent, setResetSent] = useState(false);
-
-  function validate(): boolean {
-    setError("");
-    setErrorField(null);
-
-    if (mode === "register" && !name.trim()) {
-      setError(copy.auth.errorNameRequired);
-      setErrorField("name");
-      return false;
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!email.trim() || !emailRegex.test(email.trim())) {
-      setError(copy.auth.errorEmailRequired);
-      setErrorField("email");
-      return false;
-    }
-
-    if (mode !== "forgot" && password.length < 8) {
-      setError(copy.auth.errorPasswordShort);
-      setErrorField("password");
-      return false;
-    }
-
-    return true;
-  }
-
-  async function submit() {
-    if (!validate()) return;
-
-    try {
-      setBusy(true);
-      if (mode === "register") {
-        await register(email, password, name);
-        setSuccess(true);
-      } else if (mode === "login") {
-        await login(email, password);
-        setSuccess(true);
-      } else if (mode === "forgot") {
-        await resetPassword(email);
-        setResetSent(true);
-        return;
-      }
-
-      if (onSuccess) {
-        setTimeout(() => {
-          onSuccess();
-        }, 800);
-      }
-    } catch (e) {
-      const code = errorDetail(e, "code");
-      const msg = getAuthErrorMessage(code, locale);
-      setError(msg);
-      if (code?.includes("email")) setErrorField("email");
-      else if (code?.includes("password")) setErrorField("password");
-      else setErrorField("general");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  const submitLabel =
-    mode === "register"
-      ? copy.auth.submitRegister
-      : mode === "login"
-        ? copy.auth.submitLogin
-        : copy.auth.sendResetEmailBtn;
+  const form = useAuthForm(copy, locale, initialMode, onSuccess);
+  const { mode } = form;
 
   return (
     <SafeAreaView style={S.safe} edges={["top", "bottom"]}>
@@ -163,11 +80,7 @@ export function AuthScreen({
               <Image source={sprig} style={S.mascot} resizeMode="contain" />
             </View>
 
-            <AuthScreenBody copy={copy} mode={mode} setMode={setMode} name={name} setName={setName} email={email} setEmail={setEmail}
-              password={password} setPassword={setPassword} showPassword={showPassword} setShowPassword={setShowPassword}
-              busy={busy} error={error} setError={setError} errorField={errorField} setErrorField={setErrorField}
-              success={success} resetSent={resetSent} setResetSent={setResetSent} submitLabel={submitLabel}
-              submit={submit} enableGuestMode={enableGuestMode} onContinueAsGuest={onContinueAsGuest} />
+            <AuthScreenBody copy={copy} {...form} onContinueAsGuest={onContinueAsGuest} />
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

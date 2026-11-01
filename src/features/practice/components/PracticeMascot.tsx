@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Animated, Image, StyleSheet, View } from "react-native";
 import { C, radius } from "../../../theme/colors";
 
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const sprigImage = require("../../../../assets/sprig-mascot-idle-transparent.png");
 
 interface Props {

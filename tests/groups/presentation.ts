@@ -12,6 +12,8 @@ import "../cases/home-week-strip-model";
 import "../cases/progress-activity-heatmap-model";
 import "../cases/format-template";
 import "../cases/home-greeting-model";
+import "../cases/home-view-model-parts";
+import "../cases/auth-form-model";
 import "../cases/production-ui-attempt-evaluation-gate";
 import "../cases/speech-voice-selection";
 import "../cases/profile-transition";

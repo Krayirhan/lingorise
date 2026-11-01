@@ -93,10 +93,12 @@ console.log("\n58. Level-Exhausted Terminal State (CORE-004):");
   // E. PracticeHubScreen.tsx: the hero CTA is gated on isLevelFullyLearned —
   // it no longer unconditionally calls onStartDailyPractice regardless of
   // whether there are fresh words to practice.
+  // The hero card lives in PracticeHubHero.tsx; the screen computes when it is an exam entry point.
   const hubSrc = fs.readFileSync(path.join(srcRoot, "screens/PracticeHubScreen.tsx"), "utf-8");
-  assert(hubSrc.includes("isLevelFullyLearned ?"), "PracticeHubScreen branches its hero card on isLevelFullyLearned");
-  assert(hubSrc.includes("heroIsExamCta"), "PracticeHubScreen's level-done hero becomes the exam CTA when an exam is pending");
-  assert(hubSrc.includes("disabled={!heroIsExamCta}"), "PracticeHubScreen's level-done hero is non-interactive when there is no exam action to take (no silent dead button)");
+  const heroSrc = fs.readFileSync(path.join(srcRoot, "screens/PracticeHubHero.tsx"), "utf-8");
+  assert(heroSrc.includes("if (props.isLevelFullyLearned) {"), "PracticeHubScreen branches its hero card on isLevelFullyLearned");
+  assert(hubSrc.includes("const heroIsExamCta = isLevelFullyLearned && isExamAvailable && !isExamPassed"), "PracticeHubScreen's level-done hero becomes the exam CTA when an exam is pending");
+  assert(heroSrc.includes("disabled={!props.heroIsExamCta}"), "PracticeHubScreen's level-done hero is non-interactive when there is no exam action to take (no silent dead button)");
 
   // F. GardenHeroCard.tsx: the "practice again" dead-end button is not shown
   // once the level is fully learned.

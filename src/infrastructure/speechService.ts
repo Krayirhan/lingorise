@@ -59,7 +59,7 @@ export const speechService = {
     speechRequest++;
     try {
       await Speech.stop();
-    } catch { }
+    } catch { /* stopping speech is best-effort */ }
   },
 
   async isSpeaking(): Promise<boolean> {

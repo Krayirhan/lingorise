@@ -1,7 +1,7 @@
 import { rolloverToToday } from "../domain/gamification/dailyRollover";
 import { UserData } from "../domain/models/user";
 import { getDueReviewItems } from "../domain/review/spacedRepetition";
-import { daysBetween, detectClockAnomaly } from "../domain/sync/clockAnomaly";
+import { daysBetween } from "../domain/sync/clockAnomaly";
 import { ApplicationDependencies } from "./ports";
 
 interface ProgressHydrationHelpers {

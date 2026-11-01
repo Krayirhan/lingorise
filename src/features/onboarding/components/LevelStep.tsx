@@ -6,6 +6,7 @@ import { Copy } from "../../../i18n/en";
 import { C } from "../../../theme/colors";
 import { LevelCode } from "../../../domain/models/content";
 
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const mascot = require("../../../../assets/sprig-mascot.png");
 
 interface Props {

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode, useCallback } from "react";
-import { Animated, Platform, StyleSheet, Text, View } from "react-native";
+import { Animated, Platform, StyleSheet, Text } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { C, radius } from "../theme/colors";
 

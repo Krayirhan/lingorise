@@ -6,7 +6,7 @@ import { CatalogueAuditContext } from "../types";
 
 
 import { FindingReporter } from "../types";
-export function validateCollocation(question: MeaningMatchQuestion, flagFinding: FindingReporter, context?: CatalogueAuditContext, informational: string[] = []) {
+export function validateCollocation(question: MeaningMatchQuestion, flagFinding: FindingReporter, context?: CatalogueAuditContext, _informational: string[] = []) {
   // 19. collocation
   const collocation = (question.collocation || "").trim();
   if (question.level === "C2" && !collocation) {

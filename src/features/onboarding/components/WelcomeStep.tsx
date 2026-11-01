@@ -1,8 +1,9 @@
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { PrimaryButton } from "../../../components/PrimaryButton";
 import { Copy } from "../../../i18n/en";
-import { C, spacing } from "../../../theme/colors";
+import { C } from "../../../theme/colors";
 
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const mascot = require("../../../../assets/sprig-mascot.png");
 
 interface Props {

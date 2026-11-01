@@ -6,7 +6,7 @@ import { CatalogueAuditContext } from "../types";
 
 
 import { FindingReporter } from "../types";
-export function validateIdentity(question: MeaningMatchQuestion, flagFinding: FindingReporter, context?: CatalogueAuditContext, informational: string[] = []) {
+export function validateIdentity(question: MeaningMatchQuestion, flagFinding: FindingReporter, context?: CatalogueAuditContext, _informational: string[] = []) {
   // 1. id
   if (!question.id || typeof question.id !== "string" || question.id.trim().length === 0) {
     flagFinding("P0", "id", "id is missing or empty");

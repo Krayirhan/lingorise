@@ -14,7 +14,7 @@ export function createGardenHeroModel({
   isLevelFullyLearned = false,
   onPress,
   onViewProgress,
-  onPracticeAgain,
+  onPracticeAgain: _onPracticeAgain,
   onGoToPracticeHub,
 }: {
   practiceState: PracticeState;
