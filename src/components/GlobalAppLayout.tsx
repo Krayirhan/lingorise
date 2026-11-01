@@ -4,7 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { GlobalTopBar, GlobalTopBarProps } from "./GlobalTopBar";
 import { GlobalBottomNav } from "./GlobalBottomNav";
 import { Copy } from "../i18n/en";
-import { HomeTab } from "../features/home/home.types";
+import { HomeTab } from "./navigation";
 import { C } from "../theme/colors";
 
 export interface GlobalAppLayoutProps {

@@ -7,6 +7,7 @@ import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-nati
 import { Copy } from "../../../i18n/en";
 import { LevelCode } from "../../../domain/models/content";
 import { levels } from "../../../content/levels";
+import { formatTemplate } from "../../../utils/formatters";
 
 
 
@@ -23,12 +24,6 @@ interface Props {
   onClose: () => void;
   reduceMotion?: boolean;
 }
-
-const fill = (template: string, values: Record<string, string | number>) =>
-  Object.entries(values).reduce(
-    (text, [key, value]) => text.replace(`{${key}}`, String(value)),
-    template
-  );
 
 function LevelOptionRow({ entry, copy, current, ready, seen, total, earned, onPick }: {
   entry: (typeof levels)[number]; copy: Copy; current: boolean; ready: boolean;
@@ -131,7 +126,7 @@ export function LevelSwitcherModal({
           {pendingLevel && pendingAssessment ? (
             <View style={S.warnBox}>
               <Text style={S.warnText}>
-                {fill(
+                {formatTemplate(
                   copy.home?.levelSwitchAheadWarning ||
                     "{current} tamamlama sınavını henüz geçmedin. {target} şu an zor gelebilir — yine de deneyebilirsin.",
                   {
@@ -154,7 +149,7 @@ export function LevelSwitcherModal({
                   onPress={confirmPending}
                 >
                   <Text style={S.warnPrimaryTxt}>
-                    {fill(copy.home?.levelSwitchConfirm || "{level} seviyesine geç", { level: pendingLevel })}
+                    {formatTemplate(copy.home?.levelSwitchConfirm || "{level} seviyesine geç", { level: pendingLevel })}
                   </Text>
                 </Pressable>
               </View>

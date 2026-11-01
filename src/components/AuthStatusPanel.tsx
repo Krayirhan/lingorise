@@ -1,7 +1,7 @@
 import { Pressable, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { C } from "../theme/colors";
-import { S } from "../screens/AuthScreen.styles";
+import { S } from "./authField.styles";
 
 /** The post-submit success / reset-email-sent state, extracted out of AuthScreen's form-rendering responsibility. */
 export function AuthSuccessPanel({ title, subtitle }: { title: string; subtitle: string }) {

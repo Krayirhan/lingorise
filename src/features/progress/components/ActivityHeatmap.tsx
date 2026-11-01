@@ -3,6 +3,7 @@ import { Copy } from "../../../i18n/en";
 import { C } from "../../../theme/colors";
 import { fonts, typeScale } from "../../../theme/typography";
 import { HeatmapDay, HeatmapWeek } from "../activityHeatmapModel";
+import { formatTemplate } from "../../../utils/formatters";
 
 interface Props {
   copy: Copy;
@@ -22,15 +23,12 @@ export function ActivityHeatmap({ copy, weeks }: Props) {
   const weekdays = (copy.progress?.weekdayInitials || "").split("|");
   const thisWeek = weeks[weeks.length - 1]?.days.filter((day) => day.intensity > 0).length ?? 0;
   const activeDays = weeks.flatMap((week) => week.days).filter((day) => day.intensity > 0).length;
-  const fill = (template: string, values: Record<string, string | number>) =>
-    Object.entries(values).reduce((text, [key, value]) => text.replace(`{${key}}`, String(value)), template);
-
   return (
     <View style={S.section}>
       <View style={S.header}>
         <Text accessibilityRole="header" style={S.title}>{copy.progress?.activityTitle || "Son 12 hafta"}</Text>
         <Text style={S.caption}>
-          {fill(copy.progress?.activityCaption || "Bu hafta {count} gün pratik yaptın", { count: thisWeek })}
+          {formatTemplate(copy.progress?.activityCaption || "Bu hafta {count} gün pratik yaptın", { count: thisWeek })}
         </Text>
       </View>
       <View style={S.legend} accessibilityLabel={`${copy.progress.activityLess} – ${copy.progress.activityMore}`}>
@@ -43,7 +41,7 @@ export function ActivityHeatmap({ copy, weeks }: Props) {
 
       <View
         accessible
-        accessibilityLabel={fill(copy.progress?.activityAccessibility || "{count}", { count: activeDays })}
+        accessibilityLabel={formatTemplate(copy.progress?.activityAccessibility || "{count}", { count: activeDays })}
         style={S.body}
       >
         <View style={S.weekdayColumn}>

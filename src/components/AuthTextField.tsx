@@ -1,7 +1,7 @@
 import { Pressable, Text, TextInput, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { C } from "../theme/colors";
-import { S } from "../screens/AuthScreen.styles";
+import { S } from "./authField.styles";
 
 interface AuthTextFieldProps {
   label: string;

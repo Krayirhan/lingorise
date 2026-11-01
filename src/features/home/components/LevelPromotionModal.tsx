@@ -6,6 +6,7 @@ import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import { C, radius, spacing } from "../../../theme/colors";
 import { Copy } from "../../../i18n/en";
 import { LevelCode } from "../../../domain/models/content";
+import { formatTemplate } from "../../../utils/formatters";
 
 
 
@@ -18,12 +19,6 @@ interface Props {
   onDismiss: () => void;
   reduceMotion?: boolean;
 }
-
-const fill = (template: string, values: Record<string, string | number>) =>
-  Object.entries(values).reduce(
-    (text, [key, value]) => text.replace(`{${key}}`, String(value)),
-    template
-  );
 
 /**
  * The moment a level is genuinely consolidated. When the next level is not
@@ -78,10 +73,10 @@ export function LevelPromotionModal({ copy, level, promotion, visible, onAdvance
 
           <Text style={S.eyebrow}>{copy.home?.promotionEyebrow || "SEVİYE TAMAMLANDI"}</Text>
           <Text style={S.title}>
-            {fill(copy.home?.promotionTitle || "{level} seviyesini tamamladın", { level })}
+            {formatTemplate(copy.home?.promotionTitle || "{level} seviyesini tamamladın", { level })}
           </Text>
           <Text style={S.body}>
-            {fill(copy.home?.promotionSubtitleExam || "{level} tamamlama sınavını geçtin — bu seviyeyi artık gerçekten biliyorsun.", {
+            {formatTemplate(copy.home?.promotionSubtitleExam || "{level} tamamlama sınavını geçtin — bu seviyeyi artık gerçekten biliyorsun.", {
               level,
             })}
           </Text>
@@ -89,10 +84,10 @@ export function LevelPromotionModal({ copy, level, promotion, visible, onAdvance
           {!canAdvance && nextLevel && (
             <View style={S.soonBox}>
               <Text style={S.soonTitle}>
-                {fill(copy.home?.promotionSoonTitle || "{level} henüz hazırlanıyor", { level: nextLevel })}
+                {formatTemplate(copy.home?.promotionSoonTitle || "{level} henüz hazırlanıyor", { level: nextLevel })}
               </Text>
               <Text style={S.soonBody}>
-                {fill(
+                {formatTemplate(
                   copy.home?.promotionSoonBody ||
                     "Yeni kelimeler ekleniyor. Bu sırada {current} kelimelerini taze tut — tekrarların devam ediyor.",
                   { current: level }
@@ -106,23 +101,23 @@ export function LevelPromotionModal({ copy, level, promotion, visible, onAdvance
               <>
                 <Pressable
                   accessibilityRole="button"
-                  accessibilityLabel={fill(copy.home?.promotionNextCta || "{level} ile devam et →", { level: nextLevel })}
+                  accessibilityLabel={formatTemplate(copy.home?.promotionNextCta || "{level} ile devam et →", { level: nextLevel })}
                   style={({ pressed }) => [S.primaryBtn, pressed && S.pressed]}
                   onPress={() => handleAdvance(nextLevel)}
                 >
                   <Text style={S.primaryTxt}>
-                    {fill(copy.home?.promotionNextCta || "{level} ile devam et →", { level: nextLevel })}
+                    {formatTemplate(copy.home?.promotionNextCta || "{level} ile devam et →", { level: nextLevel })}
                   </Text>
                 </Pressable>
                 <Pressable
                   accessibilityRole="button"
-                  accessibilityLabel={fill(copy.home?.promotionStayCta || "{level} seviyesinde kal", { level })}
+                  accessibilityLabel={formatTemplate(copy.home?.promotionStayCta || "{level} seviyesinde kal", { level })}
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                   style={({ pressed }) => [S.ghostBtn, pressed && S.pressed]}
                   onPress={onDismiss}
                 >
                   <Text style={S.ghostTxt}>
-                    {fill(copy.home?.promotionStayCta || "{level} seviyesinde kal", { level })}
+                    {formatTemplate(copy.home?.promotionStayCta || "{level} seviyesinde kal", { level })}
                   </Text>
                 </Pressable>
               </>

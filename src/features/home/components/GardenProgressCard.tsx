@@ -37,7 +37,7 @@ export function GardenProgressCard({ copy, skillProgress, practiceTargetCount = 
     {
       id: "tile_grammar",
       icon: "create-outline",
-      title: copy.home?.meaningMatch ? "Dilbilgisi" : "Grammar",
+      title: copy.home.grammar,
       tag: copy.home?.soon || "Yakında",
       tint: C.successSoft,
       isSoon: true,
@@ -45,7 +45,7 @@ export function GardenProgressCard({ copy, skillProgress, practiceTargetCount = 
     {
       id: "tile_speaking",
       icon: "chatbubbles-outline",
-      title: copy.home?.meaningMatch ? "Konuşma" : "Speaking",
+      title: copy.home.speaking,
       tag: copy.home?.soon || "Yakında",
       tint: C.rewardSoft,
       isSoon: true,

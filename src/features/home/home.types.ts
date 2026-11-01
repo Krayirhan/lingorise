@@ -2,8 +2,10 @@ import { Copy, Locale } from "../../i18n/en";
 import { LevelCode } from "../../domain/models/content";
 import { DailyQuest, GardenProgress, QuestHistoryEntry } from "../../domain/models/user";
 import { WeekStripDay } from "./weekStripModel";
+import type { HomeTab } from "../../components/navigation";
 
-export type HomeTab = "garden" | "practice" | "progress" | "profile";
+/** Navigation tabs are shared app-wide; re-exported for the home feature. */
+export type { HomeTab };
 
 export interface SkillProgress {
   id: string;
