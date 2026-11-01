@@ -1,0 +1,183 @@
+import { StyleSheet } from "react-native";
+import { C } from "../theme/colors";
+import { fonts, typeScale } from "../theme/typography";
+
+export const S = StyleSheet.create({
+  shell: {
+    flex: 1,
+    maxWidth: 580,
+    width: "100%",
+    alignSelf: "center",
+  },
+  content: {
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 28,
+    gap: 14,
+  },
+  headerGroup: {
+    gap: 4,
+    marginTop: 4,
+  },
+  branch: {
+    position: "absolute",
+    right: -20,
+    top: -5,
+    width: 115,
+    height: 145,
+    opacity: 0.32,
+  },
+  cardBranch: { right: 4, top: 10, width: 70, height: 110, opacity: 0.35 },
+  eyebrow: {
+    color: C.primary,
+    fontFamily: fonts.bodyBold,
+    fontSize: 12,
+    letterSpacing: 1.2,
+  },
+  title: {
+    color: C.ink,
+    fontFamily: fonts.display,
+    fontSize: 30,
+    lineHeight: 35,
+    letterSpacing: -0.5,
+    marginTop: 2,
+  },
+  subtitle: {
+    color: C.muted,
+    fontFamily: fonts.body,
+    fontSize: 15,
+    lineHeight: 20,
+  },
+  heroCard: {
+    backgroundColor: C.surface,
+    borderWidth: 1,
+    borderColor: C.line,
+    borderRadius: 12,
+    padding: 16,
+    gap: 14,
+  },
+  cardPressed: {
+    opacity: 0.94,
+    transform: [{ scale: 0.99 }],
+  },
+  heroTop: {
+    flexDirection: "row",
+  },
+  heroCopy: {
+    flex: 1,
+    gap: 6,
+  },
+  recommendedBadge: {
+    alignSelf: "flex-start",
+  },
+  recommendedBadgeTxt: {
+    color: C.attentionText,
+    fontFamily: fonts.bodyBold,
+    fontSize: 12,
+    letterSpacing: 1.6,
+  },
+  heroTitle: {
+    color: C.ink,
+    fontFamily: fonts.display,
+    fontSize: typeScale.display,
+    lineHeight: 34,
+  },
+  heroReason: {
+    color: C.muted,
+    fontFamily: fonts.body,
+    fontSize: 15,
+    lineHeight: 21,
+  },
+  heroMeta: {
+    color: C.ink,
+    fontFamily: fonts.bodySemi,
+    fontSize: 13.5,
+    marginTop: 2,
+  },
+  heroCtaBtn: {
+    minHeight: 52,
+    backgroundColor: C.attentionStrong,
+    borderRadius: 26,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+  },
+  heroCtaBtnTxt: {
+    color: C.surface,
+    fontFamily: fonts.bodyBold,
+    fontSize: 16,
+  },
+  sectionHdr: {
+    marginTop: 4,
+  },
+  sectionTitle: {
+    color: C.ink,
+    fontFamily: fonts.display,
+    fontSize: typeScale.section,
+  },
+  settingsCard: { backgroundColor: C.surface, borderWidth: 1, borderColor: C.line, borderRadius: 12, paddingHorizontal: 16 },
+  settingRow: { paddingVertical: 12, gap: 10 },
+  settingRowDivider: { borderTopWidth: 1, borderTopColor: C.line },
+  settingHead: { flexDirection: "row", alignItems: "center", gap: 12 },
+  settingIcon: { width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center" },
+  settingCopy: { flex: 1, minWidth: 0, gap: 2 },
+  settingTitle: { color: C.ink, fontFamily: fonts.display, fontSize: typeScale.card },
+  settingHint: { color: C.muted, fontFamily: fonts.body, fontSize: 13 },
+  segment: { flexDirection: "row", borderWidth: 1, borderColor: C.line, borderRadius: 10, padding: 3, backgroundColor: C.canvas },
+  segmentItem: { flex: 1, minHeight: 44, alignItems: "center", justifyContent: "center", borderRadius: 8 },
+  segmentItemActive: { backgroundColor: C.attentionSoft, borderWidth: 1, borderColor: C.attentionBorder },
+  segmentText: { color: C.ink, fontFamily: fonts.bodySemi, fontSize: 14, textAlign: "center" },
+  segmentTextActive: { color: C.attentionText, fontFamily: fonts.bodyBold },
+  optionCard: {
+    backgroundColor: C.surface,
+    borderRadius: 12,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: C.line,
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 12,
+  },
+  optionIconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  iconCircleAttention: {
+    backgroundColor: C.successSoft,
+  },
+  iconCircleSuccess: {
+    backgroundColor: C.successSoft,
+  },
+  optionCopy: {
+    flex: 1,
+    minWidth: 0,
+    gap: 2,
+  },
+  optionTitle: {
+    color: C.ink,
+    fontFamily: fonts.display,
+    fontSize: typeScale.card,
+  },
+  optionSubtitle: {
+    color: C.muted,
+    fontFamily: fonts.body,
+    fontSize: 12.5,
+    lineHeight: 17,
+  },
+  optionLink: {
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "flex-start",
+    minHeight: 44,
+    gap: 2,
+  },
+  optionLinkTxt: {
+    color: C.attentionText,
+    fontFamily: fonts.bodyBold,
+    fontSize: 14,
+  },
+})

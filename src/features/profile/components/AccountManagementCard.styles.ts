@@ -1,10 +1,11 @@
 import { StyleSheet } from "react-native";
 import { C, radius } from "../../../theme/colors";
+import { fonts, typeScale } from "../../../theme/typography";
 
 export const S = StyleSheet.create({
   card: {
     backgroundColor: C.surface,
-    borderRadius: radius.lg || 18,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: C.line,
     padding: 16,
@@ -33,6 +34,7 @@ export const S = StyleSheet.create({
   },
   copy: {
     flex: 1,
+    minWidth: 0,
     gap: 2,
   },
   title: {
@@ -89,8 +91,10 @@ export const S = StyleSheet.create({
   },
   authBtn: {
     minHeight: 46,
-    backgroundColor: C.reward,
-    borderRadius: radius.button || 16,
+    marginTop: 8,
+    alignSelf: "flex-start",
+    backgroundColor: C.attentionStrong,
+    borderRadius: 23,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
@@ -98,8 +102,8 @@ export const S = StyleSheet.create({
     paddingHorizontal: 16,
   },
   authBtnTxt: {
-    color: C.ink,
-    fontSize: 14.5,
+    color: C.surface,
+    fontSize: 15,
     fontWeight: "700",
   },
   noticeBox: {
@@ -195,10 +199,10 @@ export const S = StyleSheet.create({
   avatarRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    backgroundColor: C.canvas,
-    padding: 8,
-    borderRadius: radius.md || 12,
+    gap: 6,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: C.lineSoft,
   },
   avatarLabel: {
     fontSize: 12,
@@ -207,12 +211,12 @@ export const S = StyleSheet.create({
   },
   avatarList: {
     flexDirection: "row",
-    gap: 6,
+    gap: 2,
   },
   avatarBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: C.surface,
     borderWidth: 1,
     borderColor: C.line,
@@ -223,4 +227,39 @@ export const S = StyleSheet.create({
     backgroundColor: C.primary,
     borderColor: C.primary,
   },
+  avatarLarge: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: C.attentionSoft,
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
+  },
+  identityName: { color: C.ink, fontFamily: fonts.display, fontSize: typeScale.title },
+  identityMeta: { color: C.muted, fontFamily: fonts.body, fontSize: 14 },
+  changeLevelBtn: {
+    alignSelf: "flex-start",
+    minHeight: 44,
+    marginTop: 6,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: C.primaryBorder,
+    justifyContent: "center",
+  },
+  changeLevelTxt: { color: C.ink, fontFamily: fonts.bodySemi, fontSize: 14 },
+  pressed: { opacity: 0.8 },
+  // A quiet banner: terracotta is kept for the home screen's one hero card.
+  guestCard: {
+    backgroundColor: C.canvasWarm,
+    borderRadius: 12,
+    padding: 16,
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 12,
+  },
+  guestCopy: { flex: 1, minWidth: 0, gap: 4 },
+  guestTitle: { color: C.ink, fontFamily: fonts.display, fontSize: typeScale.card },
+  guestBody: { color: C.muted, fontFamily: fonts.body, fontSize: 14, lineHeight: 20 },
 });

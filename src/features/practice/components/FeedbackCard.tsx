@@ -1,9 +1,10 @@
 import { Ionicons } from "@expo/vector-icons";
 import { StyleSheet, Text, View } from "react-native";
-import { C, radius, spacing } from "../../../theme/colors";
-import { Copy } from "../../../i18n/en";
 import { PrimaryButton } from "../../../components/PrimaryButton";
-import { MeaningMatchQuestion } from "../../../types/content";
+import { MeaningMatchQuestion } from "../../../domain/models/content";
+import { Copy } from "../../../i18n/en";
+import { C, radius, spacing } from "../../../theme/colors";
+import { ReactNode } from "react";
 
 interface Props {
   copy: Copy;
@@ -13,10 +14,12 @@ interface Props {
   xpEarned: number;
   isLastQuestion?: boolean;
   onNext: () => void;
+  nextDisabled?: boolean;
   onRetry?: () => void;
+  children?: ReactNode;
 }
 
-export function FeedbackCard({ copy, question, isCorrect, correctAnswer, xpEarned, isLastQuestion = false, onNext, onRetry }: Props) {
+export function FeedbackCard({ copy, question, isCorrect, correctAnswer, xpEarned, isLastQuestion = false, onNext, onRetry, nextDisabled = false, children }: Props) {
   const nextLabel = isLastQuestion ? (copy.game?.finishSession || "Oturumu Tamamla") : (copy.game?.nextQuestion || "Devam Et →");
 
   return (
@@ -35,7 +38,7 @@ export function FeedbackCard({ copy, question, isCorrect, correctAnswer, xpEarne
         </View>
       </View>
 
-      {(question.exampleSentence || question.contextNote) && (
+      {(question.exampleSentence || question.contextNote || question.collocation) && (
         <View style={S.learningBox}>
           {question.exampleSentence && (
             <View style={S.sentenceWrap}>
@@ -45,8 +48,11 @@ export function FeedbackCard({ copy, question, isCorrect, correctAnswer, xpEarne
             </View>
           )}
           {question.contextNote && !isCorrect && <Text style={S.contextNote}>💡 {question.contextNote}</Text>}
+          {question.collocation && <Text style={S.collocation}>Kalıp: {question.collocation}</Text>}
         </View>
       )}
+
+      {children}
 
       <View style={S.btnRow}>
         {!isCorrect && onRetry && (
@@ -55,7 +61,7 @@ export function FeedbackCard({ copy, question, isCorrect, correctAnswer, xpEarne
           </View>
         )}
         <View style={S.btnFlex}>
-          <PrimaryButton label={nextLabel} onPress={onNext} />
+          <PrimaryButton label={nextLabel} onPress={onNext} disabled={nextDisabled} />
         </View>
       </View>
     </View>
@@ -81,6 +87,7 @@ const S = StyleSheet.create({
   exampleEn: { color: C.ink, fontSize: 13, fontWeight: "700" },
   exampleTr: { color: C.muted, fontSize: 11.5, fontStyle: "italic" },
   contextNote: { color: C.ink, fontSize: 11.5, fontWeight: "600", marginTop: 2 },
+  collocation: { color: C.ink, fontSize: 11.5, fontWeight: "700", marginTop: 6 },
   btnRow: { flexDirection: "row", gap: 10, marginTop: 2 },
   btnFlex: { flex: 1 },
 });

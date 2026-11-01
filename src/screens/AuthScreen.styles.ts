@@ -146,7 +146,7 @@ export const S = StyleSheet.create({
     height: 52,
     minHeight: 52,
     borderRadius: radius.button || 18,
-    backgroundColor: C.reward,
+    backgroundColor: C.attentionStrong,
     alignItems: "center",
     justifyContent: "center",
     marginTop: 4,
@@ -160,7 +160,7 @@ export const S = StyleSheet.create({
     opacity: 0.7,
   },
   primaryBtnTxt: {
-    color: C.ink,
+    color: C.surface,
     fontSize: 16,
     fontWeight: "700",
     letterSpacing: -0.2,

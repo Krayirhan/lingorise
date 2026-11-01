@@ -1,14 +1,17 @@
-import { useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
+import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { C, radius } from "../../../theme/colors";
-import { advanceDevClock, resetDevClock, getDevClockOffsetDays, todayISO } from "../../../utils/clock";
+import { UpdateDialog } from "../../../components/UpdateDialog";
+import { advanceDevClock, getDevClockOffsetDays, resetDevClock, todayISO } from "../../../utils/clock";
 
 interface Props {
   /** Reloads user state from storage, re-running the daily-rollover check
       against the (now shifted) clock — without this, advancing the clock
       changes nothing visible until the next natural reload. */
   onRefresh?: () => void;
+  locale?: string;
+  reduceMotion?: boolean;
 }
 
 /**
@@ -22,8 +25,9 @@ interface Props {
  * Never rendered in a release build: __DEV__ is checked both here and by
  * the caller, and advanceDevClock() is itself a no-op outside __DEV__.
  */
-export function DevClockCard({ onRefresh }: Props) {
+export function DevClockCard({ onRefresh, locale = "tr", reduceMotion }: Props) {
   const [offsetDays, setOffsetDays] = useState(getDevClockOffsetDays());
+  const [showUpdate, setShowUpdate] = useState(false);
 
   if (!__DEV__) return null;
 
@@ -62,6 +66,10 @@ export function DevClockCard({ onRefresh }: Props) {
           <Text style={S.resetBtnTxt}>Sıfırla</Text>
         </Pressable>
       </View>
+      <Pressable style={S.btn} onPress={() => setShowUpdate(true)} accessibilityRole="button" accessibilityLabel="Güncelleme penceresini dene">
+        <Text style={S.btnTxt}>Güncelleme penceresini dene</Text>
+      </Pressable>
+      <UpdateDialog visible={showUpdate} locale={locale} reduceMotion={reduceMotion} onClose={() => setShowUpdate(false)} />
     </View>
   );
 }

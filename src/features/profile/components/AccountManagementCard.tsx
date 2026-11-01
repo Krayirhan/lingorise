@@ -1,14 +1,13 @@
-import { useState } from "react";
-import { ActivityIndicator, Alert, Platform, Pressable, Text, View } from "react-native";
-import { updateProfile } from "firebase/auth";
 import { Ionicons } from "@expo/vector-icons";
-import { auth } from "../../../services/firebase";
-import { deleteAccount, logout, PartialAccountDeletionError, resetPassword, sendVerificationEmail } from "../../../services/auth";
+import type React from "react";
+import { ActivityIndicator, Pressable, Text, View } from "react-native";
+import { LevelCode } from "../../../domain/models/content";
 import { Copy } from "../../../i18n/en";
 import { C } from "../../../theme/colors";
-import { AvatarPicker, AVATARS } from "./AvatarPicker";
-import { EditableAccountName } from "./EditableAccountName";
 import { S } from "./AccountManagementCard.styles";
+import { AvatarPicker } from "./AvatarPicker";
+import { useAccountManagementActions } from "./useAccountManagementActions";
+import { EditableAccountName } from "./EditableAccountName";
 
 interface Props {
   copy: Copy;
@@ -18,226 +17,116 @@ interface Props {
   onAvatarChange?: (avatarId: string) => void;
   onOpenAuth: () => void;
   onLoggedOut?: () => void;
+  level: LevelCode;
+  xp: number;
+  streak: number;
+  onChangeLevel: () => void;
 }
+
 
 export function AccountManagementCard({
   copy,
-  displayName = "LingoRise Bahçıvanı",
+  displayName = "Lingterra Bahçıvanı",
   avatarId = "sprig",
   onDisplayNameChange,
   onAvatarChange,
   onOpenAuth,
   onLoggedOut,
+  level,
+  xp,
+  streak,
+  onChangeLevel,
 }: Props) {
-  const user = auth.currentUser;
-  const isGuest = !user;
-  const [busy, setBusy] = useState(false);
-  const [notice, setNotice] = useState<string | null>(null);
-  const [editingName, setEditingName] = useState(false);
-  const [nameInput, setNameInput] = useState(user?.displayName || displayName);
+  const { user, isGuest, busy, notice, editingName, nameInput, setNameInput, setEditingName,
+    handleSaveName, handleLogout, handleSendVerification, handleResetPassword, handleDeleteAccount, currentAvatarIcon } =
+    useAccountManagementActions({ copy, displayName, avatarId, onDisplayNameChange, onLoggedOut });
 
-  const handleSaveName = async () => {
-    const trimmed = nameInput.trim();
-    if (!trimmed) return;
-    if (user) {
-      try {
-        setBusy(true);
-        await updateProfile(user, { displayName: trimmed });
-      } catch (e) {
-        console.warn("Update profile error", e);
-      } finally {
-        setBusy(false);
-      }
-    }
-    if (onDisplayNameChange) onDisplayNameChange(trimmed);
-    setEditingName(false);
-  };
-
-  const handleLogout = async () => {
-    try {
-      setBusy(true);
-      await logout();
-      if (onLoggedOut) onLoggedOut();
-    } catch (e: any) {
-      console.warn("Logout error", e);
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const handleSendVerification = async () => {
-    try {
-      setBusy(true);
-      await sendVerificationEmail();
-      setNotice(
-        copy.profile?.verificationSent ||
-          "Doğrulama bağlantısı e-posta adresine gönderildi."
-      );
-      setTimeout(() => setNotice(null), 4000);
-    } catch (e: any) {
-      Alert.alert("Hata", e?.message || "Doğrulama e-postası gönderilemedi.");
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const handleResetPassword = async () => {
-    if (!user?.email) return;
-    try {
-      setBusy(true);
-      await resetPassword(user.email);
-      setNotice(
-        copy.auth?.resetEmailSentSuccess ||
-          "Şifre sıfırlama bağlantısı e-posta adresine gönderildi."
-      );
-      setTimeout(() => setNotice(null), 4000);
-    } catch (e: any) {
-      Alert.alert("Hata", e?.message || "Şifre sıfırlama e-postası gönderilemedi.");
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const handleDeleteAccount = () => {
-    const confirmMsg =
-      copy.profile?.deleteAccountConfirm ||
-      "Hesabını ve buluttaki tüm ilerlemeni kalıcı olarak silmek istediğinden emin misin? Bu işlem geri alınamaz.";
-
-    if (Platform.OS === "web") {
-      if (window.confirm(confirmMsg)) {
-        void executeDelete();
-      }
-    } else {
-      Alert.alert("Hesabı Sil", confirmMsg, [
-        { text: "İptal", style: "cancel" },
-        {
-          text: "Sil",
-          style: "destructive",
-          onPress: () => void executeDelete(),
-        },
-      ]);
-    }
-  };
-
-  const executeDelete = async () => {
-    try {
-      setBusy(true);
-      await deleteAccount();
-      if (onLoggedOut) onLoggedOut();
-    } catch (e: any) {
-      // A PartialAccountDeletionError means the user's data is already gone
-      // — only the Auth credential remains — so the message must not imply
-      // deletion never started (DATA-QA-004 / SEC-QA-003 / GLOBAL-QA-007).
-      const isPartial = e instanceof PartialAccountDeletionError;
-      const underlying = isPartial ? e.cause : e;
-      if (underlying?.code === "auth/requires-recent-login") {
-        Alert.alert(
-          "Yeniden Giriş Gerekli",
-          isPartial
-            ? "Verilerin zaten silindi; hesabını tamamen kapatmak için lütfen yeniden giriş yapıp tekrar dene."
-            : "Güvenliğin için hesabını silmeden önce lütfen oturumu kapatıp yeniden giriş yap."
-        );
-      } else {
-        Alert.alert(
-          "Hata",
-          isPartial
-            ? "Verilerin silindi, ancak hesap kaydın tam olarak kaldırılamadı. Lütfen tekrar giriş yapıp tekrar dene."
-            : "Hesap silinirken bir hata oluştu. Lütfen tekrar giriş yapıp deneyin."
-        );
-      }
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const currentAvatarIcon = AVATARS.find((a) => a.id === avatarId)?.icon || "leaf-outline";
-
-  if (isGuest) {
-    return (
-      <View style={S.card}>
-        <View style={S.headerRow}>
-          <View style={S.iconCircleGuest}>
-            <Ionicons name={currentAvatarIcon} size={24} color={C.primary} />
-          </View>
-          <View style={S.copy}>
-            <View style={S.nameRow}>
-              <EditableAccountName
-                copy={copy}
-                name={displayName}
-                nameStyle={S.title}
-                editing={editingName}
-                nameInput={nameInput}
-                onNameInputChange={setNameInput}
-                onStartEdit={() => setEditingName(true)}
-                onSave={handleSaveName}
-              />
-            </View>
-            <Text style={S.subtitle}>
-              {copy.profile?.accountGuestSubtitle ||
-                "İlerlemen bu cihazda güvenle saklanıyor. Tüm cihazlarında eşitlemek için hesap bağla."}
-            </Text>
-          </View>
-        </View>
-
-        <AvatarPicker avatarId={avatarId} onAvatarChange={onAvatarChange} />
-
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={copy.profile?.loginRegisterBtn || "Giriş Yap veya Kayıt Ol"}
-          style={S.authBtn}
-          onPress={onOpenAuth}
-        >
-          <Ionicons name="cloud-upload-outline" size={18} color={C.ink} />
-          <Text style={S.authBtnTxt}>
-            {copy.profile?.loginRegisterBtn || "Giriş Yap veya Kayıt Ol"}
-          </Text>
-        </Pressable>
-      </View>
-    );
-  }
-
-  return (
+  const streakSuffix = copy.home?.streakSuffix || "gün";
+  const identity = (name: string, extra?: React.ReactNode, badge?: React.ReactNode) => (
     <View style={S.card}>
       <View style={S.headerRow}>
-        <View style={S.iconCircleUser}>
-          <Ionicons name={currentAvatarIcon} size={26} color={C.primary} />
+        <View style={S.avatarLarge}>
+          <Ionicons name={currentAvatarIcon} size={38} color={C.primary} />
         </View>
         <View style={S.copy}>
           <View style={S.nameRow}>
             <EditableAccountName
               copy={copy}
-              name={user.displayName || displayName}
-              nameStyle={S.userName}
+              name={name.trim() || copy.profile?.guestName || "Misafir öğrenci"}
+              nameStyle={S.identityName}
               editing={editingName}
               nameInput={nameInput}
               onNameInputChange={setNameInput}
               onStartEdit={() => setEditingName(true)}
               onSave={handleSaveName}
-              badge={
-                user.emailVerified ? (
-                  <View style={S.verifiedBadge}>
-                    <Ionicons name="checkmark-circle" size={12} color={C.success} />
-                    <Text style={S.verifiedBadgeTxt}>
-                      {copy.profile?.verifiedBadge || "Doğrulandı"}
-                    </Text>
-                  </View>
-                ) : (
-                  <View style={S.unverifiedBadge}>
-                    <Ionicons name="alert-circle" size={12} color={C.attention} />
-                    <Text style={S.unverifiedBadgeTxt}>
-                      {copy.profile?.unverifiedBadge || "Doğrulanmadı"}
-                    </Text>
-                  </View>
-                )
-              }
+              badge={badge}
             />
           </View>
-          <Text style={S.userEmail}>{user.email}</Text>
+          {extra}
+          <Text style={S.identityMeta}>{level} · {xp} XP · {streak} {streakSuffix} seri</Text>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={copy.profile?.changeLevelBtn || "Seviyeyi Değiştir"}
+            style={({ pressed }) => [S.changeLevelBtn, pressed && S.pressed]}
+            onPress={onChangeLevel}
+          >
+            <Text style={S.changeLevelTxt}>{copy.profile?.changeLevelBtn || "Seviyeyi Değiştir"}</Text>
+          </Pressable>
         </View>
       </View>
+      <AvatarPicker copy={copy} avatarId={avatarId} onAvatarChange={onAvatarChange} />
+    </View>
+  );
 
-      <AvatarPicker avatarId={avatarId} onAvatarChange={onAvatarChange} />
+  if (!user) {
+    return (
+      <>
+        {identity(displayName)}
 
+        <View style={S.guestCard}>
+          <Ionicons name="phone-portrait-outline" size={22} color={C.primary} />
+          <View style={S.guestCopy}>
+            <Text style={S.guestTitle}>{copy.profile?.accountGuestBannerTitle || "İlerlemen bu cihazda"}</Text>
+            <Text style={S.guestBody}>{copy.profile?.accountGuestBody}</Text>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={copy.profile?.loginRegisterBtn || "Giriş Yap veya Kayıt Ol"}
+              style={({ pressed }) => [S.authBtn, pressed && S.pressed]}
+              onPress={onOpenAuth}
+            >
+              <Text style={S.authBtnTxt}>
+                {copy.profile?.loginRegisterBtn || "Giriş Yap veya Kayıt Ol"}
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      </>
+    );
+  }
+
+  return (
+    <>
+      {identity(
+        user.displayName || displayName,
+        <Text style={S.userEmail}>{user.email}</Text>,
+        user.emailVerified ? (
+          <View style={S.verifiedBadge}>
+            <Ionicons name="checkmark-circle" size={12} color={C.success} />
+            <Text style={S.verifiedBadgeTxt}>
+              {copy.profile?.verifiedBadge || "Doğrulandı"}
+            </Text>
+          </View>
+        ) : (
+          <View style={S.unverifiedBadge}>
+            <Ionicons name="alert-circle" size={12} color={C.attention} />
+            <Text style={S.unverifiedBadgeTxt}>
+              {copy.profile?.unverifiedBadge || "Doğrulanmadı"}
+            </Text>
+          </View>
+        ),
+      )}
+
+    <View style={S.card}>
       {notice && (
         <View style={S.noticeBox}>
           <Ionicons name="information-circle" size={16} color={C.primary} />
@@ -299,5 +188,6 @@ export function AccountManagementCard({
         </Text>
       </Pressable>
     </View>
+    </>
   );
 }

@@ -1,8 +1,13 @@
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Animated, AppState, AppStateStatus } from "react-native";
-import { speechService } from "../../../services/speechService";
+import { useApplication } from "../../../context/ApplicationContext";
+import { englishSpeechText } from "../../../domain/speech/voice";
+
 
 export function useSpeech(wordPrompt: string, pronunciationText?: string, enabled = true, reduceMotion = false) {
+  const application = useApplication();
+  const { speechService } = application;
+
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [audioError, setAudioError] = useState(false);
   const audioPulse = useRef(new Animated.Value(1)).current;
@@ -68,9 +73,9 @@ export function useSpeech(wordPrompt: string, pronunciationText?: string, enable
 
     setIsSpeaking(true);
     setAudioError(false);
-    await speechService.speak(pronunciationText || wordPrompt, {
+    await speechService.speak(englishSpeechText(wordPrompt, pronunciationText), {
       language: "en-US",
-      rate: 0.85,
+      rate: 0.9,
       pitch: 1.0,
       onStart: () => setIsSpeaking(true),
       onDone: () => setIsSpeaking(false),

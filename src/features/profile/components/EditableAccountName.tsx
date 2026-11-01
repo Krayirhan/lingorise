@@ -1,9 +1,9 @@
+import { Ionicons } from "@expo/vector-icons";
 import { ReactNode } from "react";
 import { Pressable, StyleProp, Text, TextInput, TextStyle, View } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { Copy } from "../../../i18n/en";
 import { C } from "../../../theme/colors";
 import { S } from "./AccountManagementCard.styles";
-import { Copy } from "../../../i18n/en";
 
 const fill = (template: string, values: Record<string, string>) =>
   template.replace(/\{(\w+)\}/g, (_, key) => values[key] ?? "");

@@ -1,20 +1,22 @@
+import { C } from "../../../theme/colors";
+import { useApplication } from "../../../context/ApplicationContext";
+import { englishSpeechText } from "../../../domain/speech/voice";
 import { useState } from "react";
 import {
   FlatList,
   Modal,
   Pressable,
   SafeAreaView,
-  StyleSheet,
   Text,
   TextInput,
   View,
 } from "react-native";
+import { S } from "./WordNotebookModal.styles";
 import { Ionicons } from "@expo/vector-icons";
-import { allQuestions } from "../../../content/questions";
-import { LevelCode, MeaningMatchQuestion } from "../../../types/content";
-import { speechService } from "../../../services/speechService";
+
+import { LevelCode, MeaningMatchQuestion } from "../../../domain/models/content";
+
 import { Copy } from "../../../i18n/en";
-import { C, radius, spacing } from "../../../theme/colors";
 
 interface Props {
   copy: Copy;
@@ -30,6 +32,45 @@ interface Props {
 
 const LEVELS: (LevelCode | "ALL")[] = ["ALL", "A1", "A2", "B1", "B2", "C1", "C2"];
 
+function NotebookWordCard({ item, copy, learned, onSpeak, onPractice }: {
+  item: MeaningMatchQuestion; copy: Copy; learned: boolean;
+  onSpeak: () => void; onPractice?: () => void;
+}) {
+  const word = item.word || item.prompt;
+  const meaning = item.meaning || item.answer;
+  return (
+    <View style={S.wordCard}>
+      <View style={S.wordTopRow}>
+        <View style={S.wordLeft}>
+          <View style={S.levelBadge}><Text style={S.levelBadgeTxt}>{item.level}</Text></View>
+          <Text style={S.wordTxt}>{word}</Text>
+          {item.phonetic && <Text style={S.phoneticTxt}>{item.phonetic}</Text>}
+        </View>
+        <View style={S.actionIcons}>
+          <Pressable accessibilityRole="button" accessibilityLabel={`${word} seslendir`} style={S.iconBtn} onPress={onSpeak}>
+            <Ionicons name="volume-medium" size={20} color={C.primary} />
+          </Pressable>
+        </View>
+      </View>
+      {learned && <View style={S.statusRow}><View style={S.statusPill}>
+        <Ionicons name="checkmark-circle" size={12} color={C.successText} />
+        <Text style={S.statusPillTxt}>{copy.progress?.statusLearned || "Öğrenildi"}</Text>
+      </View></View>}
+      <View style={S.meaningRow}>
+        <Text style={S.meaningTxt}>“{meaning}”</Text>
+        {item.topic && <Text style={S.topicTxt}>· {item.topic}</Text>}
+      </View>
+      {item.exampleSentence && <View style={S.exampleBox}>
+        <Text style={S.exampleEn}>{item.exampleSentence}</Text>
+        {item.exampleTranslation && <Text style={S.exampleTr}>{item.exampleTranslation}</Text>}
+      </View>}
+      {onPractice && <Pressable style={S.practiceWordBtn} onPress={onPractice}>
+        <Text style={S.practiceWordBtnTxt}>Bu Kelimeyi Çalış →</Text>
+      </Pressable>}
+    </View>
+  );
+}
+
 export function WordNotebookModal({
   copy,
   visible,
@@ -38,6 +79,10 @@ export function WordNotebookModal({
   onPracticeWord,
   reduceMotion,
 }: Props) {
+  const application = useApplication();
+  const { allQuestions } = application.catalogue;
+  const { speechService } = application;
+
   const [query, setQuery] = useState("");
   const [selectedLevel, setSelectedLevel] = useState<LevelCode | "ALL">("ALL");
 
@@ -54,8 +99,8 @@ export function WordNotebookModal({
   });
 
   const handleSpeak = (q: MeaningMatchQuestion) => {
-    const word = q.pronunciation || q.word || q.prompt || "";
-    speechService.speak(word, { language: "en-US", rate: 0.85 });
+    const word = englishSpeechText(q.word || q.prompt || "", q.pronunciation);
+    speechService.speak(word, { language: "en-US", rate: 0.9 });
   };
 
   return (
@@ -126,295 +171,14 @@ export function WordNotebookModal({
             keyExtractor={(item) => item.id}
             contentContainerStyle={S.listContent}
             showsVerticalScrollIndicator={false}
-            renderItem={({ item }) => {
-              const isLearned = (solvedQuestionIds || []).includes(item.id);
-              const word = item.word || item.prompt;
-              const meaning = item.meaning || item.answer;
-
-              return (
-                <View style={S.wordCard}>
-                  <View style={S.wordTopRow}>
-                    <View style={S.wordLeft}>
-                      <View style={S.levelBadge}>
-                        <Text style={S.levelBadgeTxt}>{item.level}</Text>
-                      </View>
-                      <Text style={S.wordTxt}>{word}</Text>
-                      {item.phonetic && (
-                        <Text style={S.phoneticTxt}>{item.phonetic}</Text>
-                      )}
-                    </View>
-
-                    <View style={S.actionIcons}>
-                      <Pressable
-                        accessibilityRole="button"
-                        accessibilityLabel={`${word} seslendir`}
-                        style={S.iconBtn}
-                        onPress={() => handleSpeak(item)}
-                      >
-                        <Ionicons name="volume-medium" size={20} color={C.primary} />
-                      </Pressable>
-                    </View>
-                  </View>
-
-                  {isLearned && (
-                    <View style={S.statusRow}>
-                      <View style={S.statusPill}>
-                        <Ionicons name="checkmark-circle" size={12} color={C.successText} />
-                        <Text style={S.statusPillTxt}>{copy.progress?.statusLearned || "Öğrenildi"}</Text>
-                      </View>
-                    </View>
-                  )}
-
-                  <View style={S.meaningRow}>
-                    <Text style={S.meaningTxt}>“{meaning}”</Text>
-                    {item.topic && (
-                      <Text style={S.topicTxt}>· {item.topic}</Text>
-                    )}
-                  </View>
-
-                  {item.exampleSentence && (
-                    <View style={S.exampleBox}>
-                      <Text style={S.exampleEn}>{item.exampleSentence}</Text>
-                      {item.exampleTranslation && (
-                        <Text style={S.exampleTr}>
-                          {item.exampleTranslation}
-                        </Text>
-                      )}
-                    </View>
-                  )}
-
-                  {onPracticeWord && (
-                    <Pressable
-                      style={S.practiceWordBtn}
-                      onPress={() => {
-                        onClose();
-                        onPracticeWord(item);
-                      }}
-                    >
-                      <Text style={S.practiceWordBtnTxt}>Bu Kelimeyi Çalış →</Text>
-                    </Pressable>
-                  )}
-                </View>
-              );
-            }}
+            renderItem={({ item }) => (
+              <NotebookWordCard item={item} copy={copy} learned={(solvedQuestionIds || []).includes(item.id)}
+                onSpeak={() => handleSpeak(item)}
+                onPractice={onPracticeWord ? () => { onClose(); onPracticeWord(item); } : undefined} />
+            )}
           />
         </View>
       </SafeAreaView>
     </Modal>
   );
 }
-
-const S = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: C.canvas,
-  },
-  shell: {
-    flex: 1,
-    maxWidth: 580,
-    width: "100%",
-    alignSelf: "center",
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: C.line,
-  },
-  closeBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: C.surface,
-    borderWidth: 1,
-    borderColor: C.line,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  headerTitle: {
-    color: C.ink,
-    fontSize: 18,
-    fontWeight: "800",
-  },
-  badgeCount: {
-    backgroundColor: C.primarySoft,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: radius.full,
-  },
-  badgeCountTxt: {
-    color: C.primary,
-    fontSize: 12,
-    fontWeight: "800",
-  },
-  searchBox: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    backgroundColor: C.surface,
-    marginHorizontal: 20,
-    marginTop: 12,
-    paddingHorizontal: 14,
-    height: 46,
-    borderRadius: radius.md || 14,
-    borderWidth: 1,
-    borderColor: C.line,
-  },
-  searchInput: {
-    flex: 1,
-    color: C.ink,
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  levelFilters: {
-    flexDirection: "row",
-    gap: 6,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-  },
-  filterChip: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: radius.xs || 8,
-    backgroundColor: C.surface,
-    borderWidth: 1,
-    borderColor: C.line,
-  },
-  filterChipActive: {
-    backgroundColor: C.primary,
-    borderColor: C.primary,
-  },
-  filterChipTxt: {
-    color: C.muted,
-    fontSize: 12,
-    fontWeight: "700",
-  },
-  filterChipTxtActive: {
-    color: C.surface,
-    fontWeight: "800",
-  },
-  listContent: {
-    paddingHorizontal: 20,
-    paddingTop: 4,
-    paddingBottom: 28,
-    gap: 12,
-  },
-  wordCard: {
-    backgroundColor: C.surface,
-    borderRadius: radius.lg || 16,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: C.line,
-    gap: 8,
-  },
-  wordTopRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  wordLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    flexWrap: "wrap",
-    flex: 1,
-  },
-  levelBadge: {
-    backgroundColor: C.primarySoft,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: radius.xs || 6,
-  },
-  levelBadgeTxt: {
-    color: C.primary,
-    fontSize: 10,
-    fontWeight: "800",
-  },
-  wordTxt: {
-    color: C.ink,
-    fontSize: 16,
-    fontWeight: "800",
-  },
-  phoneticTxt: {
-    color: C.muted,
-    fontSize: 12,
-    fontStyle: "italic",
-  },
-  actionIcons: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  iconBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: C.primarySoft,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  statusRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    marginTop: 6,
-  },
-  statusPill: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    backgroundColor: C.successSoft,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: radius.xs,
-  },
-  statusPillTxt: {
-    color: C.successText,
-    fontSize: 10.5,
-    fontWeight: "800",
-  },
-  meaningRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-  },
-  meaningTxt: {
-    color: C.primary,
-    fontSize: 14.5,
-    fontWeight: "700",
-  },
-  topicTxt: {
-    color: C.muted,
-    fontSize: 12,
-  },
-  exampleBox: {
-    backgroundColor: C.canvas,
-    padding: 8,
-    borderRadius: radius.sm || 8,
-    gap: 2,
-    borderWidth: 1,
-    borderColor: C.lineSoft,
-  },
-  exampleEn: {
-    color: C.ink,
-    fontSize: 12.5,
-    fontWeight: "600",
-  },
-  exampleTr: {
-    color: C.muted,
-    fontSize: 11.5,
-    fontStyle: "italic",
-  },
-  practiceWordBtn: {
-    alignSelf: "flex-end",
-    paddingTop: 4,
-  },
-  practiceWordBtnTxt: {
-    color: C.primary,
-    fontSize: 12,
-    fontWeight: "700",
-  },
-});

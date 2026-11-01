@@ -1,5 +1,5 @@
+import { LevelCode } from "../../domain/models/content";
 import { Copy, Locale } from "../../i18n/en";
-import { LevelCode } from "../../types/content";
 
 export interface ProfileScreenProps {
   copy: Copy;

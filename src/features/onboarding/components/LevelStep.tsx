@@ -4,7 +4,7 @@ import { PrimaryButton } from "../../../components/PrimaryButton";
 import { levels } from "../../../content/levels";
 import { Copy } from "../../../i18n/en";
 import { C } from "../../../theme/colors";
-import { LevelCode } from "../../../types/content";
+import { LevelCode } from "../../../domain/models/content";
 
 const mascot = require("../../../../assets/sprig-mascot.png");
 

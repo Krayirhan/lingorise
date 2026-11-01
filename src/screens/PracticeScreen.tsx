@@ -1,24 +1,23 @@
+import { useApplication } from "../context/ApplicationContext";
 import { useEffect, useState } from "react";
-import { BackHandler, Platform, Pressable, ScrollView, StatusBar, StyleSheet, Text, View } from "react-native";
+import { ScrollView, StatusBar, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
-import { Copy } from "../i18n/en";
-import { MeaningMatchQuestion } from "../types/content";
+import { C } from "../theme/colors";
+import { Copy, Locale } from "../i18n/en";
+import { MeaningMatchQuestion } from "../domain/models/content";
 import { SessionMode } from "../state/useAppSession";
-import { C, radius, spacing } from "../theme/colors";
 import { useSpeech } from "../features/practice/hooks/useSpeech";
 import { usePracticeSession, AnswerQualityMeta } from "../features/practice/hooks/usePracticeSession";
 import { usePracticeFeedback } from "../features/practice/hooks/usePracticeFeedback";
-import { PracticeHeader } from "../features/practice/components/PracticeHeader";
-import { WordPrompt } from "../features/practice/components/WordPrompt";
-import { AnswerList } from "../features/practice/components/AnswerList";
-import { FeedbackCard } from "../features/practice/components/FeedbackCard";
-import { PracticeMascot } from "../features/practice/components/PracticeMascot";
-import { PrimaryButton } from "../components/PrimaryButton";
+import { usePracticeExit } from "../features/practice/hooks/usePracticeExit";
+
+import { ActiveSessionState } from "../domain/models/user";
 import { AppDialog } from "../components/AppDialog";
-import { SessionSummaryCard } from "../features/practice/components/SessionSummaryCard";
-import { track } from "../services/telemetry";
-import { EXAM_PASS_COUNT, isExamPassed } from "../domain/learning/levelExam";
+import { PracticeHeader } from "../features/practice/components/PracticeHeader";
+import { S } from "../features/practice/practice.styles";
+import { evaluateWriting, isWritingTaskReady, WritingCheck } from "../domain/learning/writing";
+import { ProductionForm } from "../features/practice/components/ProductionForm";
+import { CompletedPracticeSummary, PracticeQuestionContent, usePracticeKeyboardShortcuts } from "./PracticeScreenParts";
 
 interface Props {
   copy: Copy;
@@ -26,6 +25,9 @@ interface Props {
   index: number;
   totalQuestions: number;
   sessionMode: SessionMode;
+  locale: Locale;
+  writingOffer?: ActiveSessionState["writingOffer"];
+  onWritingOfferChange: (offer: ActiveSessionState["writingOffer"]) => void;
   picked: string | null;
   submitted: boolean;
   isSessionCompleted?: boolean;
@@ -46,6 +48,9 @@ export function PracticeScreen({
   index,
   totalQuestions,
   sessionMode,
+  locale,
+  writingOffer,
+  onWritingOfferChange,
   picked,
   submitted,
   isSessionCompleted = false,
@@ -59,105 +64,52 @@ export function PracticeScreen({
   soundEnabled = true,
   reduceMotion = false,
 }: Props) {
+  const application = useApplication();
+
   const correctAnswer = question.meaning || question.answer || "";
   const wordPrompt = question.word || question.prompt || "";
   const isCorrect = submitted && picked === correctAnswer;
   const isLastQuestion = index + 1 >= totalQuestions;
 
-  const speech = useSpeech(wordPrompt, question.pronunciation, soundEnabled, reduceMotion);
+  const englishWord = question.mode === "PICK_THE_WORD" ? question.meaning : wordPrompt;
+  const speech = useSpeech(englishWord, question.pronunciation, soundEnabled, reduceMotion);
   const session = usePracticeSession(question, correctAnswer, onCheck);
   const feedback = usePracticeFeedback(submitted, isCorrect, reduceMotion);
-  const [exitDialogVisible, setExitDialogVisible] = useState(false);
-
-  const exitTitle = copy.game?.exitConfirmTitle || "Pratikten çıkmak istiyor musun?";
-  const exitMsg = copy.game?.exitConfirmMessage || "Bu oturumdaki çözülmemiş sorular kaydedilmeyecek.";
-  const trackAbandon = () =>
-    track("session_abandoned", { questionsAnswered: sessionAnswers.length, questionsTotal: totalQuestions });
-
-  const handleRequestExit = () => {
-    if (isSessionCompleted) {
-      onBack();
-      return;
-    }
-    if (Platform.OS === "web") {
-      if (window.confirm(`${exitTitle}\n${exitMsg}`)) {
-        trackAbandon();
-        onBack();
-      }
-    } else {
-      setExitDialogVisible(true);
-    }
-  };
-
-  const handleConfirmExit = () => {
-    setExitDialogVisible(false);
-    trackAbandon();
-    onBack();
-  };
-
-  const handleCancelExit = () => setExitDialogVisible(false);
+  const [productionResponse, setProductionResponse] = useState("");
+  const [productionResult, setProductionResult] = useState<WritingCheck | null>(null);
+  const [writingSaving, setWritingSaving] = useState(false);
+  const [writingSaveError, setWritingSaveError] = useState(false);
+  const task = application.writing.getTask(question.id);
+  const activeOffer = submitted && isCorrect && sessionMode === "PRACTICE" && writingOffer?.questionId === question.id && writingOffer.status !== "done" && isWritingTaskReady(task, question.id, question.level, englishWord) ? writingOffer : undefined;
 
   useEffect(() => {
-    const sub = BackHandler.addEventListener("hardwareBackPress", () => {
-      handleRequestExit();
-      return true;
-    });
-    return () => sub.remove();
-  }, [handleRequestExit]);
+    setProductionResponse("");
+    setProductionResult(null);
+    setWritingSaveError(false);
+  }, [question.id]);
 
-  // Physical / Web Keyboard Shortcuts
-  useEffect(() => {
-    if (Platform.OS !== "web" || typeof window === "undefined") return;
+  const submitProduction = async () => {
+    if (!task || !productionResponse.trim() || writingSaving) return;
+    setProductionResult(evaluateWriting(task, productionResponse));
+    setWritingSaving(true);
+    const saved = await application.data.saveWritingAttempt({ questionId: question.id, response: productionResponse.trim(), createdAt: Date.now() });
+    setWritingSaveError(!saved);
+    setWritingSaving(false);
+  };
 
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const options = question.options ?? [question.meaning, ...question.wrongOptions];
-      if (e.key === "1" && options[0]) {
-        onPick(options[0]);
-      } else if (e.key === "2" && options[1]) {
-        onPick(options[1]);
-      } else if (e.key === "3" && options[2]) {
-        onPick(options[2]);
-      } else if (e.key === "4" && options[3]) {
-        onPick(options[3]);
-      } else if (e.key === "Enter" || e.key === " ") {
-        e.preventDefault();
-        if (!submitted && picked) {
-          session.handleCheck(picked, submitted);
-        } else if (submitted) {
-          onNext();
-        }
-      }
-    };
+  const exit = usePracticeExit({ copy, completed: isSessionCompleted, answeredCount: sessionAnswers.length,
+    totalQuestions, onBack, isExam: sessionMode === "EXAM" });
 
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [submitted, picked, question, onPick, session, onNext]);
+  const advance = () => {
+    if (activeOffer) onWritingOfferChange({ ...activeOffer, status: "done" });
+    onNext();
+  };
+  usePracticeKeyboardShortcuts({ question, submitted, picked, onPick, onNext: advance, canAdvance: !activeOffer, handleCheck: session.handleCheck });
 
-  if (isSessionCompleted) {
-    const totalXp = sessionAnswers.reduce((acc, a) => acc + a.xpEarned, 0);
-    const correctCount = sessionAnswers.filter((a) => a.isCorrect).length;
-    const mistakesCount = sessionAnswers.filter((a) => !a.isCorrect).length;
-    const isExam = sessionMode === "EXAM";
+  if (isSessionCompleted) return <CompletedPracticeSummary copy={copy} sessionMode={sessionMode} answers={sessionAnswers} totalQuestions={totalQuestions} onBack={onBack} />;
 
-    return (
-      <SafeAreaView style={S.safe} edges={["top", "bottom"]}>
-        <StatusBar barStyle="dark-content" />
-        <View style={S.shell}>
-          <ScrollView contentContainerStyle={S.summaryContent} showsVerticalScrollIndicator={false}>
-            <SessionSummaryCard
-              copy={copy}
-              totalXpEarned={totalXp}
-              totalQuestions={sessionAnswers.length || totalQuestions}
-              correctCount={correctCount}
-              mistakesCount={mistakesCount}
-              onReturnHome={onBack}
-              examResult={isExam ? { passed: isExamPassed(correctCount), passCount: EXAM_PASS_COUNT } : undefined}
-            />
-          </ScrollView>
-        </View>
-      </SafeAreaView>
-    );
-  }
+  const recordedCurrentAnswer = [...sessionAnswers].reverse().find((answer) => answer.questionId === question.id);
+  const displayedXpEarned = recordedCurrentAnswer?.xpEarned ?? session.xpReward;
 
   return (
     <SafeAreaView style={S.safe} edges={["top", "bottom"]}>
@@ -168,126 +120,44 @@ export function PracticeScreen({
           index={index}
           totalQuestions={totalQuestions}
           isExamMode={sessionMode === "EXAM"}
-          onBack={handleRequestExit}
+          onBack={exit.requestExit}
         />
 
         <ScrollView contentContainerStyle={S.content} showsVerticalScrollIndicator={false}>
-          <WordPrompt
-            copy={copy}
-            question={question}
-            dynamicFontSize={28}
-            isCompactScreen={false}
-            showHint={session.showHint}
-            onToggleHint={session.toggleHint}
-            isSpeaking={speech.isSpeaking}
-            audioPulse={speech.audioPulse}
-            isMotionReduced={feedback.isMotionReduced}
-            onToggleSpeech={speech.toggleSpeech}
-            audioError={speech.audioError}
+          <PracticeQuestionContent
+            copy={copy} question={question} session={session} speech={speech} feedback={feedback}
+            correctAnswer={correctAnswer} picked={picked} submitted={submitted} isCorrect={isCorrect}
+            isLastQuestion={isLastQuestion} displayedXpEarned={displayedXpEarned}
+            writingContent={activeOffer && task ? <ProductionForm copy={copy} locale={locale} task={task} status={activeOffer.status as "offered" | "open"}
+              response={productionResponse} result={productionResult} saving={writingSaving} saveError={writingSaveError}
+              onStart={() => onWritingOfferChange({ ...activeOffer, status: "open" })}
+              onSkip={() => onWritingOfferChange({ ...activeOffer, status: "done" })}
+              onChange={(value) => { setProductionResponse(value); setProductionResult(null); setWritingSaveError(false); }}
+              onSubmit={() => { void submitProduction(); }} /> : null}
+            onPick={onPick} onNext={advance} onRetry={onRetry} onRemindLater={onRemindLater}
+            sessionMode={sessionMode} onCheckAnswer={() => session.handleCheck(picked, submitted)}
           />
-
-          <AnswerList
-            copy={copy}
-            options={session.shuffledOptions}
-            correctAnswer={correctAnswer}
-            picked={picked}
-            submitted={submitted}
-            isChecking={session.isChecking}
-            isMotionReduced={feedback.isMotionReduced}
-            isCompactScreen={false}
-            onPick={onPick}
-          />
-
-          {!submitted ? (
-            <View style={S.ctaBox}>
-              <PrimaryButton
-                label={copy.game?.checkAnswer || "Cevabı Kontrol Et"}
-                disabled={!picked}
-                onPress={() => session.handleCheck(picked, submitted)}
-              />
-            </View>
-          ) : (
-            <FeedbackCard
-              copy={copy}
-              question={question}
-              isCorrect={isCorrect}
-              correctAnswer={correctAnswer}
-              xpEarned={session.xpReward}
-              isLastQuestion={isLastQuestion}
-              onNext={onNext}
-              onRetry={onRetry}
-            />
-          )}
-
-          {submitted && (
-            <PracticeMascot
-              correct={isCorrect}
-              isMotionReduced={feedback.isMotionReduced}
-              leafAnim={feedback.leafAnim}
-              mascotBounce={feedback.mascotBounce}
-            />
-          )}
-
-          {onRemindLater && (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={copy.game?.remindLater || "Daha sonra hatırlat"}
-              style={S.remindBtn}
-              // The visible control is ~36dp tall — below platform touch-target
-              // guidance (A11Y-QA-002 / GLOBAL-QA-025). hitSlop expands the
-              // tappable area without changing the compact visual size.
-              hitSlop={{ top: 8, bottom: 8, left: 12, right: 12 }}
-              onPress={() => onRemindLater(question)}
-            >
-              <Ionicons name="bookmark-outline" size={14} color={C.primary} />
-              <Text style={S.remindBtnTxt}>
-                {copy.game?.remindLater || "Bu kelimeyi tekrar listeme ekle"}
-              </Text>
-            </Pressable>
-          )}
         </ScrollView>
       </View>
 
       <AppDialog
-        visible={exitDialogVisible}
-        title={exitTitle}
-        message={exitMsg}
+        visible={exit.dialogVisible}
+        title={exit.title}
+        message={exit.message}
+        appearance="session"
+        icon={{ name: sessionMode === "EXAM" ? "school-outline" : "leaf-outline" }}
         primaryAction={{
-          label: copy.game?.exitCancel || "Devam Et",
-          onPress: handleCancelExit,
+          label: sessionMode === "EXAM" ? copy.game.examExitCancel : copy.game.exitCancel,
+          onPress: exit.cancelExit,
         }}
         secondaryAction={{
-          label: copy.game?.exitConfirm || "Çıkış Yap",
-          onPress: handleConfirmExit,
+          label: sessionMode === "EXAM" ? copy.game.examExitConfirm : copy.game.exitConfirm,
+          onPress: exit.confirmExit,
           destructive: true,
         }}
-        onRequestClose={handleCancelExit}
+        onRequestClose={exit.cancelExit}
         reduceMotion={reduceMotion}
       />
     </SafeAreaView>
   );
 }
-
-const S = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: C.canvas },
-  shell: { flex: 1, maxWidth: 580, width: "100%", alignSelf: "center" },
-  content: { padding: spacing.xl, gap: 16, paddingBottom: 28 },
-  summaryContent: { padding: spacing.xl, justifyContent: "center", minHeight: "85%" },
-  ctaBox: { marginTop: 4 },
-  remindBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderRadius: radius.md || 12,
-    alignSelf: "center",
-    marginTop: 4,
-  },
-  remindBtnTxt: {
-    color: C.primary,
-    fontSize: 12.5,
-    fontWeight: "700",
-  },
-});
