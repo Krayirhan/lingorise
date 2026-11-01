@@ -1,0 +1,4 @@
+Ana sayfa, pratik, ilerleme ve profil ekranlarını daha anlaşılır ve kullanışlı hâle getirdik.
+B1 seviyesinde isteğe bağlı cümle kurma alıştırmalarını ekledik.
+Kelime seslendirmesini iyileştirdik.
+Çeşitli görünüm ve kullanım iyileştirmeleri yaptık.

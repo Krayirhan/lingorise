@@ -1,0 +1,4 @@
+appId: com.lingterra.app
+---
+- tapOn: ".*Pratiğe başla.*"
+- assertVisible: ".*Kontrol.*"

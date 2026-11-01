@@ -2,6 +2,10 @@ node_modules/
 .expo/
 dist/
 web-build/
+coverage/
+.audit/quality/latest.json
+.audit/quality/eslint-current.json
+.audit/quality/ci-check-results.json
 graphify-out/
 android/local.properties
 .env
@@ -42,3 +46,5 @@ screenshot_action_ready.png
 **/.claude/agent-memory-local
 **/.claude/first-run
 **/.claude/assistant-daemon-state.json
+# Firebase iOS app configuration (generated per Firebase project)
+/GoogleService-Info.plist

@@ -1,0 +1,86 @@
+- generic [ref=f3e25]:
+  - generic [ref=f3e26]:
+    - generic "Lingterra logosu" [ref=f3e28]:
+      - generic [ref=f3e29]:
+        - generic [ref=f3e30]: 
+        - generic [ref=f3e31]: 
+      - generic [ref=f3e32]: Lingterra
+    - generic [ref=f3e33]:
+      - button "Metro kodunu yeniden yükle" [ref=f3e34] [cursor=pointer]:
+        - generic [ref=f3e35]: 
+      - 'button "Seviye: A1, 1 günlük çalışma serisi" [ref=f3e36] [cursor=pointer]':
+        - generic [ref=f3e37]: İngilizce · A1
+        - generic [ref=f3e38]: 
+      - button "Seviye ve bildirimler" [ref=f3e39] [cursor=pointer]:
+        - generic [ref=f3e40]: 
+  - generic [ref=f3e44]:
+    - generic [ref=f3e45]:
+      - generic [ref=f3e47]:
+        - generic [ref=f3e48]: BÖLÜM 1 · İYİ GÜNLER
+        - generic [ref=f3e49]: Bugünün pratiğine hazır mısın?
+      - generic [ref=f3e50]: Bugünün kelimeleri seni bekliyor.
+    - generic [ref=f3e51]:
+      - generic [ref=f3e73]:
+        - generic [ref=f3e74]: 
+        - generic [ref=f3e75]: "0"
+        - generic [ref=f3e76]: / 20
+      - generic [ref=f3e78]:
+        - generic [ref=f3e79]: A1 · BÖLÜM 1/27
+        - generic [ref=f3e80]: Günün Pratiği
+        - generic [ref=f3e81]: 20 kelime · +230 XP · 5 dk
+        - button "Pratiğe başla" [ref=f3e82] [cursor=pointer]:
+          - generic [ref=f3e83]: 
+    - generic [ref=f3e85]:
+      - heading "Koleksiyonun" [level=1] [ref=f3e87]
+      - generic [ref=f3e88]:
+        - generic [ref=f3e89]: 
+        - generic [ref=f3e90]: Öğrendiğin kelimeler burada birikecek.
+    - generic [ref=f3e91]:
+      - heading "Beceriler" [level=1] [ref=f3e92]
+      - generic [ref=f3e93]:
+        - button "Kelime, 20 kelime" [ref=f3e94] [cursor=pointer]:
+          - generic [ref=f3e95]: 
+          - generic [ref=f3e97]: Kelime
+          - generic [ref=f3e98]: 20 kelime
+          - generic [ref=f3e99]: 
+        - generic "Dilbilgisi, Yakında" [ref=f3e100]:
+          - generic [ref=f3e101]: 
+          - generic [ref=f3e103]: Dilbilgisi
+          - generic [ref=f3e104]: Yakında
+        - generic "Konuşma, Yakında" [ref=f3e105]:
+          - generic [ref=f3e106]: 
+          - generic [ref=f3e108]: Konuşma
+          - generic [ref=f3e109]: Yakında
+        - generic "Dinleme, Yakında" [ref=f3e110]:
+          - generic [ref=f3e111]: 
+          - generic [ref=f3e113]: Dinleme
+          - generic [ref=f3e114]: Yakında
+    - generic [ref=f3e115]:
+      - generic [ref=f3e116]: Günün Kelimesi
+      - 'button "Günün kelimesi: they, anlamı: onlar" [ref=f3e118] [cursor=pointer]':
+        - generic [ref=f3e119]: 
+        - generic [ref=f3e121]:
+          - generic [ref=f3e122]: A1 · KELIME
+          - generic [ref=f3e123]:
+            - generic [ref=f3e124]: they
+            - generic [ref=f3e125]: /ðeɪ/
+          - generic [ref=f3e126]: onlar · Parkın yakınında burada yaşıyorlar.
+        - button "Telaffuzu dinle" [ref=f3e127]:
+          - generic [ref=f3e128]: 
+  - tablist [ref=f3e129]:
+    - tab "Ana Sayfa" [ref=f3e130] [cursor=pointer]:
+      - generic [ref=f3e132]:
+        - generic [ref=f3e133]: 
+        - generic [ref=f3e135]: Ana Sayfa
+    - tab "Pratik" [ref=f3e136] [cursor=pointer]:
+      - generic [ref=f3e138]:
+        - generic [ref=f3e139]: 
+        - generic [ref=f3e141]: Pratik
+    - tab "İlerleme" [ref=f3e142] [cursor=pointer]:
+      - generic [ref=f3e144]:
+        - generic [ref=f3e145]: 
+        - generic [ref=f3e147]: İlerleme
+    - tab "Profil" [ref=f3e148] [cursor=pointer]:
+      - generic [ref=f3e150]:
+        - generic [ref=f3e151]: 
+        - generic [ref=f3e153]: Profil

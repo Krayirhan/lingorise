@@ -103,6 +103,7 @@ npm run build:android:preview   # EAS ile önizleme APK'sı
 
 ### Mimari
 - [Teknik Mimari](docs/10-technical-architecture.md) · [Güncel ve Hedef Mimari](docs/13-current-and-target-architecture.md)
+- [Clean Architecture Referansı](docs/CLEAN_ARCHITECTURE.md) · [Güncel Doğrulama ve Puanlama](docs/CLEAN_ARCHITECTURE_VERIFICATION.md) · [Clean Code Kuralları](docs/08-architecture-and-refactor.md)
 - [MVP Uygulama Planı](docs/11-mvp-implementation-plan.md) · [MVP Kapsam Kilidi](docs/15-mvp-scope-lock.md)
 - [Learning Garden Ürün Kuralı](docs/17-lingorise-learning-garden-product-rule.md)
 

@@ -1,0 +1,19 @@
+- generic [ref=e34]:
+  - generic [ref=e35]:
+    - button "Geri" [ref=e36] [cursor=pointer]:
+      - generic [ref=e37]: ‹ Geri
+    - generic "Adım 4 / 4" [ref=e38]: 4 / 4
+  - generic [ref=e39]:
+    - generic [ref=e43]: HER ŞEY HAZIR
+    - generic [ref=e44]: Hesap açmadan hemen başlayabilirsin.
+    - generic [ref=e45]: İlerlemen cihazında güvenle tutulur. İstediğin zaman profilinden hesap oluşturup buluta yedekleyebilirsin.
+    - generic [ref=e46]:
+      - generic [ref=e47]: 
+      - generic [ref=e49]:
+        - generic [ref=e50]: Düzenli pratik yapmak ister misin?
+        - generic [ref=e51]: Her gün sadece 1 nazik hatırlatıcı alarak serini koru. Asla spam gönderilmez.
+      - switch [ref=e52] [cursor=pointer]:
+        - switch "Düzenli pratik yapmak ister misin?" [ref=e55]
+    - generic [ref=e56]:
+      - button "Hemen Başla (Misafir Olarak) →" [ref=e57] [cursor=pointer]
+      - button "Hesap Oluştur ve Başla" [ref=e59] [cursor=pointer]

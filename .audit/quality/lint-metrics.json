@@ -1,0 +1,9 @@
+{
+  "baselineVersion": 1,
+  "filesScanned": 337,
+  "cleanFiles": 261,
+  "cleanFileRate": 77.45,
+  "errors": 238,
+  "warnings": 16,
+  "regressions": []
+}

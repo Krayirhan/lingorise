@@ -1,0 +1,1 @@
+See 10_OFFLINE_SYNC.md "Data storage map" table — the full inventory of AsyncStorage keys and Firestore collections, their source of truth, sync direction, and delete behavior lives there to avoid duplicated/drifting copies.
