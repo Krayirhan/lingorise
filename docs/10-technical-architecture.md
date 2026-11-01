@@ -1,20 +1,25 @@
 # LingoRise Teknik Mimari
 
-## MVP teknoloji kararı
+**Güncelleme:** 5 Ekim 2026
 
-LingoRise MVP için **Expo + React Native + TypeScript** kullanılır. Bu seçim, Android ve iOS için tek bir uygulama kodu, hızlı cihaz üzerinde deneme ve Expo'nun ses/yerel depolama ekosistemine erişim sağlar. MVP'de backend yerine yerel, tip güvenli içerik verisi kullanılır.
+## Teknoloji ve çalışma zamanı
+
+LingoRise, Expo + React Native + TypeScript uygulamasıdır. Android ve iOS istemcileri aynı `src/` kod tabanını kullanır. Android application id ve iOS bundle id `com.lingterra.app` olarak yapılandırılmıştır.
+
+Runtime mimarisinde Firebase Auth/Firestore uzak adaptörleri, AsyncStorage yerel adaptörü ve Expo bildirim/ses/paylaşım adaptörleri bulunur. Uygulama, içerik ve öğrenme akışlarının bir bölümünü bundled veriyle çevrimdışı sürdürebilir; tam remote/cache/bundled katalog sırası mimari referansta açıklanır.
 
 ## Katmanlar
 
-- UI: React Native ekranları ve erişilebilir bileşenler
-- Domain: seviye, soru, cevap, XP ve streak kuralları
-- Content: A1 içerikleriyle başlayan TypeScript/JSON veri kümeleri
-- Persistence: MVP sonrası `AsyncStorage`; hesap/senkronizasyon daha sonra backend ile
+- **Domain:** platformdan bağımsız modeller, öğrenme/ilerleme kuralları ve editorial politikaları.
+- **Application:** kullanım senaryoları ile SDK'sız repository/gateway/clock/telemetry portları.
+- **Infrastructure:** Firebase, AsyncStorage ve Expo servis adaptörleri.
+- **Presentation:** ekran, feature, hook ve React state bağlantıları.
+- **Composition:** uygulama örneğini ve adaptörleri bağlayan `src/app/AppBootstrap.tsx`.
 
-## MVP dışı bırakılanlar
+Güncel bağımlılık grafiği, kurallar ve kalan düşük öncelikli iyileştirme [Clean Architecture referansında](CLEAN_ARCHITECTURE.md) tutulur. Doğrulama sonuçları [ayrı kayıtta](CLEAN_ARCHITECTURE_VERIFICATION.md) güncellenir.
 
-Kimlik doğrulama, sosyal özellikler, ligler, ödeme, uzaktan içerik CMS'i ve gerçek ses servisi MVP'ye dahil değildir.
+## Mimari kalite kapısı
 
-## Kalite hedefleri
+CI typecheck, mimari AST kontrolü, application regression testleri ve tam test paketini çalıştırır; ayrıca Firestore rules ve Android derleme/cihaz smoke işleri için ayrı job'lar tanımlıdır. Bir job'un workflow'da tanımlı olması, her yerel doğrulamada geçtiği anlamına gelmez. Son çalıştırma durumu verification belgesinde belirtilir.
 
-TypeScript strict kontrolü, temel cevap akışı testi, küçük ve modüler ekranlar, çevrimdışı çalışabilecek içerik yapısı.
+Domain ve application kodu React/Firebase/AsyncStorage olmadan test edilir. Presentation, infrastructure adaptörlerini doğrudan import etmez. Mimari checker bilinmeyen source root'ları hata sayar ve katman kurallarıyla import çevrimlerini CI'da kontrol eder.

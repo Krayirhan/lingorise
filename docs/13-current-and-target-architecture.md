@@ -1,49 +1,26 @@
-# LingoRise Güncel Durum ve Hedef Mimari
+# Güncel ve Hedef Mimari
 
-Bu dosya, LingoRise için proje içindeki ana teknik referanstır. Yeni bir karar alındığında bu doküman ve ilgili alt dokümanlar güncellenir.
+**Son güncelleme:** 5 Ekim 2026
 
-## Güncel durum — 22 Ağustos 2026
+Bu dosya mimari belgeler içindeki kısa Türkçe giriş ve yönlendirme sayfasıdır. Kanonik katman şeması, bağımlılık kuralları ve güncel boşluklar tek yerde tutulur:
 
-- Platform: Expo + React Native + TypeScript
-- Çalışan hedef: Android emülatörü ve Expo development build
-- Paket adı: `com.lingorise.app`
-- Uygulama adı: **LingoRise**
-- Çalışan ekranlar: 3 adımlı onboarding, seviye seçimi, ana sayfa, Meaning Match ve Pick the Word
-- Çalışan sistemler: seviye seçimi, XP, streak görünümü, soru ilerlemesi, doğru/yanlış geri bildirimi, oyun ekranı geri dönüşü
-- İçerik: A1 örnekleri `src/content/questions/a1.ts` altında; ekran akışı `App.tsx` üzerinden çalışıyor
-- Tema: `src/theme/colors.ts` içinde görsel token sistemi başlatıldı; eski isimler geçiş için alias olarak korunuyor
-- Kalıcılık: henüz yok; uygulama yeniden başlatıldığında onboarding durumu korunmaz
-- Backend/hesap: yok
-- Sentence Builder: MVP'den çıkarıldı ve kullanıcıya gösterilmiyor
+- [Clean Architecture güncel referansı](CLEAN_ARCHITECTURE.md)
+- [Doğrulama sonuçları, açık engeller ve puanlama](CLEAN_ARCHITECTURE_VERIFICATION.md)
 
-## Hedef mimari
+## Güncel ürün/platform özeti
 
-```text
-src/
-  screens/       ekran kompozisyonları
-  components/    tekrar kullanılabilir UI parçaları
-  content/       seviyeler, sorular ve öğrenme içerikleri
-  i18n/          arayüz çevirileri
-  domain/        XP, streak, cevap değerlendirme ve ilerleme kuralları
-  services/      storage, content ve ileride API erişimi
-  theme/         renk, tipografi, spacing ve ortak stiller
-  types/         ortak TypeScript modelleri
-```
+- Expo, React Native ve TypeScript kullanılır.
+- Android ve iOS uygulama kimliği `com.lingterra.app` olarak tanımlıdır.
+- Uygulama; onboarding, home, practice, progress, profile ve auth akışlarını içerir.
+- İlerleme, öğrenme kuralları, hesap, katalog, senkronizasyon ve editorial kontroller domain/application/infrastructure katmanlarına ayrılmıştır.
+- Yerel ve uzak persistence, Firebase, AsyncStorage ve platform servis adaptörleri üzerinden yürütülür.
 
-## Geçiş sırası
+## Bugünkü mimari kararı
 
-1. `App.tsx` içindeki kalan ekran metinlerini `src/i18n/en.ts` dosyasına taşı.
-2. Seviyeleri `src/content/levels.ts` dosyasına taşı. **Tamamlandı.**
-3. Soruları `src/content/questions/a1.ts` dosyasına taşı. **Tamamlandı.**
-4. Onboarding, home ve game ekranlarını `src/screens/` altına böl.
-5. XP, streak ve cevap kontrolünü `src/domain/` altına taşı.
-6. Onboarding ve kullanıcı ilerlemesini `AsyncStorage` ile kalıcı yap.
-7. İçerik hacmi büyüdüğünde API/CMS katmanına geç; UI sözleşmesini değiştirme.
+Yeni işlevler Clean Architecture referansındaki yönlere uymalıdır: domain saf kalır; application kullanım senaryolarını ve portları sahiplenir; infrastructure portları platform SDK'larıyla uygular; presentation application arayüzünü çağırır; composition root bağımlılıkları bağlar.
 
-## Mimari sınırlar
+`src/app/AppBootstrap.tsx` composition root olarak adaptörleri bağlar; giriş sonrası merge/refresh application use case'ine taşınmıştır ve AST checker bilinmeyen klasörleri reddeder. Bootstrap'ta başlangıç katalog yükleme/zaman aşımı ve navigator hazırlığı için kalan React yaşam döngüsü koordinasyonu takip edilecek iyileştirmedir.
 
-- Ekran bileşeni soru doğrulama veya XP hesabı yapmaz.
-- İçerik dosyası renk, padding veya React Native bileşeni içermez.
-- Çeviri dosyası öğrenme sorusu içermez.
-- Domain katmanı React Native'e bağımlı olmaz.
-- API'ye geçişte ekranlar doğrudan fetch çağrısı yapmaz; `services/` kullanılır.
+## Eski MVP notu
+
+22 Ağustos 2026 tarihli ilk mimari taslakta geçen “storage/backend henüz yok”, yalnızca A1 ve `App.tsx` odaklı ekran akışı gibi bilgiler tarihsel başlangıç durumuydu. Güncel kod yapısını veya runtime durumunu tanımlamaz; güncel bilgi için üstteki kanonik belgelere bakın.

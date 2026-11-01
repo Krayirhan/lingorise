@@ -1,0 +1,4 @@
+We refined the home, practice, progress and profile screens.
+Optional sentence-writing exercises are now available for a selection of B1 words.
+We improved word pronunciation playback.
+We also made usability and visual improvements.

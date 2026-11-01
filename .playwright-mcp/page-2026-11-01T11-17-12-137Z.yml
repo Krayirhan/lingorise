@@ -1,0 +1,33 @@
+- generic [ref=f3e401]:
+  - button "Geri" [ref=f3e403] [cursor=pointer]:
+    - generic [ref=f3e404]: 
+  - generic [ref=f3e407]:
+    - generic [ref=f3e408]: Öğrenme profilini oluşturalım.
+    - generic [ref=f3e409]: İlerlemen her cihazında seninle gelsin.
+  - generic [ref=f3e412]:
+    - generic [ref=f3e413]:
+      - generic [ref=f3e414]: Adın
+      - generic [ref=f3e416]:
+        - generic [ref=f3e417]: 
+        - textbox "Adın" [ref=f3e418]:
+          - /placeholder: Örn. Can
+    - generic [ref=f3e419]:
+      - generic [ref=f3e420]: E-posta
+      - generic [ref=f3e422]:
+        - generic [ref=f3e423]: 
+        - textbox "E-posta" [ref=f3e424]:
+          - /placeholder: ornek@email.com
+    - generic [ref=f3e425]:
+      - generic [ref=f3e426]: Şifre
+      - generic [ref=f3e428]:
+        - generic [ref=f3e429]: 
+        - textbox "Şifre" [ref=f3e430]:
+          - /placeholder: ••••••••
+        - button "Şifreyi göster" [ref=f3e431] [cursor=pointer]:
+          - generic [ref=f3e432]: 
+      - generic [ref=f3e433]: En az 8 karakter kullan.
+    - button "Hesabımı Oluştur →" [ref=f3e434] [cursor=pointer]
+    - generic [ref=f3e436]: Kayıt olarak Kullanım Koşulları ve Gizlilik Politikası’nı kabul etmiş olursun.
+    - button "Zaten hesabın var mı? Giriş yap" [ref=f3e437] [cursor=pointer]:
+      - generic [ref=f3e438]: Zaten hesabın var mı?Giriş yap
+    - button "Hesap Açmadan Devam Et" [ref=f3e439] [cursor=pointer]

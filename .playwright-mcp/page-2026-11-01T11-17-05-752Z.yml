@@ -1,0 +1,118 @@
+- generic [ref=f3e155]:
+  - generic [ref=f3e156]:
+    - generic "Lingterra logosu" [ref=f3e158]:
+      - generic [ref=f3e159]:
+        - generic [ref=f3e160]: 
+        - generic [ref=f3e161]: 
+      - generic [ref=f3e162]: Lingterra
+    - generic [ref=f3e163]:
+      - button "Metro kodunu yeniden yükle" [ref=f3e164] [cursor=pointer]:
+        - generic [ref=f3e165]: 
+      - 'button "Seviye: A1, 1 günlük çalışma serisi" [ref=f3e166] [cursor=pointer]':
+        - generic [ref=f3e167]: İngilizce · A1
+        - generic [ref=f3e168]: 
+      - button "Seviye ve bildirimler" [ref=f3e169] [cursor=pointer]:
+        - generic [ref=f3e170]: 
+  - generic [ref=f3e286]:
+    - generic [ref=f3e287]:
+      - generic [ref=f3e288]: HESAP & AYARLAR
+      - generic [ref=f3e289]: Profil
+    - generic [ref=f3e290]:
+      - generic [ref=f3e291]:
+        - generic [ref=f3e292]: 
+        - generic [ref=f3e294]:
+          - 'button "İsmi düzenle, mevcut isim: Misafir öğrenci" [ref=f3e296] [cursor=pointer]':
+            - generic [ref=f3e297]: Misafir öğrenci
+            - generic [ref=f3e298]: 
+          - generic [ref=f3e299]: A1 · 12 XP · 1 gün seri
+          - button "Seviyeyi Değiştir" [ref=f3e300] [cursor=pointer]
+      - generic [ref=f3e302]:
+        - generic [ref=f3e303]: Avatar
+        - generic [ref=f3e304]:
+          - radio "Filiz avatarı" [ref=f3e305] [cursor=pointer]:
+            - generic [ref=f3e306]: 
+          - radio "Işık avatarı" [ref=f3e307] [cursor=pointer]:
+            - generic [ref=f3e308]: 
+          - radio "Çiçek avatarı" [ref=f3e309] [cursor=pointer]:
+            - generic [ref=f3e310]: 
+          - radio "Doğa avatarı" [ref=f3e311] [cursor=pointer]:
+            - generic [ref=f3e312]: 
+          - radio "Sevgi avatarı" [ref=f3e313] [cursor=pointer]:
+            - generic [ref=f3e314]: 
+    - generic [ref=f3e315]:
+      - generic [ref=f3e316]: 
+      - generic [ref=f3e317]:
+        - generic [ref=f3e318]: İlerlemeni güvene al
+        - generic [ref=f3e319]: İlerlemeni yedeklemek ve cihazların arasında eşitlemek için hesap oluştur.
+        - button "Giriş Yap veya Kayıt Ol" [ref=f3e320] [cursor=pointer]
+    - generic [ref=f3e322]:
+      - heading "Tercihler" [level=1] [ref=f3e323]
+      - generic [ref=f3e324]:
+        - generic [ref=f3e325]:
+          - generic [ref=f3e326]: 
+          - generic [ref=f3e328]: Uygulama Dili
+          - generic [ref=f3e329]:
+            - button "Türkçe dilini seç" [ref=f3e330] [cursor=pointer]:
+              - generic [ref=f3e331]: Türkçe
+            - button "English language select" [ref=f3e332] [cursor=pointer]:
+              - generic [ref=f3e333]: English
+        - generic [ref=f3e334]:
+          - generic [ref=f3e335]: 
+          - generic [ref=f3e337]: Günlük Hatırlatıcılar
+          - switch "Günlük Hatırlatıcılar" [ref=f3e341] [cursor=pointer]
+        - generic [ref=f3e342]:
+          - generic [ref=f3e343]: 
+          - generic [ref=f3e345]: Ses Efektleri
+          - switch "Ses Efektleri" [checked] [ref=f3e349] [cursor=pointer]
+        - generic [ref=f3e350]:
+          - generic [ref=f3e351]: 
+          - generic [ref=f3e353]: Hareketi Azalt
+          - switch "Hareketi Azalt" [ref=f3e357] [cursor=pointer]
+    - generic [ref=f3e358]:
+      - heading "Veri ve Gizlilik" [level=1] [ref=f3e359]
+      - generic [ref=f3e360]:
+        - generic [ref=f3e361]:
+          - generic [ref=f3e362]: 
+          - generic [ref=f3e363]: Yerel Cihaz Modu
+        - button "Yedek İndir (JSON)" [ref=f3e364] [cursor=pointer]:
+          - generic [ref=f3e365]: 
+          - generic [ref=f3e368]: 
+        - button "Gizlilik & Şartlar" [ref=f3e369] [cursor=pointer]:
+          - generic [ref=f3e370]: 
+          - generic [ref=f3e373]: 
+        - button "Yerel Verileri Sıfırla" [ref=f3e374] [cursor=pointer]:
+          - generic [ref=f3e375]: 
+          - generic [ref=f3e378]: 
+    - generic [ref=f3e379]:
+      - generic [ref=f3e380]:
+        - generic [ref=f3e381]: 
+        - generic [ref=f3e382]: Dev — Zaman Kaydırma
+      - generic [ref=f3e383]: "Bugün: 2026-11-01"
+      - generic [ref=f3e384]:
+        - button "1 gün ilerlet" [ref=f3e385] [cursor=pointer]:
+          - generic [ref=f3e386]: +1 gün
+        - button "7 gün ilerlet" [ref=f3e387] [cursor=pointer]:
+          - generic [ref=f3e388]: +7 gün
+        - button "30 gün ilerlet" [ref=f3e389] [cursor=pointer]:
+          - generic [ref=f3e390]: +30 gün
+        - button "Zamanı sıfırla" [ref=f3e391] [cursor=pointer]:
+          - generic [ref=f3e392]: Sıfırla
+      - button "Güncelleme penceresini dene" [ref=f3e393] [cursor=pointer]
+    - generic [ref=f3e395]: Lingterra Hakkında · Sürüm 0.2.2
+  - tablist [ref=f3e259]:
+    - tab "Ana Sayfa" [ref=f3e260] [cursor=pointer]:
+      - generic [ref=f3e262]:
+        - generic [ref=f3e263]: 
+        - generic [ref=f3e265]: Ana Sayfa
+    - tab "Pratik" [ref=f3e266] [cursor=pointer]:
+      - generic [ref=f3e268]:
+        - generic [ref=f3e269]: 
+        - generic [ref=f3e271]: Pratik
+    - tab "İlerleme" [ref=f3e272] [cursor=pointer]:
+      - generic [ref=f3e274]:
+        - generic [ref=f3e275]: 
+        - generic [ref=f3e277]: İlerleme
+    - tab "Profil" [active] [ref=f3e278] [cursor=pointer]:
+      - generic [ref=f3e280]:
+        - generic [ref=f3e281]: 
+        - generic [ref=f3e283]: Profil

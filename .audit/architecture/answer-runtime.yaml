@@ -1,0 +1,5 @@
+appId: com.lingterra.app
+---
+- tapOn: "ben"
+- tapOn: ".*Kontrol.*"
+- assertVisible: ".*XP kazanıldı.*"
