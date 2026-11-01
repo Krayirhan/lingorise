@@ -1,0 +1,40 @@
+import { StyleSheet } from "react-native";
+import { C, radius, spacing } from "../../theme/colors";
+import { fonts } from "../../theme/typography";
+export const S = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: C.canvas },
+  shell: { flex: 1, maxWidth: 580, width: "100%", alignSelf: "center" },
+  content: { padding: spacing.xl, gap: 16, paddingBottom: 28 },
+  summaryContent: { padding: spacing.xl, justifyContent: "center", minHeight: "85%" },
+  ctaBox: { marginTop: 4 },
+  productionBox: { backgroundColor: C.surface, borderRadius: 12, borderWidth: 1, borderColor: C.line, padding: spacing.lg, gap: 10 },
+  productionHeading: { flexDirection: "row", alignItems: "center", gap: 10 },
+  productionIcon: { width: 36, height: 36, borderRadius: 18, backgroundColor: C.successSoft, alignItems: "center", justifyContent: "center" },
+  productionTitle: { color: C.ink, fontFamily: fonts.display, fontSize: 20 },
+  productionPrompt: { color: C.ink, fontFamily: fonts.body, fontSize: 14, lineHeight: 21 },
+  productionInput: { minHeight: 96, borderWidth: 1, borderColor: C.primaryBorder, borderRadius: 10, padding: 12, color: C.ink, fontFamily: fonts.body, fontSize: 15, textAlignVertical: "top", backgroundColor: C.canvas },
+  productionFeedback: { gap: 8, backgroundColor: C.successSoft, borderRadius: 10, padding: 12 },
+  productionScore: { color: C.ink, fontFamily: fonts.bodyBold, fontSize: 14 },
+  productionCheckRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  productionFeedbackText: { color: C.muted, fontFamily: fonts.body, fontSize: 13, lineHeight: 19, flex: 1 },
+  productionNote: { color: C.muted, fontFamily: fonts.body, fontSize: 12, lineHeight: 18 },
+  productionError: { color: C.attentionText, fontFamily: fonts.body, fontSize: 12, lineHeight: 18 },
+  writingSkip: { minHeight: 44, alignItems: "center", justifyContent: "center" },
+  writingSkipText: { color: C.muted, fontFamily: fonts.bodyBold, fontSize: 13 },
+  remindBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: radius.md || 12,
+    alignSelf: "center",
+    marginTop: 4,
+  },
+  remindBtnTxt: {
+    color: C.primary,
+    fontSize: 12.5,
+    fontWeight: "700",
+  },
+});

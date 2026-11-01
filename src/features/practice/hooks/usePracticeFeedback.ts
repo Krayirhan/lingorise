@@ -15,7 +15,7 @@ export function usePracticeFeedback(answered: boolean, correct: boolean, forceRe
   useEffect(() => {
     AccessibilityInfo.isReduceMotionEnabled()
       .then((enabled) => setSystemReduceMotion(enabled))
-      .catch(() => {});
+      .catch(() => { });
 
     const sub = AccessibilityInfo.addEventListener("reduceMotionChanged", (enabled) => {
       setSystemReduceMotion(enabled);
@@ -32,7 +32,7 @@ export function usePracticeFeedback(answered: boolean, correct: boolean, forceRe
     if (correct) {
       try {
         if (Platform.OS !== "web") Vibration.vibrate(45);
-      } catch {}
+      } catch { }
 
       if (isMotionReduced) {
         feedbackAnim.setValue(1);
@@ -70,7 +70,7 @@ export function usePracticeFeedback(answered: boolean, correct: boolean, forceRe
     } else {
       try {
         if (Platform.OS !== "web") Vibration.vibrate([0, 35, 40, 35]);
-      } catch {}
+      } catch { }
 
       if (isMotionReduced) {
         feedbackAnim.setValue(1);

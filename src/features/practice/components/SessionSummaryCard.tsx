@@ -1,8 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
 import { StyleSheet, Text, View } from "react-native";
-import { C, radius, spacing } from "../../../theme/colors";
-import { Copy } from "../../../i18n/en";
 import { PrimaryButton } from "../../../components/PrimaryButton";
+import { Copy } from "../../../i18n/en";
+import { C, radius } from "../../../theme/colors";
 
 interface Props {
   copy: Copy;
@@ -14,6 +14,7 @@ interface Props {
   /** Set for a level-completion exam (domain/learning/levelExam.ts) — swaps
    * the generic practice summary for a pass/fail result. */
   examResult?: { passed: boolean; passCount: number };
+  checkpointResult?: { passed: boolean; passCount: number };
 }
 
 export function SessionSummaryCard({
@@ -24,30 +25,40 @@ export function SessionSummaryCard({
   mistakesCount,
   onReturnHome,
   examResult,
+  checkpointResult,
 }: Props) {
   const accuracyPercent =
     totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 100;
 
+  const assessmentResult = examResult || checkpointResult;
   const title = examResult
     ? examResult.passed
       ? copy.game?.examPassedTitle || "Sınavı Geçtin! 🎉"
       : copy.game?.examFailedTitle || "Bu Sefer Olmadı"
-    : copy.game?.sessionSummaryTitle || "Pratik Tamamlandı!";
+    : checkpointResult
+      ? checkpointResult.passed
+        ? "Konu Kontrolünü Geçtin! 🎉"
+        : "Konu Kontrolünü Tekrarla"
+      : copy.game?.sessionSummaryTitle || "Pratik Tamamlandı!";
 
   const subtitle = examResult
     ? examResult.passed
       ? copy.game?.examPassedSubtitle || "Bu seviyeyi artık gerçekten biliyorsun."
       : (copy.game?.examFailedSubtitle || "En az {pass} doğru gerekiyor. İstediğin zaman tekrar deneyebilirsin.").replace(
-          "{pass}",
-          String(examResult.passCount)
-        )
-    : copy.game?.sessionSummarySubtitle || "Tebrikler! Günlük pratiğini başarıyla tamamladın.";
+        "{pass}",
+        String(examResult.passCount)
+      )
+    : checkpointResult
+      ? checkpointResult.passed
+        ? "Sıradaki konu artık açıldı."
+        : `Sonraki konu için en az ${checkpointResult.passCount} doğru gerekiyor.`
+      : copy.game?.sessionSummarySubtitle || "Tebrikler! Günlük pratiğini başarıyla tamamladın.";
 
   return (
     <View style={S.card}>
       <View style={S.trophyCircle}>
         <Ionicons
-          name={examResult && !examResult.passed ? "refresh-circle" : "trophy"}
+          name={assessmentResult && !assessmentResult.passed ? "refresh-circle" : "trophy"}
           size={32}
           color={C.rewardText}
         />

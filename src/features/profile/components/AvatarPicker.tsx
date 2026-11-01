@@ -1,6 +1,7 @@
-import { Pressable, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { Pressable, Text, View } from "react-native";
 import { C } from "../../../theme/colors";
+import { Copy } from "../../../i18n/en";
 import { S } from "./AccountManagementCard.styles";
 
 export const AVATARS = [
@@ -13,15 +14,17 @@ export const AVATARS = [
 
 /** Identical in both the guest and signed-in card states — extracted so it exists once (roadmap 18-srs-flow-hardening.md ARCH-003). */
 export function AvatarPicker({
+  copy,
   avatarId,
   onAvatarChange,
 }: {
+  copy: Copy;
   avatarId: string;
   onAvatarChange?: (avatarId: string) => void;
 }) {
   return (
     <View style={S.avatarRow}>
-      <Text style={S.avatarLabel}>Avatar Seç:</Text>
+      <Text style={S.avatarLabel}>{copy.profile?.avatarPickerLabel || "Avatar"}</Text>
       <View style={S.avatarList}>
         {AVATARS.map((av) => (
           <Pressable
@@ -32,7 +35,7 @@ export function AvatarPicker({
             accessibilityLabel={`${av.label} avatarı`}
             accessibilityState={{ selected: avatarId === av.id }}
           >
-            <Ionicons name={av.icon} size={18} color={avatarId === av.id ? C.white : C.primary} />
+            <Ionicons name={av.icon} size={20} color={avatarId === av.id ? C.white : C.primary} />
           </Pressable>
         ))}
       </View>

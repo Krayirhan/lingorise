@@ -1,9 +1,10 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Animated, Pressable, StyleSheet, Text, View } from "react-native";
-import { C, radius, spacing } from "../../../theme/colors";
+import { MeaningMatchQuestion } from "../../../domain/models/content";
 import { Copy } from "../../../i18n/en";
+import { C, radius, spacing } from "../../../theme/colors";
 import { formatPartOfSpeech } from "../../../utils/formatters";
-import { MeaningMatchQuestion } from "../../../types/content";
+import { fonts } from "../../../theme/typography";
 
 interface Props {
   copy: Copy;
@@ -120,20 +121,20 @@ export function WordPrompt({
 }
 
 const S = StyleSheet.create({
-  card: { backgroundColor: C.surface, borderRadius: radius.lg, padding: spacing.lg, borderWidth: 1, borderColor: C.line },
+  card: { backgroundColor: C.surface, borderRadius: 12, padding: spacing.lg, borderWidth: 1, borderColor: C.line },
   cardCompact: { padding: spacing.md },
   metaRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  tagsRow: { flexDirection: "row", gap: 5, alignItems: "center" },
+  tagsRow: { flexDirection: "row", flexWrap: "wrap", flexShrink: 1, gap: 5, alignItems: "center" },
   dirBadge: { backgroundColor: C.attentionSoft, paddingHorizontal: 7, paddingVertical: 2, borderRadius: radius.xs, borderWidth: 1, borderColor: C.attentionBorder },
-  dirText: { color: C.attention, fontSize: 9, fontWeight: "800", letterSpacing: 0.7 },
+  dirText: { color: C.attentionText, fontFamily: fonts.bodyBold, fontSize: 10, letterSpacing: 0.4 },
   posBadge: { backgroundColor: C.primarySoft, paddingHorizontal: 6, paddingVertical: 2, borderRadius: radius.xs },
-  posText: { color: C.primary, fontSize: 9, fontWeight: "800" },
+  posText: { color: C.primary, fontFamily: fonts.bodyBold, fontSize: 10 },
   hintBtn: { flexDirection: "row", alignItems: "center", gap: 3, backgroundColor: C.canvas, paddingHorizontal: 6, paddingVertical: 2, borderRadius: radius.xs, borderWidth: 1, borderColor: C.line },
-  hintTxt: { color: C.muted, fontSize: 9.5, fontWeight: "700" },
-  hintTxtAct: { color: C.rewardText, fontWeight: "800" },
+  hintTxt: { color: C.muted, fontFamily: fonts.bodyBold, fontSize: 10.5 },
+  hintTxtAct: { color: C.rewardText },
   cntRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: spacing.md, marginTop: 4 },
   titleWrap: { flex: 1 },
-  title: { color: C.ink, fontWeight: "800", letterSpacing: -0.5 },
+  title: { color: C.ink, fontFamily: fonts.bodyExtraBold, letterSpacing: -0.5 },
   pho: { color: C.muted, fontSize: 12, fontStyle: "italic", marginTop: 1 },
   audioBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: C.primarySoft, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: C.primaryBorder },
   audioBtnAct: { backgroundColor: C.primary, borderColor: C.primary },
@@ -145,5 +146,5 @@ const S = StyleSheet.create({
   hintPen: { color: C.rewardText, fontSize: 10, fontWeight: "700", marginTop: 2 },
   div: { height: 1, backgroundColor: C.lineSoft, marginVertical: 8 },
   instRow: { flexDirection: "row", alignItems: "center", gap: 4 },
-  instTxt: { color: C.muted, fontSize: 13, fontWeight: "600", flex: 1 },
+  instTxt: { color: C.muted, fontFamily: fonts.bodySemi, fontSize: 13, flex: 1 },
 });

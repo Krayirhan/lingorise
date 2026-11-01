@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState, useCallback } from "react";
-import { MeaningMatchQuestion } from "../../../types/content";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { MeaningMatchQuestion } from "../../../domain/models/content";
 import { AnswerQualityMeta } from "../../../domain/review/qualitySignal";
 
 export type { AnswerQualityMeta };

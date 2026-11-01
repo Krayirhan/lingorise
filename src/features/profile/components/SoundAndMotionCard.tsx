@@ -1,97 +1,74 @@
-import { useState } from "react";
-import { StyleSheet, Switch, Text, View } from "react-native";
-import { C, radius } from "../../../theme/colors";
+import { Switch } from "react-native";
 import { Copy } from "../../../i18n/en";
+import { C } from "../../../theme/colors";
+import { SettingsRow } from "./SettingsRow";
 
 interface Props {
   copy: Copy;
+  notificationsEnabled?: boolean;
   soundEnabled?: boolean;
   reduceMotion?: boolean;
+  onNotificationToggle?: (enabled: boolean) => void;
   onSoundToggle?: (enabled: boolean) => void;
   onReduceMotionToggle?: (reduced: boolean) => void;
 }
 
+const trackColor = { false: C.line, true: C.attentionStrong };
+
+/** Reminder, sound and motion toggles as rows of the preferences group. */
 export function SoundAndMotionCard({
   copy,
+  notificationsEnabled = true,
   soundEnabled = true,
   reduceMotion = false,
+  onNotificationToggle,
   onSoundToggle,
   onReduceMotionToggle,
 }: Props) {
   return (
-    <View style={S.card}>
-      <Text style={S.headerTitle}>{copy.profile?.soundAndMotionHeader || "Ses ve Animasyon"}</Text>
-
-      {/* Sound Effects Toggle */}
-      <View style={S.row}>
-        <View style={S.copy}>
-          <Text style={S.title}>{copy.profile?.soundEffectsTitle || "Ses Efektleri"}</Text>
-          <Text style={S.sub}>{copy.profile?.soundEffectsSub || "Doğru ve yanlış cevap sesleri"}</Text>
-        </View>
-        <Switch
-          value={soundEnabled}
-          onValueChange={onSoundToggle}
-          trackColor={{ false: C.line, true: C.primary }}
-          thumbColor={C.white}
-          accessibilityLabel={copy.profile?.soundEffectsTitle || "Ses Efektleri"}
-        />
-      </View>
-
-      <View style={S.divider} />
-
-      {/* Motion Reduction Toggle */}
-      <View style={S.row}>
-        <View style={S.copy}>
-          <Text style={S.title}>{copy.profile?.reduceMotionTitle || "Hareketi Azalt"}</Text>
-          <Text style={S.sub}>{copy.profile?.reduceMotionSub || "Gereksiz animasyonları kapat"}</Text>
-        </View>
-        <Switch
-          value={reduceMotion}
-          onValueChange={onReduceMotionToggle}
-          trackColor={{ false: C.line, true: C.primary }}
-          thumbColor={C.white}
-          accessibilityLabel={copy.profile?.reduceMotionTitle || "Hareketi Azalt"}
-        />
-      </View>
-    </View>
+    <>
+      <SettingsRow
+        icon="notifications-outline"
+        tint={C.attentionSoft}
+        title={copy.profile?.remindersTitle || "Günlük Hatırlatıcılar"}
+        right={
+          <Switch
+            value={notificationsEnabled}
+            onValueChange={onNotificationToggle}
+            trackColor={trackColor}
+            thumbColor={C.surface}
+            accessibilityLabel={copy.profile?.remindersTitle || "Günlük Hatırlatıcılar"}
+          />
+        }
+      />
+      <SettingsRow
+        icon="volume-medium-outline"
+        tint={C.rewardSoft}
+        title={copy.profile?.soundEffectsTitle || "Ses Efektleri"}
+        right={
+          <Switch
+            value={soundEnabled}
+            onValueChange={onSoundToggle}
+            trackColor={trackColor}
+            thumbColor={C.surface}
+            accessibilityLabel={copy.profile?.soundEffectsTitle || "Ses Efektleri"}
+          />
+        }
+      />
+      <SettingsRow
+        icon="pulse-outline"
+        tint={C.successSoft}
+        title={copy.profile?.reduceMotionTitle || "Hareketi Azalt"}
+        right={
+          <Switch
+            value={reduceMotion}
+            onValueChange={onReduceMotionToggle}
+            trackColor={trackColor}
+            thumbColor={C.surface}
+            accessibilityLabel={copy.profile?.reduceMotionTitle || "Hareketi Azalt"}
+          />
+        }
+      />
+    </>
   );
 }
-
-const S = StyleSheet.create({
-  card: {
-    backgroundColor: C.surface,
-    borderRadius: radius.card || 20,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: C.line,
-    gap: 12,
-  },
-  headerTitle: {
-    color: C.ink,
-    fontSize: 15.5,
-    fontWeight: "800",
-  },
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 10,
-  },
-  copy: {
-    flex: 1,
-    gap: 2,
-  },
-  title: {
-    color: C.ink,
-    fontSize: 14.5,
-    fontWeight: "700",
-  },
-  sub: {
-    color: C.muted,
-    fontSize: 12,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: C.lineSoft,
-  },
-});

@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { C, radius, spacing } from "../../../theme/colors";
 import { Copy } from "../../../i18n/en";
+import { C, radius, spacing } from "../../../theme/colors";
 
 interface Props {
   copy: Copy;
@@ -29,7 +29,7 @@ export function PracticeHeader({ copy, index, totalQuestions, isExamMode, onBack
 
       <View style={S.progWrap}>
         <View style={S.progTrack}>
-          <View style={[S.progFill, { width: `${progressPercent}%` }]} />
+          <View style={[S.progFill, isExamMode && S.examProgFill, { width: `${progressPercent}%` }]} />
         </View>
       </View>
 
@@ -37,7 +37,7 @@ export function PracticeHeader({ copy, index, totalQuestions, isExamMode, onBack
         {isExamMode ? (
           <View style={S.revBadge}>
             <Ionicons name="school-outline" size={11} color={C.attentionText} style={S.icon} />
-            <Text style={S.revText}>{copy.game?.examModeBadge || "Sınav"}</Text>
+            <Text style={S.revText}>{copy.game?.examModeBadge || "Sınav"} · {index + 1}/{totalQuestions}</Text>
           </View>
         ) : isSingle ? (
           <View style={S.qBadge}>
@@ -63,6 +63,7 @@ const S = StyleSheet.create({
   progWrap: { flex: 1, height: 24, justifyContent: "center", paddingHorizontal: 2 },
   progTrack: { width: "100%", height: 7, backgroundColor: C.line, borderRadius: radius.xs, overflow: "hidden" },
   progFill: { height: "100%", backgroundColor: C.primary, borderRadius: radius.xs },
+  examProgFill: { backgroundColor: C.attentionStrong },
   indWrap: { alignItems: "flex-end", justifyContent: "center", minWidth: 68 },
   revBadge: { flexDirection: "row", alignItems: "center", backgroundColor: C.attentionSoft, paddingHorizontal: 8, paddingVertical: 3.5, borderRadius: radius.sm, borderWidth: 1, borderColor: C.attentionBorder },
   qBadge: { flexDirection: "row", alignItems: "center", backgroundColor: C.primarySoft, paddingHorizontal: 8, paddingVertical: 3.5, borderRadius: radius.sm, borderWidth: 1, borderColor: C.primaryBorder },

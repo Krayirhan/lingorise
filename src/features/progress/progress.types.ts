@@ -1,6 +1,6 @@
 import { Copy, Locale } from "../../i18n/en";
-import { LevelCode, MeaningMatchQuestion } from "../../types/content";
-import { GardenProgress, PracticeHistoryEntry } from "../../types/user";
+import { LevelCode, MeaningMatchQuestion } from "../../domain/models/content";
+import { GardenProgress, PracticeHistoryEntry } from "../../domain/models/user";
 
 export interface LevelProgressItem {
   /** False while the level lacks enough words to be worth entering. */
@@ -14,8 +14,14 @@ export interface LevelProgressItem {
 }
 
 export interface TopicProgressItem {
+  topicId: string;
   topic: string;
-  count: number;
+  objective: string;
+  total: number;
+  seen: number;
+  reliable: number;
+  percent: number;
+  state: "locked" | "available" | "in_progress" | "assessment_due" | "completed" | "mastered";
 }
 
 export interface ProgressScreenProps {
