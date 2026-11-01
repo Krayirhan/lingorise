@@ -1,4 +1,4 @@
-import { PartOfSpeech } from "../../types/content";
+import { PartOfSpeech } from "../../domain/models/content";
 
 export type A1VocabularyTopic =
   | "people"

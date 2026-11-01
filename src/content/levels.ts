@@ -1,4 +1,4 @@
-import { Level } from "../types/content";
+import { Level } from "../domain/models/content";
 
 export const levels: Level[] = [
   { code: "A1", title: "Başlangıç", hint: "Birkaç kelime biliyorum" },

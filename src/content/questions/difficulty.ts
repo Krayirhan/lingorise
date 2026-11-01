@@ -1,4 +1,4 @@
-import { LevelCode } from "../../types/content";
+import { LevelCode } from "../../domain/models/content";
 
 /**
  * Difficulty and XP were flat constants (10 XP, difficulty 1) regardless of
