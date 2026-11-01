@@ -1,3 +1,29 @@
+/**
+ * Display face for headings. Loaded in AppBootstrap; each weight is its own
+ * family, so styles using these never set fontWeight (Android would fall back
+ * to the system font).
+ */
+export const fonts = {
+  display: "Fraunces_700Bold",
+  displaySemi: "Fraunces_600SemiBold",
+  body: "Manrope_400Regular",
+  bodyMedium: "Manrope_500Medium",
+  bodySemi: "Manrope_600SemiBold",
+  bodyBold: "Manrope_700Bold",
+  bodyExtraBold: "Manrope_800ExtraBold",
+} as const;
+
+/** The only heading sizes screens use. */
+export const typeScale = {
+  hero: 34,
+  display: 28,
+  title: 24,
+  section: 21,
+  card: 17,
+  body: 15,
+  caption: 13,
+} as const;
+
 export const typography = {
   fontSizes: {
     badge: 11,

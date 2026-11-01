@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import { C, radius, spacing } from "../theme/colors";
+import { fonts } from "../theme/typography";
 
 interface DialogAction {
   label: string;
@@ -24,6 +25,7 @@ interface Props {
   reduceMotion?: boolean;
   /** Small single-icon affordance above the title. Optional — most dialogs don't need one. */
   icon?: DialogIcon;
+  appearance?: "default" | "session";
 }
 
 /**
@@ -40,6 +42,7 @@ export function AppDialog({
   onRequestClose,
   reduceMotion = false,
   icon,
+  appearance = "default",
 }: Props) {
   if (!visible) return null;
 
@@ -55,7 +58,7 @@ export function AppDialog({
     >
       <View style={S.overlay}>
         <View
-          style={S.card}
+          style={[S.card, appearance === "session" && S.sessionCard]}
           accessible={true}
           accessibilityRole="alert"
           accessibilityLiveRegion="assertive"
@@ -74,17 +77,17 @@ export function AppDialog({
             </View>
           )}
 
-          <Text style={S.title}>{title}</Text>
-          <Text style={S.message}>{message}</Text>
+          <Text style={appearance === "session" ? S.sessionTitle : S.title}>{title}</Text>
+          <Text style={[S.message, appearance === "session" && S.sessionMessage]}>{message}</Text>
 
           <View style={S.actions}>
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={primaryAction.label}
-              style={({ pressed }) => [S.primaryBtn, pressed && S.pressed]}
+              style={({ pressed }) => [S.primaryBtn, appearance === "session" && S.sessionPrimary, pressed && S.pressed]}
               onPress={primaryAction.onPress}
             >
-              <Text style={S.primaryTxt}>{primaryAction.label}</Text>
+              <Text style={appearance === "session" ? S.sessionPrimaryText : S.primaryTxt}>{primaryAction.label}</Text>
             </Pressable>
 
             {secondaryAction && (
@@ -95,9 +98,9 @@ export function AppDialog({
                 style={({ pressed }) => [S.secondaryBtn, pressed && S.pressed]}
                 onPress={secondaryAction.onPress}
               >
-                <Text
+              <Text
                   style={[
-                    S.secondaryTxt,
+                    appearance === "session" ? S.sessionSecondaryText : S.secondaryTxt,
                     secondaryAction.destructive && S.secondaryTxtDestructive,
                   ]}
                 >
@@ -131,6 +134,12 @@ const S = StyleSheet.create({
     borderColor: C.line,
     elevation: 8,
   },
+  sessionCard: { borderRadius: 14, padding: 20 },
+  sessionTitle: { color: C.ink, fontFamily: fonts.display, fontSize: 21, lineHeight: 27 },
+  sessionMessage: { fontFamily: fonts.body, fontSize: 14, lineHeight: 21 },
+  sessionPrimary: { backgroundColor: C.attentionStrong, borderRadius: 12 },
+  sessionPrimaryText: { fontFamily: fonts.bodyBold, color: C.surface, fontSize: 15.5 },
+  sessionSecondaryText: { color: C.ink, fontFamily: fonts.bodyBold, fontSize: 14.5 },
   iconCircle: {
     width: 52,
     height: 52,

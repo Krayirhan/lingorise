@@ -1,7 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useRef } from "react";
 import { Animated, Pressable, StyleSheet, Text, View } from "react-native";
-import { C, radius, spacing } from "../theme/colors";
+import { C, spacing } from "../theme/colors";
+import { fonts } from "../theme/typography";
 
 type Props = {
   label: string;
@@ -89,17 +90,17 @@ export function AnswerOption({
 }
 
 const S = StyleSheet.create({
-  opt: { minHeight: 54, backgroundColor: C.surface, borderWidth: 1.5, borderColor: C.line, borderRadius: radius.md, paddingHorizontal: spacing.lg, paddingVertical: spacing.md, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: spacing.md },
+  opt: { minHeight: 54, backgroundColor: C.surface, borderWidth: 1, borderColor: C.line, borderRadius: 12, paddingHorizontal: spacing.lg, paddingVertical: spacing.md, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: spacing.md },
   optPre: { backgroundColor: C.primarySubtle, transform: [{ scale: 0.99 }] },
   optSel: { backgroundColor: C.primarySubtle, borderColor: C.primary, borderWidth: 2 },
   optCor: { backgroundColor: C.successSoft, borderColor: C.success, borderWidth: 2 },
   optWro: { backgroundColor: C.attentionSoft, borderColor: C.attention, borderWidth: 2 },
   optRev: { backgroundColor: C.successSoft, borderColor: C.success, borderWidth: 1.5, borderStyle: "dashed" },
   optMut: { opacity: 0.45, backgroundColor: C.surface, borderColor: C.line },
-  lbl: { flex: 1, color: C.ink, fontSize: 16, lineHeight: 22, fontWeight: "700" },
-  lblSel: { color: C.primary, fontWeight: "800" },
-  lblCor: { color: C.successText, fontWeight: "800" },
-  lblWro: { color: C.attentionText, fontWeight: "800" },
+  lbl: { flex: 1, color: C.ink, fontFamily: fonts.bodySemi, fontSize: 16, lineHeight: 22 },
+  lblSel: { color: C.primary, fontFamily: fonts.bodyBold },
+  lblCor: { color: C.successText, fontFamily: fonts.bodyBold },
+  lblWro: { color: C.attentionText, fontFamily: fonts.bodyBold },
   lblMut: { color: C.muted },
   ind: { width: 26, height: 26, alignItems: "center", justifyContent: "center" },
   rad: { width: 20, height: 20, borderRadius: 10, borderWidth: 1.5, borderColor: C.line, backgroundColor: C.surface },

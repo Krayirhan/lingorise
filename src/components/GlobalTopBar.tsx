@@ -3,8 +3,7 @@ import { ActivityIndicator, DevSettings, Pressable, StyleSheet, Text, View } fro
 import { useState } from "react";
 import { Brand } from "./Brand";
 import { C, radius } from "../theme/colors";
-import { LevelCode } from "../types/content";
-import { formatDays } from "../utils/formatters";
+import { LevelCode } from "../domain/models/content";
 import { Locale } from "../i18n/en";
 
 export interface GlobalTopBarProps {
@@ -28,10 +27,12 @@ export function GlobalTopBar({
 }: GlobalTopBarProps) {
   const [refreshing, setRefreshing] = useState(false);
 
+  const courseName = locale === "tr" ? "İngilizce" : "English";
+
   return (
     <View style={S.hdr}>
       <View style={S.brandWrap}>
-        <Brand size={23} />
+        <Brand size={25} />
       </View>
 
       <View style={S.actions}>
@@ -60,28 +61,28 @@ export function GlobalTopBar({
           </Pressable>
         )}
 
-        {/* 1. Streak Chip: Leaf icon + 3 gün */}
-        <View
-          accessibilityRole="text"
-          accessibilityLabel={`${streak} ${streakLabel}`}
-          style={S.streak}
-        >
-          <Ionicons name="leaf" size={13} color={C.primary} />
-          <Text style={S.streakTxt}>{formatDays(streak, locale)}</Text>
-        </View>
-
-        {/* 2. Level Selector Chip: Compact [A1] ⌄ */}
+        {/* Language & Level Pill Badge: [İNGİLİZCE · A1] */}
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={`${levelLabel}: ${level}`}
+          accessibilityLabel={`${levelLabel}: ${level}, ${streak} ${streakLabel}`}
           accessibilityHint="Seviye seçicisini aç"
-          style={({ pressed }) => [S.level, pressed && S.btnPre]}
+          style={({ pressed }) => [S.levelPill, pressed && S.btnPre]}
           onPress={onLevelPress}
         >
-          <View style={S.levelBadge}>
-            <Text style={S.levelBadgeTxt}>{level}</Text>
-          </View>
-          <Ionicons name="chevron-down" size={11} color={C.muted} />
+          <Text style={S.levelPillTxt}>
+            {courseName} · {level}
+          </Text>
+          <Ionicons name="chevron-down" size={14} color={C.primary} />
+        </Pressable>
+
+        {/* Notification Bell Outline Icon */}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={locale === "tr" ? "Seviye ve bildirimler" : "Level and notifications"}
+          style={({ pressed }) => [S.bellBtn, pressed && S.btnPre]}
+          onPress={onLevelPress}
+        >
+          <Ionicons name="notifications-outline" size={22} color={C.primary} />
         </Pressable>
       </View>
     </View>
@@ -93,13 +94,11 @@ const S = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingTop: 4,
+    paddingTop: 8,
     paddingHorizontal: 18,
     paddingBottom: 6,
     backgroundColor: C.canvas,
-    borderBottomWidth: 1,
-    borderBottomColor: C.line,
-    minHeight: 46,
+    minHeight: 50,
   },
   brandWrap: {
     justifyContent: "center",
@@ -107,7 +106,7 @@ const S = StyleSheet.create({
   actions: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: 10,
   },
   devBtn: {
     width: 28,
@@ -117,57 +116,31 @@ const S = StyleSheet.create({
     borderRadius: radius.sm,
   },
   btnPre: {
-    opacity: 0.7,
-    transform: [{ scale: 0.96 }],
+    opacity: 0.75,
+    transform: [{ scale: 0.97 }],
   },
-  streak: {
+  levelPill: {
     flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    backgroundColor: C.surface,
-    borderWidth: 1,
-    borderColor: C.line,
-    paddingHorizontal: 9,
-    minHeight: 32,
-    borderRadius: radius.md,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.03,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-  streakTxt: {
-    color: C.ink,
-    fontSize: 11.5,
-    fontWeight: "800",
-  },
-  level: {
-    flexDirection: "row",
-    gap: 4,
-    alignItems: "center",
-    backgroundColor: C.surface,
-    borderWidth: 1,
-    borderColor: C.line,
-    paddingHorizontal: 7,
-    minHeight: 32,
-    borderRadius: radius.md,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.03,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-  levelBadge: {
-    paddingHorizontal: 5,
-    paddingVertical: 1,
-    borderRadius: radius.xs,
-    backgroundColor: C.primarySoft,
     alignItems: "center",
     justifyContent: "center",
+    backgroundColor: C.surface,
+    borderWidth: 1,
+    borderColor: C.line,
+    paddingHorizontal: 14,
+    minHeight: 44,
+    borderRadius: 22,
+    gap: 6,
   },
-  levelBadgeTxt: {
+  levelPillTxt: {
     color: C.primary,
-    fontSize: 11,
-    fontWeight: "800",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  bellBtn: {
+    width: 36,
+    height: 36,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 18,
   },
 });
