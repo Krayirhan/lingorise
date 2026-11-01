@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { C, radius, spacing } from "../theme/colors";
-import { Level } from "../types/content";
+import { Level } from "../domain/models/content";
 
 export function LevelCard({ level, selected, onPress }: { level: Level; selected: boolean; onPress: () => void }) {
   return (

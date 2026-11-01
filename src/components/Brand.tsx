@@ -1,25 +1,33 @@
-import { Image, StyleSheet, Text, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { StyleSheet, Text, View } from "react-native";
 import { C } from "../theme/colors";
-
-const appIcon = require("../../assets/lingorise-app-icon.png");
+import { fonts } from "../theme/typography";
 
 interface BrandProps {
   size?: number;
 }
 
-export function Brand({ size = 23 }: BrandProps) {
-  const iconSize = Math.round(size * 0.82);
+export function Brand({ size = 25 }: BrandProps) {
+  const leafSize = Math.round(size * 0.92);
 
   return (
-    <View style={styles.container}>
-      <Image
-        source={appIcon}
-        style={[styles.icon, { width: iconSize, height: iconSize, borderRadius: Math.round(iconSize * 0.26) }]}
-        accessibilityLabel="LingoRise logosu"
-        accessibilityIgnoresInvertColors
-      />
-      <Text style={[styles.logo, { fontSize: size - 2 }]} numberOfLines={1}>
-        Lingo<Text style={styles.accent}>Rise</Text>
+    <View style={styles.container} accessibilityLabel="Lingterra logosu">
+      <View style={styles.leafMark}>
+        <Ionicons
+          name="leaf"
+          size={leafSize}
+          color={C.primary}
+          style={styles.leafLeft}
+        />
+        <Ionicons
+          name="leaf"
+          size={Math.round(leafSize * 0.78)}
+          color={C.growth}
+          style={styles.leafRight}
+        />
+      </View>
+      <Text style={[styles.logo, { fontSize: size }]} numberOfLines={1}>
+        Lingterra
       </Text>
     </View>
   );
@@ -29,18 +37,24 @@ const styles = StyleSheet.create({
   container: {
     alignItems: "center",
     flexDirection: "row",
-    gap: 6,
+    gap: 8,
   },
-  icon: {
-    backgroundColor: C.surface,
+  leafMark: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    marginRight: -2,
+  },
+  leafLeft: {
+    transform: [{ rotate: "-32deg" }, { scaleX: -1 }],
+  },
+  leafRight: {
+    marginLeft: -8,
+    transform: [{ rotate: "24deg" }],
   },
   logo: {
-    fontSize: 27,
-    fontWeight: "800",
-    color: C.ink,
-    letterSpacing: -0.4,
-  },
-  accent: {
+    fontFamily: fonts.display,
+    fontSize: 25,
     color: C.primary,
+    letterSpacing: -0.3,
   },
 });

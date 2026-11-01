@@ -23,7 +23,8 @@ export const en = {
 
 export { tr };
 
-export type Locale = "en" | "tr";
+export type { Locale } from "../domain/models/locale";
+import type { Locale } from "../domain/models/locale";
 
 /**
  * Keys are pinned to the English dictionary rather than left as an open
