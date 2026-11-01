@@ -1,151 +1,119 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { C, radius } from "../../../theme/colors";
+import { C } from "../../../theme/colors";
 import { Copy } from "../../../i18n/en";
 import { SkillProgress } from "../home.types";
+import { fonts, typeScale } from "../../../theme/typography";
 
 interface Props {
   copy: Copy;
   skillProgress: SkillProgress[];
-  onViewProgress?: () => void;
+  practiceTargetCount?: number;
+  onTilePress?: () => void;
 }
 
-export function GardenProgressCard({ copy, skillProgress, onViewProgress }: Props) {
-  // Only show active ready skills on the home dashboard to keep it actionable
-  const activeSkills = skillProgress.filter((s) => s.isReady);
+/** The four skills as one plain list: rows with dividers, no card per row. */
+export function GardenProgressCard({ copy, skillProgress, practiceTargetCount = 20, onTilePress }: Props) {
+  const vocabSkill = skillProgress.find((s) => s.id === "skill_vocab");
+  const vocabTag = vocabSkill && vocabSkill.percent > 0
+    ? `%${vocabSkill.percent}`
+    : `${practiceTargetCount} ${copy.home?.wordCountSuffix || "kelime"}`;
+
+  const rows: {
+    id: string;
+    icon: keyof typeof Ionicons.glyphMap;
+    title: string;
+    tag?: string;
+    tint: string;
+    isSoon?: boolean;
+  }[] = [
+    {
+      id: "tile_vocab",
+      icon: "albums-outline",
+      title: copy.home?.vocabulary ? copy.home.vocabulary.split(" ")[0] : "Kelime",
+      tag: vocabTag,
+      tint: C.attentionSoft,
+    },
+    {
+      id: "tile_grammar",
+      icon: "create-outline",
+      title: copy.home?.meaningMatch ? "Dilbilgisi" : "Grammar",
+      tag: copy.home?.soon || "Yakında",
+      tint: C.successSoft,
+      isSoon: true,
+    },
+    {
+      id: "tile_speaking",
+      icon: "chatbubbles-outline",
+      title: copy.home?.meaningMatch ? "Konuşma" : "Speaking",
+      tag: copy.home?.soon || "Yakında",
+      tint: C.rewardSoft,
+      isSoon: true,
+    },
+    {
+      id: "tile_listening",
+      icon: "headset-outline",
+      title: copy.home?.listening || "Dinleme",
+      tag: copy.home?.soon || "Yakında",
+      tint: C.disabledBg,
+      isSoon: true,
+    },
+  ];
 
   return (
-    <View style={S.card}>
-      {activeSkills.map((skill) => (
-        <View key={skill.id} style={S.itemWrap}>
-          <View style={S.row}>
-            {/* 42px Icon Circle */}
-            <View style={S.iconCircle}>
-              <Ionicons
-                name="book-outline"
-                size={20}
-                color={C.primary}
-              />
+    <View style={S.list}>
+      {rows.map((row, index) => {
+        const body = (
+          <>
+            <View style={[S.iconWrap, { backgroundColor: row.tint }]}>
+              <Ionicons name={row.icon} size={20} color={row.isSoon ? C.disabledText : C.primary} />
             </View>
-
-            {/* Title & Subtitle with clear explanation */}
-            <View style={S.copy}>
-              <Text style={S.title}>{skill.title}</Text>
-              <Text style={S.meta}>
-                {skill.meta || `${copy.home?.levelPrefix || "A1"} kelimelerinin %${skill.percent}'i`}
-              </Text>
-            </View>
-
-            {/* Right side percentage */}
-            <Text style={S.pct}>%{skill.percent}</Text>
+            <Text numberOfLines={1} style={[S.title, row.isSoon && S.soonText]}>{row.title}</Text>
+            {row.tag ? <Text numberOfLines={1} style={S.tag}>{row.tag}</Text> : null}
+            {!row.isSoon && <Ionicons name="chevron-forward" size={18} color={C.muted} />}
+          </>
+        );
+        const rowStyle = [S.row, index > 0 && S.divider];
+        // "Soon" is information, not a destination: no chevron, not tappable.
+        return row.isSoon ? (
+          <View key={row.id} accessible accessibilityLabel={`${row.title}, ${row.tag}`} style={rowStyle}>
+            {body}
           </View>
-
-          {/* Progress Bar */}
-          <View style={S.line}>
-            <View
-              style={[
-                S.fill,
-                { width: `${Math.max(8, Math.min(100, skill.percent))}%` },
-              ]}
-            />
-          </View>
-        </View>
-      ))}
-
-      {/* Action CTA Button */}
-      {onViewProgress && (
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={copy.home?.progress || "Kelime ilerlemesini gör"}
-          style={({ pressed }) => [S.actionBtn, pressed && S.actionBtnPressed]}
-          onPress={onViewProgress}
-        >
-          <Text style={S.actionBtnTxt}>
-            {copy.home?.progress || "Kelime ilerlemesini gör"} →
-          </Text>
-        </Pressable>
-      )}
+        ) : (
+          <Pressable
+            key={row.id}
+            accessibilityRole="button"
+            accessibilityLabel={row.tag ? `${row.title}, ${row.tag}` : row.title}
+            style={({ pressed }) => [...rowStyle, pressed && S.rowPressed]}
+            onPress={onTilePress}
+          >
+            {body}
+          </Pressable>
+        );
+      })}
     </View>
   );
 }
 
 const S = StyleSheet.create({
-  card: {
-    backgroundColor: C.surface,
-    borderRadius: 20,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: C.line,
-    gap: 14,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 2,
-  },
-  itemWrap: {
-    gap: 10,
-  },
+  list: {},
   row: {
     flexDirection: "row",
     alignItems: "center",
-    minHeight: 42,
+    gap: 14,
+    minHeight: 60,
+    paddingVertical: 8,
   },
-  iconCircle: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+  divider: { borderTopWidth: 1, borderTopColor: C.line },
+  rowPressed: { opacity: 0.7 },
+  iconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: C.primarySoft,
-    marginRight: 12,
   },
-  copy: {
-    flex: 1,
-    paddingRight: 8,
-    gap: 2,
-  },
-  title: {
-    color: C.ink,
-    fontWeight: "700",
-    fontSize: 17,
-  },
-  meta: {
-    color: C.muted,
-    fontSize: 14,
-    fontWeight: "400",
-    lineHeight: 18,
-  },
-  pct: {
-    color: C.ink,
-    fontWeight: "700",
-    fontSize: 15,
-  },
-  line: {
-    height: 10,
-    backgroundColor: C.lineSoft,
-    borderRadius: 5,
-    overflow: "hidden",
-  },
-  fill: {
-    height: 10,
-    backgroundColor: C.success,
-    borderRadius: 5,
-  },
-  actionBtn: {
-    minHeight: 44,
-    borderRadius: radius.sm,
-    backgroundColor: C.canvas,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 2,
-  },
-  actionBtnPressed: {
-    opacity: 0.7,
-  },
-  actionBtnTxt: {
-    color: C.primary,
-    fontWeight: "700",
-    fontSize: 13.5,
-  },
+  title: { flex: 1, color: C.primary, fontFamily: fonts.display, fontSize: typeScale.card },
+  soonText: { color: C.muted },
+  tag: { color: C.muted, fontFamily: fonts.body, fontSize: typeScale.caption },
 });

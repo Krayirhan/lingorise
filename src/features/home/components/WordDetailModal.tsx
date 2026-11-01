@@ -1,11 +1,13 @@
+import { useApplication } from "../../../context/ApplicationContext";
 import { Ionicons } from "@expo/vector-icons";
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import { C, radius, spacing } from "../../../theme/colors";
 import { Copy } from "../../../i18n/en";
 import { RecommendedWordData } from "../home.types";
-import { speechService } from "../../../services/speechService";
+
 import { PrimaryButton } from "../../../components/PrimaryButton";
 import { getTopicLabel } from "../topicLabel";
+import { englishSpeechText } from "../../../domain/speech/voice";
 
 interface Props {
   copy: Copy;
@@ -17,10 +19,13 @@ interface Props {
 }
 
 export function WordDetailModal({ copy, wordData, visible, onPracticeWord, onClose, reduceMotion }: Props) {
+  const application = useApplication();
+  const { speechService } = application;
+
   if (!visible || !wordData) return null;
 
   const handleAudio = () => {
-    speechService.speak(wordData.pronunciation || wordData.word, { language: "en-US", rate: 0.85 });
+    speechService.speak(englishSpeechText(wordData.word, wordData.pronunciation), { language: "en-US", rate: 0.9 });
   };
 
   return (

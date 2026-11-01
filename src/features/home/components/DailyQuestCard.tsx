@@ -2,7 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { C, radius } from "../../../theme/colors";
 import { Copy } from "../../../i18n/en";
-import { DailyQuest } from "../../../types/user";
+import { DailyQuest } from "../../../domain/models/user";
 
 interface Props {
   copy: Copy;
@@ -53,13 +53,13 @@ export function DailyQuestCard({ copy, dailyQuests, onHistoryPress }: Props) {
                 key={q.id}
                 accessibilityRole="text"
                 accessibilityLabel={`${questTitle}, ${q.current}/${q.target}, +${q.xpReward} XP`}
-                style={[S.row, q.completed ? S.rowDone : S.rowActive]}
+                style={S.row}
               >
                 {/* Check / Circle Icon */}
                 <View style={S.checkWrap}>
                   <Ionicons
                     name={q.completed ? "checkmark-circle" : "ellipse-outline"}
-                    size={20}
+                    size={22}
                     color={q.completed ? C.success : C.primary}
                   />
                 </View>
@@ -69,19 +69,13 @@ export function DailyQuestCard({ copy, dailyQuests, onHistoryPress }: Props) {
                   <Text style={[S.title, q.completed && S.titleDone]}>
                     {questTitle}
                   </Text>
-                  {!q.completed && (
-                    <Text style={S.meta}>
-                      {q.current} / {q.target} tamamlandı
-                    </Text>
-                  )}
                 </View>
 
-                {/* Reward Badge */}
-                <View style={[S.badge, q.completed ? S.badgeDone : S.badgeActive]}>
-                  <Text style={[S.badgeTxt, q.completed ? S.badgeTxtDone : S.badgeTxtActive]}>
-                    +{q.xpReward} XP
-                  </Text>
-                </View>
+                {!q.completed && (
+                  <View style={S.progressPill}>
+                    <Text style={S.progressText}>{q.current} / {q.target} {copy.home?.wordCountSuffix || "kelime"}</Text>
+                  </View>
+                )}
               </View>
             );
           })}
@@ -102,26 +96,18 @@ export function DailyQuestCard({ copy, dailyQuests, onHistoryPress }: Props) {
 
 const S = StyleSheet.create({
   card: {
-    backgroundColor: C.surface,
-    borderRadius: 20,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: C.line,
-    gap: 14,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 2,
+    paddingTop: 15,
+    gap: 8,
   },
   hdr: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    paddingHorizontal: 2,
   },
   hdrTxt: {
     color: C.primary,
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: "700",
     letterSpacing: 1.1,
   },
@@ -143,7 +129,7 @@ const S = StyleSheet.create({
     fontWeight: "700",
   },
   list: {
-    gap: 10,
+    gap: 2,
   },
   emptyTxt: {
     color: C.muted,
@@ -155,21 +141,10 @@ const S = StyleSheet.create({
   row: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
-    minHeight: 52,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: radius.sm,
-    borderWidth: 1,
-  },
-  rowActive: {
-    backgroundColor: C.canvas,
-    borderColor: C.line,
-  },
-  rowDone: {
-    backgroundColor: C.canvas,
-    borderColor: C.line,
-    opacity: 0.7,
+    gap: 12,
+    minHeight: 58,
+    paddingVertical: 4,
+    paddingHorizontal: 2,
   },
   rowPressed: {
     opacity: 0.8,
@@ -182,43 +157,19 @@ const S = StyleSheet.create({
   },
   copy: {
     flex: 1,
-    gap: 2,
+    gap: 0,
   },
   title: {
     color: C.ink,
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: "700",
     lineHeight: 19,
   },
   titleDone: {
     color: C.successText,
   },
-  meta: {
-    color: C.muted,
-    fontSize: 13,
-    fontWeight: "400",
-  },
-  badge: {
-    paddingHorizontal: 8,
-    paddingVertical: 3.5,
-    borderRadius: radius.xs,
-  },
-  badgeActive: {
-    backgroundColor: C.primarySoft,
-  },
-  badgeDone: {
-    backgroundColor: "rgba(76, 175, 80, 0.15)",
-  },
-  badgeTxt: {
-    fontSize: 11,
-    fontWeight: "700",
-  },
-  badgeTxtActive: {
-    color: C.primary,
-  },
-  badgeTxtDone: {
-    color: C.successText,
-  },
+  progressPill: { backgroundColor: C.canvas, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 7 },
+  progressText: { color: C.muted, fontSize: 12, fontWeight: "600" },
   allDoneNote: {
     flexDirection: "row",
     alignItems: "center",

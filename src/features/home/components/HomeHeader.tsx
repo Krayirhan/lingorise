@@ -3,9 +3,10 @@ import { ActivityIndicator, Platform, Pressable, StatusBar, StyleSheet, Text, Vi
 import { useState } from "react";
 import { Brand } from "../../../components/Brand";
 import { C, radius } from "../../../theme/colors";
-import { LevelCode } from "../../../types/content";
+import { LevelCode } from "../../../domain/models/content";
 import { formatDays } from "../../../utils/formatters";
 import { Locale } from "../../../i18n/en";
+import { fonts } from "../../../theme/typography";
 
 interface Props {
   level: LevelCode;
@@ -139,8 +140,8 @@ const S = StyleSheet.create({
   },
   streakTxt: {
     color: C.ink,
+    fontFamily: fonts.bodyExtraBold,
     fontSize: 11.5,
-    fontWeight: "800",
   },
   level: {
     flexDirection: "row",
@@ -164,12 +165,12 @@ const S = StyleSheet.create({
   },
   levelBadgeTxt: {
     color: C.primary,
+    fontFamily: fonts.bodyExtraBold,
     fontSize: 10,
-    fontWeight: "800",
   },
   levelTxt: {
     color: C.ink,
+    fontFamily: fonts.bodyBold,
     fontSize: 11,
-    fontWeight: "700",
   },
 });
